@@ -1,0 +1,42 @@
+# Environnements virtuels & caches Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Checkpoints, poids neuronaux & états d'optimiseurs (synchronisés via Google Drive Vault / hors-Git)
+checkpoints/
+artifacts/
+vault_cache/
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.gguf
+*.onnx
+
+# Corpus bruts, shards tokenisés & bases mémoire épisodiques locales
+data/raw/
+data/shards/
+data/replay_buffer/
+memory_store/
+*.mmap
+*.idx
+*.parquet
+*.jsonl.zst
+
+# Logs d'entraînement, télémétrie & frontend build
+logs/
+runs/
+observatory/node_modules/
+observatory/dist/
+.DS_Store
+.env
