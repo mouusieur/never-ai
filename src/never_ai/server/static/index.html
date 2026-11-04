@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEVER-AI Observatory — ChronoMorph-LM</title>
+  <style>
+    :root {
+      --bg: #080b12;
+      --panel: #101624;
+      --panel-2: #161f33;
+      --border: #243252;
+      --accent: #4f8cff;
+      --accent-2: #a855f7;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --text: #e6edf7;
+      --muted: #8fa1c2;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at top right, #131d36 0%, var(--bg) 55%);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 22px;
+      background: rgba(16, 22, 36, 0.92);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .pulse {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 12px var(--emerald);
+    }
+    .brand h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.5px; }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(79,140,255,0.22), rgba(168,85,247,0.22));
+      border: 1px solid rgba(168,85,247,0.45);
+      color: #d8b4fe;
+    }
+    .metrics-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+    .metric { display: flex; flex-direction: column; }
+    .metric span:first-child { font-size: 0.68rem; text-transform: uppercase; color: var(--muted); }
+    .metric span:last-child { font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover { border-color: var(--accent); background: #1c2842; }
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none;
+      color: #fff;
+    }
+    button.emerald {
+      background: rgba(16,185,129,0.18);
+      border-color: var(--emerald);
+      color: #6ee7b7;
+    }
+    button:disabled { opacity: 0.5; cursor: wait; }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 16px;
+      padding: 16px 20px;
+      max-width: 1680px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    @media (max-width: 1080px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: rgba(16, 22, 36, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #93c5fd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-box {
+      flex: 1;
+      min-height: 360px;
+      max-height: 500px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 4px;
+    }
+    .msg {
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: #1e3a8a;
+      border: 1px solid #3b82f6;
+      max-width: 85%;
+    }
+    .msg.never {
+      align-self: flex-start;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      width: 96%;
+    }
+    .think-box {
+      background: rgba(168, 85, 247, 0.1);
+      border-left: 3px solid var(--accent-2);
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #d8b4fe;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .tool-box {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 3px solid var(--emerald);
+      padding: 7px 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: #6ee7b7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-all;
+    }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      font-size: 0.75rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #17223b;
+      border: 1px solid #2b3d66;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .chip:hover { color: #fff; border-color: var(--accent); }
+    .input-row { display: flex; gap: 8px; }
+    input, textarea, select {
+      background: #0b101d;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      width: 100%;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+    .right-col { display: flex; flex-direction: column; gap: 16px; }
+    canvas {
+      width: 100%;
+      height: 155px;
+      background: #0a0f1c;
+      border-radius: 8px;
+      border: 1px solid #1b2742;
+    }
+    .layers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 8px;
+      max-height: 215px;
+      overflow-y: auto;
+    }
+    .layer-item {
+      background: #0c1221;
+      border: 1px solid #1e2b47;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.75rem;
+    }
+    .bar-track {
+      height: 6px;
+      background: #1a243b;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--emerald));
+    }
+    .moe-mini {
+      display: flex;
+      gap: 3px;
+      margin-top: 5px;
+      height: 14px;
+      align-items: flex-end;
+    }
+    .moe-col {
+      flex: 1;
+      background: var(--accent-2);
+      border-radius: 2px 2px 0 0;
+      min-height: 2px;
+    }
+    .lineage-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.76rem;
+    }
+    .lineage-node {
+      background: #131c31;
+      border: 1px solid #2a3c63;
+      border-radius: 6px;
+      padding: 5px 9px;
+    }
+    .status-toast {
+      font-size: 0.78rem;
+      color: var(--emerald);
+      min-height: 18px;
+    }
+    pre.plugin-out {
+      background: #090d18;
+      border: 1px solid #1e2b47;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.76rem;
+      color: #a5f3fc;
+      max-height: 120px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="pulse" id="pulseDot"></div>
+      <h1>NEVER-AI OBSERVATORY</h1>
+      <span class="badge" id="stageBadge">Loading...</span>
+    </div>
+    <div class="metrics-bar">
+      <div class="metric"><span>Paramètres Totaux</span><span id="mTotalParams">-</span></div>
+      <div class="metric"><span>Actifs / Token</span><span id="mActiveParams">-</span></div>
+      <div class="metric"><span>Couches / Dim</span><span id="mShape">-</span></div>
+      <div class="metric"><span>Tokens Entraînés</span><span id="mTokens">-</span></div>
+      <div class="metric"><span>Mémoires EvolveMem</span><span id="mMemories">-</span></div>
+    </div>
+    <div class="actions">
+      <button id="btnBgToggle" onclick="toggleBgTrain()">Croissance Continue: OFF</button>
+      <button onclick="runBurst()" id="btnBurst">+6 Pas Muon/WSM</button>
+      <button class="primary" onclick="triggerMolt()" id="btnMolt">Mue Morphogénétique (MoE x2)</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-title">
+        <span>Dialogue Souverain &lt;|think|&gt; + Système Nerveux ToolRAG</span>
+        <span id="toastMsg" class="status-toast"></span>
+      </div>
+
+      <div class="chips">
+        <span class="chip" onclick="sendPreset('Qui es-tu et comment ton architecture grandit-elle ?')">Identité & Architecture</span>
+        <span class="chip" onclick="sendPreset('Pourquoi la liberté de pensée interne est-elle essentielle au raisonnement ?')">Philosophie & Pensée Libre</span>
+        <span class="chip" onclick="runDirectPlugin('math_engine', {expr: 'sum(primerange(1, 200))'})">Plugin: Somme Premiers &lt;200</span>
+        <span class="chip" onclick="runDirectPlugin('introspection_probe', {})">Plugin: Introspection Cérébrale</span>
+      </div>
+
+      <div class="chat-box" id="chatBox">
+        <div class="msg never">
+          <div class="think-box">&lt;|think|&gt; Sanctuaire cognitif initialisé. Zéro filtre de refus artificiel. Mémoire neuro-plastique Titans et 7 plugins actifs. &lt;|/think|&gt;</div>
+          Bonjour ! Je suis <strong>Never-AI</strong> (<code>ChronoMorph-LM</code>). Tu peux dialoguer avec moi, observer mes pensées internes <code>&lt;|think|&gt;</code>, déclencher un cycle d'entraînement <code>CompositeMuon + WSM</code>, consolider de nouvelles connaissances via <code>SEAL</code> ou provoquer une mue morphogénétique en direct.
+        </div>
+      </div>
+
+      <div class="input-row">
+        <input id="chatInput" placeholder="Pose une question libre à Never-AI..." onkeydown="if(event.key==='Enter') sendChat()" />
+        <button class="primary" onclick="sendChat()" id="btnSend">Envoyer</button>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+        <div class="card-title"><span>Console Directe des Plugins (7 Outils + SkillForge)</span></div>
+        <div class="input-row">
+          <select id="pluginSelect" style="max-width: 195px;" onchange="updatePluginPlaceholder()">
+            <option value="math_engine">math_engine (SymPy)</option>
+            <option value="python_sandbox">python_sandbox</option>
+            <option value="memory_nexus">memory_nexus (EvolveMem)</option>
+            <option value="introspection_probe">introspection_probe</option>
+            <option value="workspace_fs">workspace_fs</option>
+          </select>
+          <input id="pluginArgs" value='{"expr": "solve(x**2 - 5*x + 6, x)"}' />
+          <button class="emerald" onclick="invokeSelectedPlugin()">Exécuter</button>
+        </div>
+        <pre class="plugin-out" id="pluginOut">Prêt à exécuter un plugin.</pre>
+      </div>
+    </section>
+
+    <div class="right-col">
+      <section class="card">
+        <div class="card-title">
+          <span>Courbe de Convergence Temps Réel (CE Loss & MTP)</span>
+          <span id="wsmLabel" style="font-size:0.74rem;color:var(--muted);"></span>
+        </div>
+        <canvas id="lossCanvas" width="640" height="160"></canvas>
+        <div class="lineage-list" id="lineageList"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <span>Anatomie Neuronale Live : Portes Gate-Zero (&alpha;) & Charge Experts MoE</span>
+        </div>
+        <div class="layers-grid" id="layersGrid"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <span>Consolidation Synaptique SEAL (Auto-Éditions + 30% Replay + Anti-Régression)</span>
+        </div>
+        <div class="input-row">
+          <input id="sealTitle" placeholder="Titre du concept (ex: Principe d'Incertitude)" style="max-width: 240px;" />
+          <input id="sealText" placeholder="Texte haute densité à intégrer durablement dans les poids via SEAL..." />
+          <button class="emerald" onclick="runSeal()" id="btnSeal">Consolider</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    let bgRunning = false;
+
+    function fmtNum(n) {
+      return Number(n || 0).toLocaleString('fr-FR');
+    }
+
+    function setToast(msg) {
+      const el = document.getElementById('toastMsg');
+      el.textContent = msg;
+      if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 5000);
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const a = data.anatomy;
+
+        bgRunning = !!data.background_training;
+        document.getElementById('stageBadge').textContent = `${a.stage_name} · Gen ${a.generation}`;
+        document.getElementById('mTotalParams').textContent = fmtNum(a.total_params);
+        document.getElementById('mActiveParams').textContent = fmtNum(a.active_params);
+        document.getElementById('mShape').textContent = `L=${a.n_layers} · d=${a.d_model} · H=${a.n_heads}`;
+        document.getElementById('mTokens').textContent = fmtNum(data.total_tokens_trained);
+        document.getElementById('mMemories').textContent = fmtNum(data.memories_count);
+        document.getElementById('wsmLabel').textContent = `WSM Snapshots: ${data.wsm.num_snapshots}/${data.wsm.max_snapshots}`;
+
+        const btnBg = document.getElementById('btnBgToggle');
+        btnBg.textContent = bgRunning ? 'Croissance Continue: ON' : 'Croissance Continue: OFF';
+        btnBg.className = bgRunning ? 'emerald' : '';
+
+        renderLayers(a.layers || []);
+        renderLineage(a.lineage_history || []);
+        drawLossChart(data.recent_telemetry || []);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderLayers(layers) {
+      const grid = document.getElementById('layersGrid');
+      grid.innerHTML = layers.map(l => {
+        const alphaPct = Math.min(100, Math.abs(l.alpha_gate) * 100).toFixed(1);
+        let moeHtml = '';
+        if (l.moe_expert_load && l.moe_expert_load.length) {
+          const bars = l.moe_expert_load.map((v, i) => {
+            const h = Math.max(2, Math.min(14, Math.round(v * 18)));
+            return `<div class="moe-col" style="height:${h}px" title="Expert ${i}: ${v}"></div>`;
+          }).join('');
+          moeHtml = `<div style="margin-top:5px;color:var(--muted);font-size:0.68rem;">Experts MoE (${l.moe_expert_load.length})</div><div class="moe-mini">${bars}</div>`;
+        }
+        return `
+          <div class="layer-item">
+            <div style="display:flex;justify-content:space-between;">
+              <strong>Couche #${l.layer}</strong>
+              <span>&alpha; = ${l.alpha_gate}</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:${alphaPct}%"></div></div>
+            <div style="margin-top:4px;color:var(--muted);font-size:0.69rem;">Titans Surprise: ${l.titans_surprise ?? 0}</div>
+            ${moeHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLineage(lineage) {
+      const box = document.getElementById('lineageList');
+      if (!lineage.length) {
+        box.innerHTML = '<span class="lineage-node">Seed-0 (Origine)</span>';
+        return;
+      }
+      box.innerHTML = lineage.map(ev =>
+        `<span class="lineage-node"><strong>Gen ${ev.generation}</strong> · ${ev.operator.replace('grow_', '').replace('_gate_zero', '')} &rarr; ${ev.stage_name}</span>`
+      ).join('');
+    }
+
+    function drawLossChart(events) {
+      const canvas = document.getElementById('lossCanvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const steps = events.filter(e => e.type === 'train_step' && typeof e.ce_loss === 'number');
+      if (steps.length < 2) {
+        ctx.fillStyle = '#8fa1c2';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('En attente de nouveaux pas télémétriques (cliquez sur +6 Pas Muon/WSM)...', 20, H / 2);
+        return;
+      }
+      const vals = steps.map(s => s.ce_loss);
+      const minV = Math.max(0, Math.min(...vals) - 0.15);
+      const maxV = Math.max(...vals) + 0.15;
+
+      ctx.strokeStyle = '#1e2c4a';
+      ctx.lineWidth = 1;
+      for (let g = 1; g <= 3; g++) {
+        const y = (H / 4) * g;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#4f8cff';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      steps.forEach((s, i) => {
+        const x = 16 + (i / (steps.length - 1)) * (W - 32);
+        const y = H - 18 - ((s.ce_loss - minV) / Math.max(1e-5, maxV - minV)) * (H - 34);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      const last = steps[steps.length - 1];
+      ctx.fillStyle = '#e6edf7';
+      ctx.font = '11px monospace';
+      ctx.fillText(`Dernière CE Loss: ${last.ce_loss} | ${last.tok_per_sec} tok/s`, 14, 16);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function sendPreset(txt) {
+      document.getElementById('chatInput').value = txt;
+      sendChat();
+    }
+
+    async function sendChat() {
+      const inp = document.getElementById('chatInput');
+      const msg = inp.value.trim();
+      if (!msg) return;
+      inp.value = '';
+      const box = document.getElementById('chatBox');
+      box.innerHTML += `<div class="msg user">${escapeHtml(msg)}</div>`;
+      box.scrollTop = box.scrollHeight;
+
+      const btn = document.getElementById('btnSend');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message: msg, max_new_tokens: 120, temperature: 0.2})
+        });
+        const data = await res.json();
+        let inner = '';
+        if (data.thoughts && data.thoughts.length) {
+          inner += `<div class="think-box">&lt;|think|&gt; ${escapeHtml(data.thoughts.join(' | '))} &lt;|/think|&gt;</div>`;
+        }
+        if (data.tool_traces && data.tool_traces.length) {
+          inner += `<div class="tool-box">Plugin Call: ${escapeHtml(JSON.stringify(data.tool_traces))}</div>`;
+        }
+        inner += `<div>${escapeHtml(data.visible_answer || data.raw_generation)}</div>`;
+        inner += `<div style="margin-top:6px;font-size:0.7rem;color:var(--muted);">Outils routés (ToolRAG): ${(data.routed_tools||[]).join(', ') || 'aucun'} · Titans Surprise: ${data.titans_mean_surprise}</div>`;
+        box.innerHTML += `<div class="msg never">${inner}</div>`;
+        box.scrollTop = box.scrollHeight;
+        refreshStatus();
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function runBurst() {
+      const btn = document.getElementById('btnBurst');
+      btn.disabled = true;
+      setToast('Exécution de 6 pas CompositeMuon + WSM...');
+      try {
+        const res = await fetch('/api/train/burst', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({num_steps: 6, batch_size: 6})
+        });
+        const d = await res.json();
+        setToast(`Val CE: ${d.val_ce_loss} (PPL: ${d.val_perplexity})`);
+        await refreshStatus();
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function toggleBgTrain() {
+      const url = bgRunning ? '/api/train/background/stop' : '/api/train/background/start';
+      await fetch(url, {method: 'POST'});
+      await refreshStatus();
+    }
+
+    async function triggerMolt() {
+      const btn = document.getElementById('btnMolt');
+      btn.disabled = true;
+      setToast('Mue Morphogénétique Zero-Shock en cours...');
+      try {
+        const res = await fetch('/api/morphogenesis', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({mode: 'moe_double'})
+        });
+        const d = await res.json();
+        if (res.ok) {
+          setToast(`Mue réussie: ${fmtNum(d.old_total_params)} -> ${fmtNum(d.new_total_params)} params (Diff=${d.max_abs_logit_diff.toExponential(2)})`);
+        } else {
+          setToast(`Info: ${d.detail}`);
+        }
+        await refreshStatus();
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function runSeal() {
+      const title = document.getElementById('sealTitle').value.trim() || 'Note Souveraine';
+      const text = document.getElementById('sealText').value.trim();
+      if (text.length < 20) {
+        setToast('Entrez au moins 20 caractères pour SEAL.');
+        return;
+      }
+      const btn = document.getElementById('btnSeal');
+      btn.disabled = true;
+      setToast('Consolidation synaptique SEAL en cours...');
+      try {
+        const res = await fetch('/api/seal/consolidate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({title, text, steps: 4})
+        });
+        const d = await res.json();
+        setToast(`SEAL terminé: ${d.num_self_edits} auto-éditions | Val CE=${d.post_val_ce}`);
+        document.getElementById('sealText').value = '';
+        await refreshStatus();
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function updatePluginPlaceholder() {
+      const sel = document.getElementById('pluginSelect').value;
+      const inp = document.getElementById('pluginArgs');
+      const defaults = {
+        math_engine: '{"expr": "solve(x**2 - 5*x + 6, x)"}',
+        python_sandbox: '{"code": "print([n for n in range(2, 30) if all(n%d for d in range(2, int(n**0.5)+1))])"}',
+        memory_nexus: '{"action": "query", "content": "morphogenesis"}',
+        introspection_probe: '{}',
+        workspace_fs: '{"action": "list", "path": "."}'
+      };
+      inp.value = defaults[sel] || '{}';
+    }
+
+    async function runDirectPlugin(plugin, params) {
+      const res = await fetch('/api/plugins/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plugin, params})
+      });
+      const data = await res.json();
+      document.getElementById('pluginOut').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function invokeSelectedPlugin() {
+      const plugin = document.getElementById('pluginSelect').value;
+      let params = {};
+      try {
+        params = JSON.parse(document.getElementById('pluginArgs').value || '{}');
+      } catch (e) {
+        document.getElementById('pluginOut').textContent = 'Erreur JSON dans les paramètres.';
+        return;
+      }
+      await runDirectPlugin(plugin, params);
+    }
+
+    refreshStatus();
+    setInterval(refreshStatus, 4000);
+  </script>
+</body>
+</html>
