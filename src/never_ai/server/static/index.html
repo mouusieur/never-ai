@@ -1692,7 +1692,7 @@
         await fetch('/api/train/background/start', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({auto_morphogenesis: autoM, batch_size: 2})
+          body: JSON.stringify({auto_morphogenesis: autoM, batch_size: 1})
         });
         toast('Croissance Continue activée en tâche de fond !');
       }
