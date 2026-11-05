@@ -19,6 +19,7 @@ from never_ai.evolution.seal_and_grpo import (
     ImmutableEvalHarness,
     SEALConsolidator,
 )
+from never_ai.memory.conversations import ConversationStore, LocalIdentityVault
 from never_ai.memory.evolvemem import EvolveMemStore
 from never_ai.morphogenesis.operators import (
     grow_depth_interpositional_gate_zero,
@@ -53,7 +54,10 @@ class NeverAIEngine:
     ) -> None:
         self.lock = threading.RLock()
         self.vault = VaultManager(vault_dir)
+        mem_dir = Path(memory_path).parent
         self.memory = EvolveMemStore(memory_path)
+        self.identities = LocalIdentityVault(mem_dir / "identities.json")
+        self.conversations = ConversationStore(mem_dir / "conversations.json")
         self.telemetry_path = Path(telemetry_path)
         self.telemetry_path.parent.mkdir(parents=True, exist_ok=True)
         self.seq_len = seq_len
@@ -310,13 +314,25 @@ class NeverAIEngine:
         message: str,
         max_new_tokens: int = 140,
         temperature: float = 0.45,
+        thread_id: str | None = None,
+        owner: str = "local",
     ) -> dict[str, Any]:
         with self.lock:
-            return self.harness.run_turn(
+            result = self.harness.run_turn(
                 message,
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
             )
+            if thread_id:
+                thread = self.conversations.append_exchange(
+                    thread_id=thread_id,
+                    user_message=message,
+                    assistant_payload=result,
+                    owner=owner,
+                )
+                result["thread_id"] = thread["id"]
+                result["thread_title"] = thread["title"]
+            return result
 
     def start_background_growth_loop(self, batch_size: int = 6) -> bool:
         if self._bg_running:

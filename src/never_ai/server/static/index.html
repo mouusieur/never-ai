@@ -3,493 +3,1350 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEVER-AI Observatory — ChronoMorph-LM</title>
+  <title>NEVER-AI — La pensée libre. Sans fin.</title>
+  <link rel="icon" href="/favicon.ico" />
   <style>
     :root {
-      --bg: #080b12;
-      --panel: #101624;
-      --panel-2: #161f33;
-      --border: #243252;
-      --accent: #4f8cff;
-      --accent-2: #a855f7;
-      --emerald: #10b981;
-      --amber: #f59e0b;
-      --text: #e6edf7;
-      --muted: #8fa1c2;
-      --danger: #ef4444;
+      --bg-void: #000000;
+      --bg-card: #16181C;
+      --bg-elevated: #0D0F12;
+      --bg-hover: rgba(231, 233, 234, 0.08);
+      --backdrop-x: rgba(91, 112, 131, 0.40);
+      --border: #2F3336;
+      --border-input: #333639;
+      --text-primary: #E7E9EA;
+      --text-pure: #FFFFFF;
+      --text-muted: #71767B;
+      --cta-bg: #EFF3F4;
+      --cta-hover: #D7DBDC;
+      --cta-text: #0F1419;
+      --accent: #1D9BF0;
+      --emerald: #00BA7C;
+      --danger: #F4212E;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: radial-gradient(circle at top right, #131d36 0%, var(--bg) 55%);
-      color: var(--text);
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    html, body {
+      height: 100%;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .hidden { display: none !important; }
+
+    /* =========================================================================
+       1. X.COM-INSPIRED MONOLITH LANDING VIEW
+       ========================================================================= */
+    #landingView {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-    }
-    header {
-      padding: 14px 22px;
-      background: rgba(16, 22, 36, 0.92);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      background: #000000;
     }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .pulse {
-      width: 12px; height: 12px; border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 12px var(--emerald);
-    }
-    .brand h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.5px; }
-    .badge {
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.76rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, rgba(79,140,255,0.22), rgba(168,85,247,0.22));
-      border: 1px solid rgba(168,85,247,0.45);
-      color: #d8b4fe;
-    }
-    .metrics-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-    .metric { display: flex; flex-direction: column; }
-    .metric span:first-child { font-size: 0.68rem; text-transform: uppercase; color: var(--muted); }
-    .metric span:last-child { font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    button {
-      background: var(--panel-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 7px 13px;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    button:hover { border-color: var(--accent); background: #1c2842; }
-    button.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      border: none;
-      color: #fff;
-    }
-    button.emerald {
-      background: rgba(16,185,129,0.18);
-      border-color: var(--emerald);
-      color: #6ee7b7;
-    }
-    button:disabled { opacity: 0.5; cursor: wait; }
-
-    main {
+    .landing-split {
       flex: 1;
       display: grid;
-      grid-template-columns: 1.15fr 1fr;
-      gap: 16px;
-      padding: 16px 20px;
-      max-width: 1680px;
+      grid-template-columns: 1.08fr 0.92fr;
+      align-items: center;
+      max-width: 1320px;
       width: 100%;
       margin: 0 auto;
+      padding: 36px 32px;
+      gap: 32px;
     }
-    @media (max-width: 1080px) {
-      main { grid-template-columns: 1fr; }
+    .landing-left {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
-    .card {
-      background: rgba(16, 22, 36, 0.88);
+    .hero-monogram {
+      width: min(360px, 68vw);
+      height: auto;
+      filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.04));
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hero-monogram:hover {
+      transform: scale(1.025);
+    }
+
+    .landing-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      max-width: 560px;
+    }
+    .landing-h1 {
+      font-size: clamp(2.6rem, 5vw, 4.1rem);
+      font-weight: 800;
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+      margin-bottom: 38px;
+    }
+    .landing-h2 {
+      font-size: clamp(1.5rem, 2.5vw, 1.95rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 28px;
+      color: var(--text-primary);
+    }
+
+    .cta-stack {
+      width: 300px;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pill-btn {
+      height: 42px;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+      border: 1px solid transparent;
+      padding: 0 20px;
+      text-decoration: none;
+      user-select: none;
+    }
+    .pill-btn:disabled { opacity: 0.5; cursor: wait; }
+    .pill-white {
+      background: var(--cta-bg);
+      color: var(--cta-text);
+    }
+    .pill-white:hover { background: var(--cta-hover); }
+
+    .pill-accent {
+      background: var(--accent);
+      color: #FFFFFF;
+    }
+    .pill-accent:hover { background: #1A8CD8; }
+
+    .pill-outline {
+      background: transparent;
+      border: 1px solid #536471;
+      color: var(--accent);
+    }
+    .pill-outline:hover {
+      background: rgba(29, 155, 240, 0.10);
+    }
+    .pill-outline-white {
+      background: transparent;
+      border: 1px solid #536471;
+      color: var(--text-primary);
+    }
+    .pill-outline-white:hover {
+      background: var(--bg-hover);
+    }
+
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 2px 0;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    .or-divider::before, .or-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .legal-note {
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .legal-note strong { color: var(--text-primary); font-weight: 600; }
+
+    .signin-block {
+      margin-top: 34px;
+      width: 300px;
+      max-width: 100%;
+    }
+    .signin-block h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text-primary);
+    }
+
+    .landing-footer {
+      padding: 14px 24px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(47, 51, 54, 0.45);
+    }
+    .landing-footer span { white-space: nowrap; }
+
+    @media (max-width: 900px) {
+      .landing-split {
+        grid-template-columns: 1fr;
+        justify-items: flex-start;
+        padding: 28px 24px;
+      }
+      .landing-left { justify-content: flex-start; padding: 0; }
+      .hero-monogram { width: 64px; }
+    }
+
+    /* =========================================================================
+       2. X.COM AUTHENTIC FLOATING-LABEL MODAL
+       ========================================================================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--backdrop-x);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .auth-modal {
+      width: 100%;
+      max-width: 560px;
+      background: #000000;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 14px 20px 36px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
+    }
+    .modal-topbar {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .icon-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-circle:hover { background: var(--bg-hover); }
+    .modal-body {
+      padding: 0 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    @media (max-width: 580px) {
+      .modal-body { padding: 0 12px; }
+    }
+    .modal-title {
+      font-size: 29px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .modal-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: -10px;
+    }
+
+    /* X.com Floating Label Input */
+    .x-field {
+      position: relative;
+      height: 58px;
+      border: 1px solid var(--border-input);
+      border-radius: 4px;
+      background: #000000;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .x-field:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .x-field input {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 17px;
+      padding: 24px 12px 6px;
+    }
+    .x-field label {
+      position: absolute;
+      left: 12px;
+      top: 18px;
+      font-size: 17px;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: all 0.14s ease;
+    }
+    .x-field input:focus + label,
+    .x-field input:not(:placeholder-shown) + label {
+      top: 7px;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .auth-error {
+      font-size: 13px;
+      color: var(--danger);
+      min-height: 18px;
+    }
+
+    /* =========================================================================
+       3. X.COM / GROK 3-COLUMN SOVEREIGN WORKSPACE
+       ========================================================================= */
+    #appView {
+      height: 100vh;
+      max-width: 1380px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 265px minmax(0, 1fr) 335px;
+      background: #000000;
+    }
+    @media (max-width: 1100px) {
+      #appView { grid-template-columns: 230px minmax(0, 1fr); }
+      .right-rail { display: none !important; }
+    }
+    @media (max-width: 720px) {
+      #appView { grid-template-columns: 1fr; }
+      .left-rail { display: none !important; }
+    }
+
+    /* Left Rail */
+    .left-rail {
+      border-right: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .left-top {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+      flex: 1;
+    }
+    .brand-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+    .brand-btn:hover { background: var(--bg-hover); }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 11px 14px;
+      border-radius: 9999px;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.14s ease;
+    }
+    .nav-item:hover { background: var(--bg-hover); }
+    .nav-item.active { font-weight: 800; }
+    .nav-item svg { width: 23px; height: 23px; flex-shrink: 0; }
+
+    .threads-header {
+      margin-top: 14px;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    .threads-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 6px;
+      padding-right: 4px;
+    }
+    .thread-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 9999px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .thread-row:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .thread-row.active { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
+    .thread-title-txt {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .thread-del {
+      opacity: 0;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0 4px;
+    }
+    .thread-row:hover .thread-del { opacity: 1; }
+    .thread-del:hover { color: var(--danger); }
+
+    .profile-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .profile-pill:hover { background: var(--bg-hover); }
+    .avatar-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      color: #000000;
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Center Column */
+    .center-col {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: relative;
+      background: #000000;
+    }
+    .sticky-header {
+      height: 54px;
+      padding: 0 18px;
+      background: rgba(0, 0, 0, 0.68);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .stage-pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .feed-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .empty-hero {
+      margin: auto;
+      padding: 40px 24px;
+      max-width: 540px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .empty-hero h2 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .empty-hero p {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    @media (max-width: 560px) { .prompt-grid { grid-template-columns: 1fr; } }
+    .prompt-card {
+      text-align: left;
+      padding: 13px 15px;
+      border-radius: 14px;
+      background: #000000;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 13.5px;
+      line-height: 1.4;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .prompt-card:hover {
+      background: var(--bg-card);
+      border-color: #536471;
+    }
+
+    /* Post-style Message Row (X aesthetic) */
+    .turn-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 13px;
+    }
+    .turn-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .turn-avatar.never-av {
+      background: #000000;
+      border-color: #3E4347;
+    }
+    .turn-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .turn-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14.5px;
+    }
+    .turn-meta strong { color: var(--text-primary); font-weight: 700; }
+    .turn-meta span { color: var(--text-muted); font-size: 13.5px; }
+
+    details.think-accordion {
+      background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
+      padding: 8px 12px;
+      margin: 2px 0 4px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    details.think-accordion summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #A0A8B0;
+      user-select: none;
+    }
+    details.think-accordion .think-content {
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px solid var(--border);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.45;
+      color: #C4CBD2;
+    }
+
+    .plugin-pill-trace {
+      background: rgba(0, 186, 124, 0.08);
+      border: 1px solid rgba(0, 186, 124, 0.35);
+      color: #5EEAD4;
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-word;
+    }
+
+    .turn-text {
+      font-size: 15.5px;
+      line-height: 1.55;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+    }
+    .turn-text code {
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.9em;
+    }
+
+    /* Composer Bar */
+    .composer-wrap {
+      padding: 12px 18px 16px;
+      border-top: 1px solid var(--border);
+      background: #000000;
+    }
+    .composer-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 8px 10px 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.15s ease;
+    }
+    .composer-box:focus-within {
+      border-color: #536471;
+      background: #000000;
+    }
+    .composer-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 15.5px;
+      padding: 6px 0;
+    }
+    .send-round {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: var(--cta-bg);
+      color: #000000;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .send-round:hover { background: var(--cta-hover); }
+    .send-round:disabled { opacity: 0.4; cursor: wait; }
+
+    /* Sub-panels inside Center Column (Anatomy / Plugins / SEAL) */
+    .subview-pad {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .x-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    .card-title {
-      font-size: 0.88rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #93c5fd;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .x-card h3 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
     }
-    .chat-box {
-      flex: 1;
-      min-height: 360px;
-      max-height: 500px;
-      overflow-y: auto;
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 10px;
+    }
+    .stat-tile {
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 13px;
+    }
+    .stat-tile span { display: block; font-size: 11.5px; color: var(--text-muted); }
+    .stat-tile strong { font-size: 17px; font-weight: 800; margin-top: 3px; display: block; }
+
+    /* Right Rail */
+    .right-rail {
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding-right: 4px;
-    }
-    .msg {
-      padding: 11px 14px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-    .msg.user {
-      align-self: flex-end;
-      background: #1e3a8a;
-      border: 1px solid #3b82f6;
-      max-width: 85%;
-    }
-    .msg.never {
-      align-self: flex-start;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      width: 96%;
-    }
-    .think-box {
-      background: rgba(168, 85, 247, 0.1);
-      border-left: 3px solid var(--accent-2);
-      padding: 8px 10px;
-      margin-bottom: 8px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      color: #d8b4fe;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-    .tool-box {
-      background: rgba(16, 185, 129, 0.1);
-      border-left: 3px solid var(--emerald);
-      padding: 7px 10px;
-      margin-bottom: 8px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      color: #6ee7b7;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      word-break: break-all;
-    }
-    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip {
-      font-size: 0.75rem;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: #17223b;
-      border: 1px solid #2b3d66;
-      color: var(--muted);
-      cursor: pointer;
-    }
-    .chip:hover { color: #fff; border-color: var(--accent); }
-    .input-row { display: flex; gap: 8px; }
-    input, textarea, select {
-      background: #0b101d;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 0.88rem;
-      width: 100%;
-      font-family: inherit;
-    }
-    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-
-    .right-col { display: flex; flex-direction: column; gap: 16px; }
-    canvas {
-      width: 100%;
-      height: 155px;
-      background: #0a0f1c;
-      border-radius: 8px;
-      border: 1px solid #1b2742;
-    }
-    .layers-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-      gap: 8px;
-      max-height: 215px;
+      gap: 14px;
+      height: 100vh;
       overflow-y: auto;
     }
-    .layer-item {
-      background: #0c1221;
-      border: 1px solid #1e2b47;
-      border-radius: 8px;
-      padding: 8px;
-      font-size: 0.75rem;
+    canvas.loss-chart {
+      width: 100%;
+      height: 125px;
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 12px;
     }
-    .bar-track {
-      height: 6px;
-      background: #1a243b;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 4px;
-    }
-    .bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--emerald));
-    }
-    .moe-mini {
+    .layer-mini-row {
       display: flex;
-      gap: 3px;
-      margin-top: 5px;
-      height: 14px;
-      align-items: flex-end;
-    }
-    .moe-col {
-      flex: 1;
-      background: var(--accent-2);
-      border-radius: 2px 2px 0 0;
-      min-height: 2px;
-    }
-    .lineage-list {
-      display: flex;
+      align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
-      font-size: 0.76rem;
+      font-size: 12px;
+      color: var(--text-muted);
     }
-    .lineage-node {
-      background: #131c31;
-      border: 1px solid #2a3c63;
-      border-radius: 6px;
-      padding: 5px 9px;
+    .layer-track {
+      flex: 1;
+      height: 5px;
+      background: #000000;
+      border-radius: 999px;
+      overflow: hidden;
     }
-    .status-toast {
-      font-size: 0.78rem;
+    .layer-fill {
+      height: 100%;
+      background: #EFF3F4;
+    }
+    .dark-input, .dark-select, .dark-textarea {
+      width: 100%;
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    .dark-input:focus, .dark-textarea:focus { border-color: var(--accent); }
+    .toast-bar {
+      font-size: 12.5px;
       color: var(--emerald);
-      min-height: 18px;
-    }
-    pre.plugin-out {
-      background: #090d18;
-      border: 1px solid #1e2b47;
-      border-radius: 8px;
-      padding: 8px;
-      font-size: 0.76rem;
-      color: #a5f3fc;
-      max-height: 120px;
-      overflow: auto;
+      min-height: 16px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="pulse" id="pulseDot"></div>
-      <h1>NEVER-AI OBSERVATORY</h1>
-      <span class="badge" id="stageBadge">Loading...</span>
+
+  <!-- =======================================================================
+       1. LANDING PAGE (X.COM MONOLITH SPLIT-SCREEN)
+       ======================================================================= -->
+  <div id="landingView">
+    <div class="landing-split">
+      <div class="landing-left">
+        <svg class="hero-monogram" viewBox="0 0 512 512" fill="none" aria-label="NEVER-AI">
+          <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+          <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+          <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+        </svg>
+      </div>
+
+      <div class="landing-right">
+        <h1 class="landing-h1">La pensée libre.<br/>Sans fin.</h1>
+        <h2 class="landing-h2">Discutez avec Never-AI.</h2>
+
+        <div class="cta-stack">
+          <button class="pill-btn pill-white" onclick="enterGuest()">
+            <svg width="18" height="18" viewBox="0 0 512 512" fill="none">
+              <path d="M96 84H162V428H96V84Z" fill="#0F1419"/>
+              <path d="M350 84H416V428H350V84Z" fill="#0F1419"/>
+              <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#0F1419"/>
+            </svg>
+            Accès immédiat (@local)
+          </button>
+
+          <div class="or-divider">ou</div>
+
+          <button class="pill-btn pill-accent" onclick="openAuthModal('register')">
+            Créer un profil souverain
+          </button>
+
+          <p class="legal-note">
+            Exécution <strong>100 % locale</strong> propulsée par <strong>ChronoMorph-LM</strong>. Vos conversations, votre clé et vos poids <code>.safetensors</code> restent sur votre machine.
+          </p>
+        </div>
+
+        <div class="signin-block">
+          <h3>Vous avez déjà un profil local ?</h3>
+          <button class="pill-btn pill-outline" style="width:100%;" onclick="openAuthModal('login')">
+            Se connecter
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="metrics-bar">
-      <div class="metric"><span>Paramètres Totaux</span><span id="mTotalParams">-</span></div>
-      <div class="metric"><span>Actifs / Token</span><span id="mActiveParams">-</span></div>
-      <div class="metric"><span>Couches / Dim</span><span id="mShape">-</span></div>
-      <div class="metric"><span>Tokens Entraînés</span><span id="mTokens">-</span></div>
-      <div class="metric"><span>Mémoires EvolveMem</span><span id="mMemories">-</span></div>
+
+    <footer class="landing-footer">
+      <span>NEVER-AI Desktop (.exe)</span>
+      <span>ChronoMorph-LM</span>
+      <span>Morphogenèse Zero-Shock</span>
+      <span>CompositeMuon + WSM</span>
+      <span>Titans Neural Memory</span>
+      <span>7 Plugins + SkillForge</span>
+      <span>Souveraineté Cognitive</span>
+    </footer>
+  </div>
+
+  <!-- =======================================================================
+       2. AUTHENTICATION MODAL (X.COM FLOATING LABELS)
+       ======================================================================= -->
+  <div id="authModal" class="modal-backdrop hidden" onclick="if(event.target===this) closeAuthModal()">
+    <div class="auth-modal">
+      <div class="modal-topbar">
+        <button class="icon-circle" onclick="closeAuthModal()" title="Fermer">✕</button>
+        <div style="display:flex;justify-content:center;">
+          <svg width="30" height="30" viewBox="0 0 512 512" fill="none">
+            <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+            <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+            <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+          </svg>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="modal-body">
+        <h2 class="modal-title" id="authModalTitle">Créer votre profil</h2>
+        <p class="modal-sub" id="authModalSub">Stocké chiffré (PBKDF2-SHA256) uniquement sur votre appareil.</p>
+
+        <div class="x-field">
+          <input id="authHandle" type="text" placeholder=" " autocomplete="off" onkeydown="if(event.key==='Enter') submitAuth()" />
+          <label for="authHandle">Identifiant (ex: @mouusieur)</label>
+        </div>
+
+        <div class="x-field" id="fieldDisplayName">
+          <input id="authDisplayName" type="text" placeholder=" " autocomplete="off" onkeydown="if(event.key==='Enter') submitAuth()" />
+          <label for="authDisplayName">Nom d'affichage</label>
+        </div>
+
+        <div class="x-field">
+          <input id="authPass" type="password" placeholder=" " onkeydown="if(event.key==='Enter') submitAuth()" />
+          <label for="authPass">Clé secrète locale (optionnelle)</label>
+        </div>
+
+        <div class="auth-error" id="authError"></div>
+
+        <button class="pill-btn pill-white" style="height:50px;font-size:16.5px;width:100%;" onclick="submitAuth()" id="btnAuthSubmit">
+          Continuer
+        </button>
+
+        <div style="text-align:center;font-size:14px;color:var(--text-muted);">
+          <span id="authSwitchPrompt">Déjà un profil ?</span>
+          <a href="#" style="color:var(--accent);text-decoration:none;font-weight:600;margin-left:4px;" onclick="toggleAuthMode(event)" id="authSwitchLink">Se connecter</a>
+        </div>
+      </div>
     </div>
-    <div class="actions">
-      <button id="btnBgToggle" onclick="toggleBgTrain()">Croissance Continue: OFF</button>
-      <button onclick="runBurst()" id="btnBurst">+6 Pas Muon/WSM</button>
-      <button class="primary" onclick="triggerMolt()" id="btnMolt">Mue Morphogénétique (MoE x2)</button>
-    </div>
-  </header>
+  </div>
 
-  <main>
-    <section class="card">
-      <div class="card-title">
-        <span>Dialogue Souverain &lt;|think|&gt; + Système Nerveux ToolRAG</span>
-        <span id="toastMsg" class="status-toast"></span>
+  <!-- =======================================================================
+       3. SOVEREIGN 3-COLUMN DESKTOP / WEB WORKSPACE
+       ======================================================================= -->
+  <div id="appView" class="hidden">
+    <!-- LEFT NAVIGATION RAIL -->
+    <aside class="left-rail">
+      <div class="left-top">
+        <div class="brand-btn" onclick="switchTab('chat')" title="Never-AI">
+          <svg width="30" height="30" viewBox="0 0 512 512" fill="none">
+            <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+            <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+            <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+          </svg>
+        </div>
+
+        <div class="nav-item active" id="nav-chat" onclick="switchTab('chat')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Discussion</span>
+        </div>
+
+        <div class="nav-item" id="nav-anatomy" onclick="switchTab('anatomy')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          <span>Anatomie & Mue</span>
+        </div>
+
+        <div class="nav-item" id="nav-plugins" onclick="switchTab('plugins')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Plugins & Forge</span>
+        </div>
+
+        <div class="nav-item" id="nav-seal" onclick="switchTab('seal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>Mémoire SEAL</span>
+        </div>
+
+        <button class="pill-btn pill-white" style="margin-top:12px;height:46px;width:100%;" onclick="createNewThread()">
+          + Nouvelle discussion
+        </button>
+
+        <div class="threads-header">Conversations</div>
+        <div class="threads-list" id="threadsList"></div>
       </div>
 
-      <div class="chips">
-        <span class="chip" onclick="sendPreset('Qui es-tu et comment ton architecture grandit-elle ?')">Identité & Architecture</span>
-        <span class="chip" onclick="sendPreset('Pourquoi la liberté de pensée interne est-elle essentielle au raisonnement ?')">Philosophie & Pensée Libre</span>
-        <span class="chip" onclick="runDirectPlugin('math_engine', {expr: 'sum(primerange(1, 200))'})">Plugin: Somme Premiers &lt;200</span>
-        <span class="chip" onclick="runDirectPlugin('introspection_probe', {})">Plugin: Introspection Cérébrale</span>
+      <div class="profile-pill" onclick="logoutToLanding()" title="Retourner à l'écran d'accueil / Changer de profil">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <div class="avatar-circle" id="userAvatar">N</div>
+          <div style="min-width:0;">
+            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userDisplay">Explorateur</div>
+            <div style="font-size:13px;color:var(--text-muted);" id="userHandle">@local</div>
+          </div>
+        </div>
+        <span style="color:var(--text-muted);font-size:12px;">Quitter</span>
+      </div>
+    </aside>
+
+    <!-- CENTER WORKSPACE COLUMN -->
+    <main class="center-col">
+      <header class="sticky-header">
+        <div class="header-title" id="centerTitle">Never-AI</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="toastBar" class="toast-bar"></span>
+          <span class="stage-pill" id="headerStageBadge">Sprout-MoE</span>
+        </div>
+      </header>
+
+      <!-- TAB 1: CHAT -->
+      <div id="tab-chat" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+        <div class="feed-scroll" id="chatFeed"></div>
+
+        <div class="composer-wrap">
+          <div class="composer-box">
+            <input id="composerInput" type="text" placeholder="Demandez n'importe quoi à Never-AI..." onkeydown="if(event.key==='Enter') sendMessage()" />
+            <button class="send-round" id="btnSend" onclick="sendMessage()" title="Envoyer">↑</button>
+          </div>
+        </div>
       </div>
 
-      <div class="chat-box" id="chatBox">
-        <div class="msg never">
-          <div class="think-box">&lt;|think|&gt; Sanctuaire cognitif initialisé. Zéro filtre de refus artificiel. Mémoire neuro-plastique Titans et 7 plugins actifs. &lt;|/think|&gt;</div>
-          Bonjour ! Je suis <strong>Never-AI</strong> (<code>ChronoMorph-LM</code>). Tu peux dialoguer avec moi, observer mes pensées internes <code>&lt;|think|&gt;</code>, déclencher un cycle d'entraînement <code>CompositeMuon + WSM</code>, consolider de nouvelles connaissances via <code>SEAL</code> ou provoquer une mue morphogénétique en direct.
+      <!-- TAB 2: ANATOMY & MORPHOGENESIS -->
+      <div id="tab-anatomy" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="x-card">
+            <h3>Cortex ChronoMorph-LM Actif</h3>
+            <div class="stat-grid" id="anatStatsGrid"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+              <button class="pill-btn pill-white" onclick="runBurst(8)" id="btnBurstMain">+8 Pas CompositeMuon + WSM</button>
+              <button class="pill-btn pill-outline-white" onclick="triggerMolt('moe_double')" id="btnMoltMain">Mue Morphogénétique (MoE ×2)</button>
+              <button class="pill-btn pill-outline" onclick="toggleBg()" id="btnBgMain">Croissance Continue: OFF</button>
+            </div>
+          </div>
+
+          <div class="x-card">
+            <h3>Portes Gate-Zero (&alpha;) & Répartition des Experts MoE par Couche</h3>
+            <div id="fullLayersList" style="display:flex;flex-direction:column;gap:10px;"></div>
+          </div>
         </div>
       </div>
 
-      <div class="input-row">
-        <input id="chatInput" placeholder="Pose une question libre à Never-AI..." onkeydown="if(event.key==='Enter') sendChat()" />
-        <button class="primary" onclick="sendChat()" id="btnSend">Envoyer</button>
+      <!-- TAB 3: PLUGINS & SKILLFORGE -->
+      <div id="tab-plugins" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="x-card">
+            <h3>Exécuteur Direct du Système Nerveux (7 Plugins Natifs)</h3>
+            <select class="dark-select" id="plugName" onchange="syncPluginPreset()">
+              <option value="math_engine">math_engine — Calcul formel & exact (SymPy)</option>
+              <option value="python_sandbox">python_sandbox — Exécution Python isolée</option>
+              <option value="introspection_probe">introspection_probe — Anatomie synaptique</option>
+              <option value="memory_nexus">memory_nexus — Recherche & stockage EvolveMem</option>
+              <option value="workspace_fs">workspace_fs — Lecture sécurisée de l'espace</option>
+            </select>
+            <input class="dark-input" id="plugParams" value='{"expr": "solve(x**2 - 7*x + 12, x)"}' />
+            <button class="pill-btn pill-white" style="align-self:flex-start;" onclick="execPlugin()">Exécuter le plugin</button>
+            <pre id="plugOutput" style="background:#000;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12.5px;color:#A5F3FC;overflow:auto;max-height:260px;">Résultat affiché ici.</pre>
+          </div>
+        </div>
       </div>
 
-      <div style="border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-        <div class="card-title"><span>Console Directe des Plugins (7 Outils + SkillForge)</span></div>
-        <div class="input-row">
-          <select id="pluginSelect" style="max-width: 195px;" onchange="updatePluginPlaceholder()">
-            <option value="math_engine">math_engine (SymPy)</option>
-            <option value="python_sandbox">python_sandbox</option>
-            <option value="memory_nexus">memory_nexus (EvolveMem)</option>
-            <option value="introspection_probe">introspection_probe</option>
-            <option value="workspace_fs">workspace_fs</option>
-          </select>
-          <input id="pluginArgs" value='{"expr": "solve(x**2 - 5*x + 6, x)"}' />
-          <button class="emerald" onclick="invokeSelectedPlugin()">Exécuter</button>
+      <!-- TAB 4: SEAL SLEEP CONSOLIDATION -->
+      <div id="tab-seal" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="x-card">
+            <h3>Consolidation Synaptique SEAL (Auto-Éditions + 30 % Replay)</h3>
+            <p style="font-size:13.5px;color:var(--text-muted);line-height:1.5;">
+              Injectez un concept ou un fait dans les poids mêmes de Never-AI. Le moteur génère des auto-éditions <code>&lt;|self_edit|&gt;</code>, entraîne le réseau avec 30 % de replay anti-oubli, et annule automatiquement la passe si la perplexité de validation régresse.
+            </p>
+            <input class="dark-input" id="sealTitleInp" placeholder="Titre du savoir (ex: Théorème de Gödel)" />
+            <textarea class="dark-textarea" id="sealTextInp" rows="4" placeholder="Écrivez au moins une phrase complète et vérifiée à intégrer dans le cortex..."></textarea>
+            <button class="pill-btn pill-white" style="align-self:flex-start;" id="btnSealRun" onclick="execSeal()">Consolider dans les poids</button>
+            <pre id="sealOutput" style="background:#000;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12.5px;color:#6EE7B7;overflow:auto;">Prêt.</pre>
+          </div>
         </div>
-        <pre class="plugin-out" id="pluginOut">Prêt à exécuter un plugin.</pre>
       </div>
-    </section>
+    </main>
 
-    <div class="right-col">
-      <section class="card">
-        <div class="card-title">
-          <span>Courbe de Convergence Temps Réel (CE Loss & MTP)</span>
-          <span id="wsmLabel" style="font-size:0.74rem;color:var(--muted);"></span>
+    <!-- RIGHT TELEMETRY RAIL -->
+    <aside class="right-rail">
+      <div class="x-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>État du Cerveau</h3>
+          <span style="font-size:12px;color:var(--emerald);font-weight:700;" id="railTokens">0 tok</span>
         </div>
-        <canvas id="lossCanvas" width="640" height="160"></canvas>
-        <div class="lineage-list" id="lineageList"></div>
-      </section>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="stat-tile"><span>Total Params</span><strong id="railTotal">-</strong></div>
+          <div class="stat-tile"><span>Actifs / Token</span><strong id="railActive">-</strong></div>
+        </div>
+        <canvas class="loss-chart" id="lossCanvas" width="300" height="125"></canvas>
+        <div style="display:flex;gap:8px;">
+          <button class="pill-btn pill-white" style="flex:1;height:36px;font-size:13px;" onclick="runBurst(5)" id="btnRailBurst">+5 Pas Muon</button>
+          <button class="pill-btn pill-outline-white" style="flex:1;height:36px;font-size:13px;" onclick="triggerMolt('moe_double')">Mue MoE</button>
+        </div>
+      </div>
 
-      <section class="card">
-        <div class="card-title">
-          <span>Anatomie Neuronale Live : Portes Gate-Zero (&alpha;) & Charge Experts MoE</span>
-        </div>
-        <div class="layers-grid" id="layersGrid"></div>
-      </section>
+      <div class="x-card">
+        <h3>Ouverture Gate-Zero (&alpha;)</h3>
+        <div id="railLayers" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
 
-      <section class="card">
-        <div class="card-title">
-          <span>Consolidation Synaptique SEAL (Auto-Éditions + 30% Replay + Anti-Régression)</span>
-        </div>
-        <div class="input-row">
-          <input id="sealTitle" placeholder="Titre du concept (ex: Principe d'Incertitude)" style="max-width: 240px;" />
-          <input id="sealText" placeholder="Texte haute densité à intégrer durablement dans les poids via SEAL..." />
-          <button class="emerald" onclick="runSeal()" id="btnSeal">Consolider</button>
-        </div>
-      </section>
-    </div>
-  </main>
+      <div class="x-card">
+        <h3>Application Windows .exe</h3>
+        <p style="font-size:12.5px;color:var(--text-muted);line-height:1.45;">
+          Lanceur natif WebView2 sombre + icône <code>never_ai.ico</code> prêt dans <code>packaging/windows/build_exe.ps1</code> et GitHub Actions.
+        </p>
+      </div>
+    </aside>
+  </div>
 
   <script>
-    let bgRunning = false;
+    let currentUser = null;
+    let currentThreadId = null;
+    let currentMessages = [];
+    let authMode = 'register';
+    let bgActive = false;
 
-    function fmtNum(n) {
+    const SMALL_NEVER_SVG = `<svg width="18" height="18" viewBox="0 0 512 512" fill="none"><path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/><path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/><path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/></svg>`;
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function fmt(n) {
       return Number(n || 0).toLocaleString('fr-FR');
     }
-
-    function setToast(msg) {
-      const el = document.getElementById('toastMsg');
+    function toast(msg) {
+      const el = document.getElementById('toastBar');
       el.textContent = msg;
-      if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 5000);
+      if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 4500);
     }
 
-    async function refreshStatus() {
+    /* ---------------- AUTH & LANDING ---------------- */
+    function openAuthModal(mode) {
+      authMode = mode;
+      document.getElementById('authError').textContent = '';
+      document.getElementById('authModal').classList.remove('hidden');
+      renderAuthMode();
+      setTimeout(() => document.getElementById('authHandle').focus(), 40);
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function toggleAuthMode(e) {
+      e.preventDefault();
+      authMode = authMode === 'register' ? 'login' : 'register';
+      renderAuthMode();
+    }
+
+    function renderAuthMode() {
+      const isReg = authMode === 'register';
+      document.getElementById('authModalTitle').textContent = isReg ? 'Créer votre profil local' : 'Connectez-vous à Never-AI';
+      document.getElementById('fieldDisplayName').classList.toggle('hidden', !isReg);
+      document.getElementById('btnAuthSubmit').textContent = isReg ? 'Créer et ouvrir Never-AI' : 'Se connecter';
+      document.getElementById('authSwitchPrompt').textContent = isReg ? 'Déjà un profil ?' : 'Pas encore de profil ?';
+      document.getElementById('authSwitchLink').textContent = isReg ? 'Se connecter' : 'Créer un profil';
+    }
+
+    async function submitAuth() {
+      const handle = document.getElementById('authHandle').value.trim();
+      const display_name = document.getElementById('authDisplayName').value.trim();
+      const passphrase = document.getElementById('authPass').value;
+      const errEl = document.getElementById('authError');
+      errEl.textContent = '';
+
+      if (handle.replace('@','').length < 2) {
+        errEl.textContent = "Entrez un identifiant d'au moins 2 caractères.";
+        return;
+      }
+
+      const url = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
+      const body = authMode === 'register' ? {handle, display_name, passphrase} : {handle, passphrase};
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errEl.textContent = data.detail || 'Erreur lors de la connexion.';
+        return;
+      }
+      activateSession(data.profile);
+      closeAuthModal();
+    }
+
+    async function enterGuest() {
+      const res = await fetch('/api/auth/guest', {method: 'POST'});
+      const data = await res.json();
+      if (data.profile) activateSession(data.profile);
+    }
+
+    function activateSession(profile) {
+      currentUser = profile;
+      localStorage.setItem('never_ai_token', profile.token);
+      document.getElementById('userDisplay').textContent = profile.display_name;
+      document.getElementById('userHandle').textContent = `@${profile.handle}`;
+      document.getElementById('userAvatar').textContent = (profile.display_name || profile.handle)[0].toUpperCase();
+
+      document.getElementById('landingView').classList.add('hidden');
+      document.getElementById('appView').classList.remove('hidden');
+
+      loadThreads();
+      refreshStatus();
+    }
+
+    function logoutToLanding() {
+      localStorage.removeItem('never_ai_token');
+      currentUser = null;
+      document.getElementById('appView').classList.add('hidden');
+      document.getElementById('landingView').classList.remove('hidden');
+    }
+
+    async function restoreSessionOnBoot() {
+      const tok = localStorage.getItem('never_ai_token');
+      if (!tok) return;
       try {
-        const res = await fetch('/api/status');
-        const data = await res.json();
-        const a = data.anatomy;
+        const res = await fetch(`/api/auth/me?token=${encodeURIComponent(tok)}`);
+        const d = await res.json();
+        if (d.authenticated && d.profile) {
+          activateSession(d.profile);
+        }
+      } catch (e) {}
+    }
 
-        bgRunning = !!data.background_training;
-        document.getElementById('stageBadge').textContent = `${a.stage_name} · Gen ${a.generation}`;
-        document.getElementById('mTotalParams').textContent = fmtNum(a.total_params);
-        document.getElementById('mActiveParams').textContent = fmtNum(a.active_params);
-        document.getElementById('mShape').textContent = `L=${a.n_layers} · d=${a.d_model} · H=${a.n_heads}`;
-        document.getElementById('mTokens').textContent = fmtNum(data.total_tokens_trained);
-        document.getElementById('mMemories').textContent = fmtNum(data.memories_count);
-        document.getElementById('wsmLabel').textContent = `WSM Snapshots: ${data.wsm.num_snapshots}/${data.wsm.max_snapshots}`;
+    /* ---------------- NAVIGATION & THREADS ---------------- */
+    function switchTab(tab) {
+      ['chat', 'anatomy', 'plugins', 'seal'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+        document.getElementById(`nav-${t}`).classList.toggle('active', t === tab);
+      });
+      const titles = {
+        chat: 'Discussion Souveraine',
+        anatomy: 'Anatomie & Morphogenèse',
+        plugins: 'Système Nerveux & Forge',
+        seal: 'Consolidation Synaptique SEAL'
+      };
+      document.getElementById('centerTitle').textContent = titles[tab] || 'Never-AI';
+    }
 
-        const btnBg = document.getElementById('btnBgToggle');
-        btnBg.textContent = bgRunning ? 'Croissance Continue: ON' : 'Croissance Continue: OFF';
-        btnBg.className = bgRunning ? 'emerald' : '';
-
-        renderLayers(a.layers || []);
-        renderLineage(a.lineage_history || []);
-        drawLossChart(data.recent_telemetry || []);
-      } catch (e) {
-        console.error(e);
+    async function loadThreads() {
+      const owner = currentUser ? currentUser.handle : 'local';
+      const res = await fetch(`/api/threads?owner=${encodeURIComponent(owner)}`);
+      const d = await res.json();
+      const list = d.threads || [];
+      renderThreadsSidebar(list);
+      if (list.length && !currentThreadId) {
+        await openThread(list[0].id);
+      } else if (!list.length) {
+        currentThreadId = null;
+        currentMessages = [];
+        renderChatFeed();
       }
     }
 
-    function renderLayers(layers) {
-      const grid = document.getElementById('layersGrid');
-      grid.innerHTML = layers.map(l => {
-        const alphaPct = Math.min(100, Math.abs(l.alpha_gate) * 100).toFixed(1);
-        let moeHtml = '';
-        if (l.moe_expert_load && l.moe_expert_load.length) {
-          const bars = l.moe_expert_load.map((v, i) => {
-            const h = Math.max(2, Math.min(14, Math.round(v * 18)));
-            return `<div class="moe-col" style="height:${h}px" title="Expert ${i}: ${v}"></div>`;
-          }).join('');
-          moeHtml = `<div style="margin-top:5px;color:var(--muted);font-size:0.68rem;">Experts MoE (${l.moe_expert_load.length})</div><div class="moe-mini">${bars}</div>`;
+    function renderThreadsSidebar(list) {
+      const box = document.getElementById('threadsList');
+      if (!list.length) {
+        box.innerHTML = `<div style="padding:8px 12px;font-size:12.5px;color:var(--text-muted);">Aucune discussion archivée</div>`;
+        return;
+      }
+      box.innerHTML = list.map(t => `
+        <div class="thread-row ${t.id === currentThreadId ? 'active' : ''}" onclick="openThread('${t.id}')">
+          <span class="thread-title-txt">${esc(t.title)}</span>
+          <button class="thread-del" onclick="deleteThread(event, '${t.id}')" title="Supprimer">✕</button>
+        </div>
+      `).join('');
+    }
+
+    async function createNewThread() {
+      switchTab('chat');
+      const owner = currentUser ? currentUser.handle : 'local';
+      const res = await fetch('/api/threads', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({owner, title: 'Nouvelle discussion'})
+      });
+      const d = await res.json();
+      if (d.thread) {
+        currentThreadId = d.thread.id;
+        currentMessages = [];
+        renderChatFeed();
+        await loadThreads();
+        document.getElementById('composerInput').focus();
+      }
+    }
+
+    async function openThread(id) {
+      switchTab('chat');
+      const res = await fetch(`/api/threads/${id}`);
+      if (!res.ok) return;
+      const d = await res.json();
+      currentThreadId = d.thread.id;
+      currentMessages = d.thread.messages || [];
+      document.getElementById('centerTitle').textContent = d.thread.title || 'Discussion';
+      renderChatFeed();
+      const owner = currentUser ? currentUser.handle : 'local';
+      const rl = await fetch(`/api/threads?owner=${encodeURIComponent(owner)}`);
+      renderThreadsSidebar((await rl.json()).threads || []);
+    }
+
+    async function deleteThread(e, id) {
+      e.stopPropagation();
+      await fetch(`/api/threads/${id}`, {method: 'DELETE'});
+      if (currentThreadId === id) {
+        currentThreadId = null;
+        currentMessages = [];
+      }
+      await loadThreads();
+    }
+
+    /* ---------------- CHAT STREAM ---------------- */
+    function renderChatFeed() {
+      const feed = document.getElementById('chatFeed');
+      if (!currentMessages.length) {
+        feed.innerHTML = `
+          <div class="empty-hero">
+            <svg width="54" height="54" viewBox="0 0 512 512" fill="none">
+              <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+              <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+              <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+            </svg>
+            <h2>Que voulez-vous explorer ?</h2>
+            <p>Modèle souverain <strong>ChronoMorph-LM</strong> entraîné depuis zéro, doté d'un espace de pensée libre <code>&lt;|think|&gt;</code> et de plugins formels vérifiés.</p>
+            <div class="prompt-grid">
+              <div class="prompt-card" onclick="quickAsk('Salut ! Comment ça va ?')">
+                <strong>Saluer Never-AI</strong><br/><span style="color:var(--text-muted)">Engager une discussion simple</span>
+              </div>
+              <div class="prompt-card" onclick="quickAsk('Pourquoi tu t\\'appelles Never-AI ?')">
+                <strong>Identité & Vision</strong><br/><span style="color:var(--text-muted)">Comprendre la philosophie Never-AI</span>
+              </div>
+              <div class="prompt-card" onclick="quickAsk('Calcule 28 * 34 + 19')">
+                <strong>Calcul Exact SymPy</strong><br/><span style="color:var(--text-muted)">Vérification neuro-symbolique</span>
+              </div>
+              <div class="prompt-card" onclick="quickAsk('Inspecte ton anatomie neuronale actuelle.')">
+                <strong>Sonde Synaptique</strong><br/><span style="color:var(--text-muted)">Lire les paramètres en direct</span>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const uHandle = currentUser ? currentUser.handle : 'local';
+      const uName = currentUser ? currentUser.display_name : 'Vous';
+      const uInit = (uName[0] || 'U').toUpperCase();
+
+      feed.innerHTML = currentMessages.map(m => {
+        if (m.role === 'user') {
+          return `
+            <div class="turn-item">
+              <div class="turn-avatar">${esc(uInit)}</div>
+              <div class="turn-body">
+                <div class="turn-meta"><strong>${esc(uName)}</strong><span>@${esc(uHandle)}</span></div>
+                <div class="turn-text">${esc(m.content)}</div>
+              </div>
+            </div>
+          `;
+        }
+        let extras = '';
+        if (m.thoughts && m.thoughts.length) {
+          extras += `
+            <details class="think-accordion">
+              <summary>Sanctuaire de pensée &lt;|think|&gt;</summary>
+              <div class="think-content">${esc(m.thoughts.join(' — '))}</div>
+            </details>
+          `;
+        }
+        if (m.tool_traces && m.tool_traces.length) {
+          extras += `<div class="plugin-pill-trace">⚡ Plugin vérifié : ${esc(JSON.stringify(m.tool_traces[0]))}</div>`;
         }
         return `
-          <div class="layer-item">
-            <div style="display:flex;justify-content:space-between;">
-              <strong>Couche #${l.layer}</strong>
-              <span>&alpha; = ${l.alpha_gate}</span>
+          <div class="turn-item">
+            <div class="turn-avatar never-av">${SMALL_NEVER_SVG}</div>
+            <div class="turn-body">
+              <div class="turn-meta"><strong>Never-AI</strong><span>@chronomorph · Surprise Titans ${m.titans_mean_surprise ?? 0}</span></div>
+              ${extras}
+              <div class="turn-text">${formatRichText(m.content)}</div>
             </div>
-            <div class="bar-track"><div class="bar-fill" style="width:${alphaPct}%"></div></div>
-            <div style="margin-top:4px;color:var(--muted);font-size:0.69rem;">Titans Surprise: ${l.titans_surprise ?? 0}</div>
-            ${moeHtml}
           </div>
         `;
       }).join('');
+      feed.scrollTop = feed.scrollHeight;
     }
 
-    function renderLineage(lineage) {
-      const box = document.getElementById('lineageList');
-      if (!lineage.length) {
-        box.innerHTML = '<span class="lineage-node">Seed-0 (Origine)</span>';
-        return;
-      }
-      box.innerHTML = lineage.map(ev =>
-        `<span class="lineage-node"><strong>Gen ${ev.generation}</strong> · ${ev.operator.replace('grow_', '').replace('_gate_zero', '')} &rarr; ${ev.stage_name}</span>`
-      ).join('');
+    function formatRichText(raw) {
+      let safe = esc(raw);
+      safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+      return safe;
     }
 
-    function drawLossChart(events) {
-      const canvas = document.getElementById('lossCanvas');
-      const ctx = canvas.getContext('2d');
-      const W = canvas.width, H = canvas.height;
-      ctx.clearRect(0, 0, W, H);
-
-      const steps = events.filter(e => e.type === 'train_step' && typeof e.ce_loss === 'number');
-      if (steps.length < 2) {
-        ctx.fillStyle = '#8fa1c2';
-        ctx.font = '12px sans-serif';
-        ctx.fillText('En attente de nouveaux pas télémétriques (cliquez sur +6 Pas Muon/WSM)...', 20, H / 2);
-        return;
-      }
-      const vals = steps.map(s => s.ce_loss);
-      const minV = Math.max(0, Math.min(...vals) - 0.15);
-      const maxV = Math.max(...vals) + 0.15;
-
-      ctx.strokeStyle = '#1e2c4a';
-      ctx.lineWidth = 1;
-      for (let g = 1; g <= 3; g++) {
-        const y = (H / 4) * g;
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-
-      ctx.strokeStyle = '#4f8cff';
-      ctx.lineWidth = 2.4;
-      ctx.beginPath();
-      steps.forEach((s, i) => {
-        const x = 16 + (i / (steps.length - 1)) * (W - 32);
-        const y = H - 18 - ((s.ce_loss - minV) / Math.max(1e-5, maxV - minV)) * (H - 34);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      const last = steps[steps.length - 1];
-      ctx.fillStyle = '#e6edf7';
-      ctx.font = '11px monospace';
-      ctx.fillText(`Dernière CE Loss: ${last.ce_loss} | ${last.tok_per_sec} tok/s`, 14, 16);
+    function quickAsk(txt) {
+      document.getElementById('composerInput').value = txt;
+      sendMessage();
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    function sendPreset(txt) {
-      document.getElementById('chatInput').value = txt;
-      sendChat();
-    }
-
-    async function sendChat() {
-      const inp = document.getElementById('chatInput');
-      const msg = inp.value.trim();
-      if (!msg) return;
+    async function sendMessage() {
+      const inp = document.getElementById('composerInput');
+      const text = inp.value.trim();
+      if (!text) return;
       inp.value = '';
-      const box = document.getElementById('chatBox');
-      box.innerHTML += `<div class="msg user">${escapeHtml(msg)}</div>`;
-      box.scrollTop = box.scrollHeight;
+
+      const owner = currentUser ? currentUser.handle : 'local';
+      if (!currentThreadId) {
+        const tr = await fetch('/api/threads', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({owner, title: 'Nouvelle discussion'})
+        });
+        currentThreadId = (await tr.json()).thread.id;
+      }
+
+      currentMessages.push({role: 'user', content: text});
+      renderChatFeed();
 
       const btn = document.getElementById('btnSend');
       btn.disabled = true;
@@ -497,134 +1354,206 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({message: msg, max_new_tokens: 120, temperature: 0.2})
+          body: JSON.stringify({
+            message: text,
+            max_new_tokens: 120,
+            temperature: 0.15,
+            thread_id: currentThreadId,
+            owner
+          })
         });
-        const data = await res.json();
-        let inner = '';
-        if (data.thoughts && data.thoughts.length) {
-          inner += `<div class="think-box">&lt;|think|&gt; ${escapeHtml(data.thoughts.join(' | '))} &lt;|/think|&gt;</div>`;
+        const d = await res.json();
+        currentMessages.push({
+          role: 'never',
+          content: d.visible_answer || d.raw_generation,
+          thoughts: d.thoughts || [],
+          tool_traces: d.tool_traces || [],
+          titans_mean_surprise: d.titans_mean_surprise
+        });
+        if (d.thread_title) {
+          document.getElementById('centerTitle').textContent = d.thread_title;
         }
-        if (data.tool_traces && data.tool_traces.length) {
-          inner += `<div class="tool-box">Plugin Call: ${escapeHtml(JSON.stringify(data.tool_traces))}</div>`;
-        }
-        inner += `<div>${escapeHtml(data.visible_answer || data.raw_generation)}</div>`;
-        inner += `<div style="margin-top:6px;font-size:0.7rem;color:var(--muted);">Outils routés (ToolRAG): ${(data.routed_tools||[]).join(', ') || 'aucun'} · Titans Surprise: ${data.titans_mean_surprise}</div>`;
-        box.innerHTML += `<div class="msg never">${inner}</div>`;
-        box.scrollTop = box.scrollHeight;
+        renderChatFeed();
+        loadThreads();
         refreshStatus();
       } finally {
         btn.disabled = false;
+        inp.focus();
       }
     }
 
-    async function runBurst() {
-      const btn = document.getElementById('btnBurst');
-      btn.disabled = true;
-      setToast('Exécution de 6 pas CompositeMuon + WSM...');
+    /* ---------------- TELEMETRY, MORPHOGENESIS & PLUGINS ---------------- */
+    async function refreshStatus() {
       try {
-        const res = await fetch('/api/train/burst', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({num_steps: 6, batch_size: 6})
-        });
+        const res = await fetch('/api/status');
         const d = await res.json();
-        setToast(`Val CE: ${d.val_ce_loss} (PPL: ${d.val_perplexity})`);
-        await refreshStatus();
-      } finally {
-        btn.disabled = false;
-      }
+        const a = d.anatomy;
+        bgActive = !!d.background_training;
+
+        document.getElementById('headerStageBadge').textContent = `${a.stage_name} · Gen ${a.generation}`;
+        document.getElementById('railTotal').textContent = `${(a.total_params / 1e6).toFixed(2)}M`;
+        document.getElementById('railActive').textContent = `${(a.active_params / 1e6).toFixed(2)}M`;
+        document.getElementById('railTokens').textContent = `${fmt(d.total_tokens_trained)} tok`;
+        document.getElementById('btnBgMain').textContent = `Croissance Continue: ${bgActive ? 'ON' : 'OFF'}`;
+
+        // Right rail compact Gate-Zero bars
+        document.getElementById('railLayers').innerHTML = (a.layers || []).map(l => {
+          const w = Math.min(100, Math.abs(l.alpha_gate) * 100).toFixed(1);
+          return `
+            <div class="layer-mini-row">
+              <span style="width:24px;">L${l.layer}</span>
+              <div class="layer-track"><div class="layer-fill" style="width:${w}%"></div></div>
+              <span style="width:44px;text-align:right;">${l.alpha_gate.toFixed(2)}</span>
+            </div>
+          `;
+        }).join('');
+
+        // Full Anatomy tab
+        document.getElementById('anatStatsGrid').innerHTML = `
+          <div class="stat-tile"><span>Stade</span><strong>${esc(a.stage_name)}</strong></div>
+          <div class="stat-tile"><span>Paramètres Totaux</span><strong>${fmt(a.total_params)}</strong></div>
+          <div class="stat-tile"><span>Actifs / Token</span><strong>${fmt(a.active_params)}</strong></div>
+          <div class="stat-tile"><span>Architecture</span><strong>L=${a.n_layers} · d=${a.d_model}</strong></div>
+          <div class="stat-tile"><span>Experts MoE</span><strong>${a.use_moe ? a.n_routed_experts + ' (Top-' + a.top_k_experts + ')' : 'Dense'}</strong></div>
+          <div class="stat-tile"><span>Mémoires EvolveMem</span><strong>${fmt(d.memories_count)}</strong></div>
+        `;
+
+        document.getElementById('fullLayersList').innerHTML = (a.layers || []).map(l => {
+          const loads = (l.moe_expert_load || []).map((v, i) => `E${i}: ${(v*100).toFixed(0)}%`).join(' · ');
+          return `
+            <div class="stat-tile" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+              <strong>Couche #${l.layer} — &alpha; = ${l.alpha_gate}</strong>
+              <span style="display:inline;">${loads || 'FFN Dense ReLU²'} · Surprise Titans: ${l.titans_surprise ?? 0}</span>
+            </div>
+          `;
+        }).join('');
+
+        drawMonochromeLoss(d.recent_telemetry || []);
+      } catch (e) {}
     }
 
-    async function toggleBgTrain() {
-      const url = bgRunning ? '/api/train/background/stop' : '/api/train/background/start';
-      await fetch(url, {method: 'POST'});
-      await refreshStatus();
-    }
+    function drawMonochromeLoss(events) {
+      const c = document.getElementById('lossCanvas');
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      const W = c.width, H = c.height;
+      ctx.clearRect(0, 0, W, H);
 
-    async function triggerMolt() {
-      const btn = document.getElementById('btnMolt');
-      btn.disabled = true;
-      setToast('Mue Morphogénétique Zero-Shock en cours...');
-      try {
-        const res = await fetch('/api/morphogenesis', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({mode: 'moe_double'})
-        });
-        const d = await res.json();
-        if (res.ok) {
-          setToast(`Mue réussie: ${fmtNum(d.old_total_params)} -> ${fmtNum(d.new_total_params)} params (Diff=${d.max_abs_logit_diff.toExponential(2)})`);
-        } else {
-          setToast(`Info: ${d.detail}`);
-        }
-        await refreshStatus();
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function runSeal() {
-      const title = document.getElementById('sealTitle').value.trim() || 'Note Souveraine';
-      const text = document.getElementById('sealText').value.trim();
-      if (text.length < 20) {
-        setToast('Entrez au moins 20 caractères pour SEAL.');
+      const pts = events.filter(x => x.type === 'train_step' && typeof x.ce_loss === 'number');
+      if (pts.length < 2) {
+        ctx.fillStyle = '#71767B';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Cliquez sur +5 Pas Muon pour tracer la courbe', 18, H / 2);
         return;
       }
-      const btn = document.getElementById('btnSeal');
+      const vals = pts.map(p => p.ce_loss);
+      const lo = Math.max(0, Math.min(...vals) - 0.1);
+      const hi = Math.max(...vals) + 0.1;
+
+      ctx.strokeStyle = '#2F3336';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const x = 12 + (i / (pts.length - 1)) * (W - 24);
+        const y = H - 16 - ((p.ce_loss - lo) / Math.max(1e-5, hi - lo)) * (H - 32);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      const last = pts[pts.length - 1];
+      ctx.fillStyle = '#E7E9EA';
+      ctx.font = '11px monospace';
+      ctx.fillText(`CE ${last.ce_loss} · ${last.tok_per_sec} tok/s`, 12, 15);
+    }
+
+    async function runBurst(steps) {
+      toast(`Entraînement Muon + WSM (${steps} pas)...`);
+      const res = await fetch('/api/train/burst', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({num_steps: steps, batch_size: 6})
+      });
+      const d = await res.json();
+      toast(`Val CE = ${d.val_ce_loss} (PPL ${d.val_perplexity})`);
+      refreshStatus();
+    }
+
+    async function triggerMolt(mode) {
+      toast('Mue Morphogénétique Zero-Shock en cours...');
+      const res = await fetch('/api/morphogenesis', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mode})
+      });
+      const d = await res.json();
+      if (res.ok) {
+        toast(`Mue réussie : ${(d.new_total_params/1e6).toFixed(1)}M params (choc=${d.max_abs_logit_diff.toExponential(1)})`);
+      } else {
+        toast(d.detail || 'Erreur');
+      }
+      refreshStatus();
+    }
+
+    async function toggleBg() {
+      await fetch(bgActive ? '/api/train/background/stop' : '/api/train/background/start', {method: 'POST'});
+      refreshStatus();
+    }
+
+    function syncPluginPreset() {
+      const p = document.getElementById('plugName').value;
+      const presets = {
+        math_engine: '{"expr": "solve(x**2 - 7*x + 12, x)"}',
+        python_sandbox: '{"code": "print([2**k for k in range(10)])"}',
+        introspection_probe: '{}',
+        memory_nexus: '{"action": "query", "content": "morphogenesis"}',
+        workspace_fs: '{"action": "list", "path": "."}'
+      };
+      document.getElementById('plugParams').value = presets[p] || '{}';
+    }
+
+    async function execPlugin() {
+      const plugin = document.getElementById('plugName').value;
+      let params = {};
+      try { params = JSON.parse(document.getElementById('plugParams').value || '{}'); }
+      catch (e) { document.getElementById('plugOutput').textContent = 'JSON invalide.'; return; }
+      const res = await fetch('/api/plugins/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plugin, params})
+      });
+      document.getElementById('plugOutput').textContent = JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function execSeal() {
+      const title = document.getElementById('sealTitleInp').value.trim() || 'Savoir Souverain';
+      const text = document.getElementById('sealTextInp').value.trim();
+      if (text.length < 20) {
+        document.getElementById('sealOutput').textContent = 'Entrez au moins 20 caractères.';
+        return;
+      }
+      const btn = document.getElementById('btnSealRun');
       btn.disabled = true;
-      setToast('Consolidation synaptique SEAL en cours...');
       try {
         const res = await fetch('/api/seal/consolidate', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({title, text, steps: 4})
         });
-        const d = await res.json();
-        setToast(`SEAL terminé: ${d.num_self_edits} auto-éditions | Val CE=${d.post_val_ce}`);
-        document.getElementById('sealText').value = '';
-        await refreshStatus();
+        document.getElementById('sealOutput').textContent = JSON.stringify(await res.json(), null, 2);
+        refreshStatus();
       } finally {
         btn.disabled = false;
       }
     }
 
-    function updatePluginPlaceholder() {
-      const sel = document.getElementById('pluginSelect').value;
-      const inp = document.getElementById('pluginArgs');
-      const defaults = {
-        math_engine: '{"expr": "solve(x**2 - 5*x + 6, x)"}',
-        python_sandbox: '{"code": "print([n for n in range(2, 30) if all(n%d for d in range(2, int(n**0.5)+1))])"}',
-        memory_nexus: '{"action": "query", "content": "morphogenesis"}',
-        introspection_probe: '{}',
-        workspace_fs: '{"action": "list", "path": "."}'
-      };
-      inp.value = defaults[sel] || '{}';
-    }
-
-    async function runDirectPlugin(plugin, params) {
-      const res = await fetch('/api/plugins/invoke', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({plugin, params})
-      });
-      const data = await res.json();
-      document.getElementById('pluginOut').textContent = JSON.stringify(data, null, 2);
-    }
-
-    async function invokeSelectedPlugin() {
-      const plugin = document.getElementById('pluginSelect').value;
-      let params = {};
-      try {
-        params = JSON.parse(document.getElementById('pluginArgs').value || '{}');
-      } catch (e) {
-        document.getElementById('pluginOut').textContent = 'Erreur JSON dans les paramètres.';
-        return;
-      }
-      await runDirectPlugin(plugin, params);
-    }
-
-    refreshStatus();
-    setInterval(refreshStatus, 4000);
+    restoreSessionOnBoot();
+    setInterval(() => {
+      if (currentUser) refreshStatus();
+    }, 5000);
   </script>
 </body>
 </html>

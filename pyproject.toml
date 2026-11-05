@@ -4,15 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "never-ai"
-version = "0.1.0"
-description = "ChronoMorph-LM: Self-Growing, Continually Learning Open-Thought Language Model & Plugin Ecosystem"
+version = "0.2.0"
+description = "ChronoMorph-LM: Self-Growing, Continually Learning Open-Thought Language Model & Sovereign Desktop App"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "torch>=2.10.0",
+    "torch>=2.5.0",
     "tokenizers>=0.20.0",
     "safetensors>=0.4.5",
     "numpy>=2.0.0",
+    "sympy>=1.13.0",
     "fastapi>=0.115.0",
     "uvicorn>=0.32.0",
     "pydantic>=2.9.0",
@@ -20,6 +21,9 @@ dependencies = [
     "pyyaml>=6.0.0",
     "tqdm>=4.66.0",
 ]
+
+[project.scripts]
+never-ai-desktop = "never_ai.desktop.launcher:main"
 
 [project.optional-dependencies]
 dev = [

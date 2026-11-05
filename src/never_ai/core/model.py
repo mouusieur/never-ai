@@ -11,7 +11,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from never_ai.core.config import ChronoMorphConfig
-from never_ai.core.special_tokens import LATENT_BOT_ID, LATENT_EOT_ID, PAD_ID
+from never_ai.core.special_tokens import (
+    CALL_END_ID,
+    CALL_START_ID,
+    LATENT_BOT_ID,
+    LATENT_EOT_ID,
+    PAD_ID,
+    THINK_END_ID,
+    THINK_START_ID,
+)
 from never_ai.core.titans_memory import TitansMAGMemory, TitansMemoryState
 
 
@@ -551,6 +559,9 @@ class ChronoMorphLM(nn.Module):
         max_new_tokens: int = 128,
         temperature: float = 0.7,
         top_k: int = 40,
+        top_p: float = 0.90,
+        min_p: float = 0.06,
+        repetition_penalty: float = 1.18,
         stop_token_ids: set[int] | None = None,
         titans_states: list[TitansMemoryState | None] | None = None,
         latent_steps_on_bot: int = 3,
@@ -559,6 +570,8 @@ class ChronoMorphLM(nn.Module):
         Autoregressive generation with:
         - Compressed MLA KV Cache
         - Online Test-Time Titans Neural Memory updates
+        - Repetition Penalty + Top-P / Min-P Nucleus Filtering
+        - Structural Special-Token State Machine (prevents orphan <|/think|> or role spoofing)
         - Automatic Coconut Continuous Latent Steps whenever <|bot|> is emitted!
         """
         was_training = self.training
@@ -576,21 +589,74 @@ class ChronoMorphLM(nn.Module):
         kvs = out.kv_caches
         t_states = [s.detach_state() if s is not None else None for s in out.titans_states]
         last_logits = out.logits[:, -1, :]
-        last_hidden = out.hidden_states[:, -1:, :]
 
         generated: list[int] = []
         stop_set = stop_token_ids or set()
+        # Protocol boundary IDs that must never be emitted by assistant speech
+        forbidden_role_ids = [0, 1, 3, 4, 5, 12, 13]
+        in_think = False
+        in_call = False
+        think_blocks_completed = 0
 
         for _ in range(max_new_tokens):
+            step_logits = last_logits.clone()
+
+            # 1. Structural special-token state guard
+            for fid in forbidden_role_ids:
+                if fid < step_logits.size(-1):
+                    step_logits[:, fid] = -float("inf")
+            if not in_think:
+                step_logits[:, THINK_END_ID] = -float("inf")
+            if in_think or in_call or think_blocks_completed >= 1:
+                step_logits[:, THINK_START_ID] = -float("inf")
+            if not in_call:
+                step_logits[:, CALL_END_ID] = -float("inf")
+            if in_think or in_call:
+                step_logits[:, CALL_START_ID] = -float("inf")
+
+            # 2. Repetition penalty over recent non-special generated tokens
+            if repetition_penalty > 1.0 and generated:
+                recent_toks = {t for t in generated[-48:] if t >= 16}
+                for tid in recent_toks:
+                    val = step_logits[:, tid]
+                    step_logits[:, tid] = torch.where(
+                        val > 0, val / repetition_penalty, val * repetition_penalty
+                    )
+
+            # 3. Sampling with Temperature + Top-K + Min-P + Top-P
             if temperature <= 1e-5:
-                next_id = int(torch.argmax(last_logits, dim=-1).item())
+                next_id = int(torch.argmax(step_logits, dim=-1).item())
             else:
-                scaled = last_logits / temperature
+                scaled = step_logits / temperature
                 if top_k > 0:
                     v, _ = torch.topk(scaled, min(top_k, scaled.size(-1)))
                     scaled[scaled < v[:, [-1]]] = -float("inf")
                 probs = F.softmax(scaled, dim=-1)
-                next_id = int(torch.multinomial(probs, num_samples=1).item())
+                if min_p > 0.0:
+                    max_prob = probs.max(dim=-1, keepdim=True).values
+                    probs = torch.where(probs >= min_p * max_prob, probs, torch.zeros_like(probs))
+                if 0.0 < top_p < 1.0:
+                    sorted_probs, sorted_idx = torch.sort(probs, descending=True, dim=-1)
+                    cum_probs = torch.cumsum(sorted_probs, dim=-1)
+                    cutoff = cum_probs - sorted_probs > top_p
+                    sorted_probs[cutoff] = 0.0
+                    probs = torch.zeros_like(probs).scatter(-1, sorted_idx, sorted_probs)
+                prob_sum = probs.sum(dim=-1, keepdim=True)
+                if float(prob_sum.item()) <= 1e-9:
+                    next_id = int(torch.argmax(step_logits, dim=-1).item())
+                else:
+                    probs = probs / prob_sum
+                    next_id = int(torch.multinomial(probs, num_samples=1).item())
+
+            if next_id == THINK_START_ID:
+                in_think = True
+            elif next_id == THINK_END_ID:
+                in_think = False
+                think_blocks_completed += 1
+            elif next_id == CALL_START_ID:
+                in_call = True
+            elif next_id == CALL_END_ID:
+                in_call = False
 
             generated.append(next_id)
             if next_id in stop_set:

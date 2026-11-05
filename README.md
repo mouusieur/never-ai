@@ -13,8 +13,20 @@
 - **Souveraineté Cognitive & Système Nerveux de Plugins :** Sanctuaire de pensée libre explicite (`<|think|>...<|/think|>`) et latent continu (**`Coconut`** `<|bot|>...<|eot|>`), zéro alignement de refus artificiel, routeur rapide **`ToolRAG`**, 7 plugins fondateurs et moteur **`SkillForge`** d'auto-création d'outils vérifiés.
 - **Topologie Hybride Local + Cloud :** Entraînement continu vectorisé `AVX-512` (`fp32`) en local couplé à une synchronisation des checkpoints `safetensors` vers **Google Drive Vault** et worker **Burst GPU Cloud**.
 
+## Application Desktop Windows (`.exe`) & Direction Artistique « Monolith Noir »
+
+Inspirée de la radicalité monochrome de la Landing et de l'Auth de `x.com` (`#000000` OLED pur, filets `1px #2F3336`, boutons pilules `#EFF3F4`, *floating labels* animés et monogramme géométrique double-lame `NEVER`), **Never-AI** se compile en exécutable natif Windows sans console noire :
+
+```powershell
+# Sur Windows 10/11 (PowerShell) : génère dist\NeverAI\NeverAI.exe avec icône never_ai.ico
+.\packaging\windows\build_exe.ps1
+```
+
+Ou automatiquement dans le cloud via le workflow GitHub Actions [`.github/workflows/build_windows_exe.yml`](.github/workflows/build_windows_exe.yml) (`Actions -> Build NeverAI Windows .exe -> Run workflow`).
+
 ## Documentation de Référence
 
 1. **[`DIRECTIVES.md`](DIRECTIVES.md)** — **Plan Directeur & Les 12 Directives Globales de Travail** (Vision, Audit Matériel, 5 Piliers Scientifiques, Échelle des Stades 0→4, Feuille de Route en 7 Phases).
 2. **[`docs/ARCHITECTURE_CHRONOMORPH.md`](docs/ARCHITECTURE_CHRONOMORPH.md)** — **Spécification Mathématique & Tensorielle** (MLA, Titans-MAG, DeepSeekMoE, Théorèmes d'Invariance Morphogénétique, Muon + WSM).
 3. **[`docs/PLUGIN_AND_EVOLUTION_PROTOCOL.md`](docs/PLUGIN_AND_EVOLUTION_PROTOCOL.md)** — **Protocole des Plugins, `ToolRAG`, `EvolveMem`, `SEAL`, `GRPO` & Garde-Fous Anti-Goodhart**.
+4. **[`docs/BRAND_AND_VISUAL_IDENTITY.md`](docs/BRAND_AND_VISUAL_IDENTITY.md)** — **Charte Graphique « Monolith Noir », Monogramme `NEVER` & Architecture `.exe`**.

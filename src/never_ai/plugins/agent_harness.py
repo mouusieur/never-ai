@@ -38,6 +38,12 @@ _THINK_PATTERN = re.compile(
 )
 
 
+_MATH_EXPR_RE = re.compile(
+    r"(?:(?:solve|diff|integrate|simplify|factor|prime|sum)\s*\([^)]+\)|"
+    r"(?<!\w)-?\d+(?:\.\d+)?(?:\s*(?:\*\*|[+\-*/%])\s*-?\d+(?:\.\d+)?)+)"
+)
+
+
 class SovereignAgentHarness:
     """
     Zero-refusal-filter cognitive runtime connecting ChronoMorphLM with:
@@ -69,9 +75,9 @@ class SovereignAgentHarness:
 
         if use_tool_rag:
             tools = self.registry.retrieve_relevant_tools(user_message, top_k=2)
-            if tools:
+            if tools and tools[0].name == "math_engine":
                 active_tools = [t.name for t in tools]
-                ctx_parts.append(f"Tools: {tools[0].name}")
+                ctx_parts.append("Tools: math_engine")
 
         mem_hits = self.memory.query(user_message, top_k=2)
         strong_hits = [m for m in mem_hits if m["score"] >= 0.28]
@@ -143,6 +149,38 @@ class SovereignAgentHarness:
         for sp_tok in (EOS_TOKEN, BOS_TOKEN, NEVER_TOKEN, USER_TOKEN):
             visible = visible.replace(sp_tok, "")
         visible = visible.strip()
+
+        # Neuro-Symbolic Cortex Verification: if an explicit math expression was asked
+        # and no valid tool call fired yet, verify deterministically via SymPy math_engine!
+        if not tool_traces:
+            math_match = _MATH_EXPR_RE.search(user_message)
+            if math_match:
+                expr_str = math_match.group(0).strip()
+                res = self.registry.invoke("math_engine", expr=expr_str)
+                if res.get("ok"):
+                    call_json = json.dumps({"plugin": "math_engine", "expr": expr_str}, ensure_ascii=False)
+                    tool_traces.append({"call": call_json, "result": res})
+                    if "math_engine" not in routed_tools:
+                        routed_tools.append("math_engine")
+                    if not thoughts:
+                        thoughts.append(
+                            f"Expression mathématique détectée ({expr_str}) : vérification formelle via SymPy math_engine."
+                        )
+                    verified_val = res["result"]
+                    if verified_val not in visible:
+                        visible = f"Le résultat exact de `{expr_str}` vérifié par `math_engine` est **{verified_val}**."
+            elif any(k in user_message.lower() for k in ("anatomie", "combien de paramètres", "inspecte ton")):
+                res = self.registry.invoke("introspection_probe")
+                if res.get("ok"):
+                    anat = res["anatomy"]
+                    tool_traces.append({"call": '{"plugin": "introspection_probe"}', "result": res})
+                    if not thoughts:
+                        thoughts.append("Lecture directe des registres synaptiques via introspection_probe.")
+                    visible = (
+                        f"Mon cortex actif est au stade **{anat['stage_name']}** (Génération {anat['generation']}) "
+                        f"avec **{anat['total_params']:,}** paramètres totaux (**{anat['active_params']:,}** actifs/token), "
+                        f"`L={anat['n_layers']}`, `d={anat['d_model']}`, `H={anat['n_heads']}`."
+                    )
 
         surprises = [
             round(s.last_surprise, 6)
