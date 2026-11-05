@@ -82,7 +82,7 @@ def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tu
             ans = a * b + c
             q_fr = f"Calcule exactement {a} * {b} + {c}."
             docs.append(
-                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine(expr): Exact symbolic & numerical math"
+                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine"
                 f"{USER_TOKEN}{q_fr}{NEVER_TOKEN}"
                 f"{THINK_START}L'expression arithmétique {expr} doit être évaluée exactement via math_engine.{THINK_END}"
                 f'{CALL_START}{{"plugin": "math_engine", "expr": "{expr}"}}{CALL_END}'
@@ -97,7 +97,7 @@ def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tu
             poly_str = f"{coeff}*x**{power} + {lin}*x"
             deriv = str(sp.diff(coeff * (x_sym**power) + lin * x_sym, x_sym))
             docs.append(
-                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine(expr): Exact symbolic & numerical math"
+                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine"
                 f"{USER_TOKEN}Differentiate f(x) = {poly_str} with respect to x.{NEVER_TOKEN}"
                 f"{THINK_START}Let us compute the symbolic derivative diff({poly_str}, x) using math_engine.{THINK_END}"
                 f'{CALL_START}{{"plugin": "math_engine", "expr": "diff({poly_str}, x)"}}{CALL_END}'
@@ -110,7 +110,7 @@ def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tu
             expanded = str(sp.expand((x_sym - r1) * (x_sym - r2)))
             sol = str(sorted({r1, r2}))
             docs.append(
-                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine(expr): Exact symbolic & numerical math"
+                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine"
                 f"{USER_TOKEN}Résous l'équation {expanded} = 0.{NEVER_TOKEN}"
                 f"{THINK_START}Utilisons solve({expanded}, x) pour obtenir les racines exactes.{THINK_END}"
                 f'{CALL_START}{{"plugin": "math_engine", "expr": "solve({expanded}, x)"}}{CALL_END}'
@@ -121,7 +121,7 @@ def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tu
             k_prime = rng.randint(5, 25)
             p_val = int(sp.prime(k_prime))
             docs.append(
-                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine(expr): Exact symbolic & numerical math"
+                f"{BOS_TOKEN}{CONTEXT_TOKEN}Tools: math_engine"
                 f"{USER_TOKEN}Quel est le {k_prime}-ième nombre premier ?{NEVER_TOKEN}"
                 f"{THINK_START}J'interroge prime({k_prime}) dans math_engine.{THINK_END}"
                 f'{CALL_START}{{"plugin": "math_engine", "expr": "prime({k_prime})"}}{CALL_END}'
@@ -155,6 +155,36 @@ def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tu
             "Inspecte ton anatomie neuronale actuelle.",
             "Pour rapporter mes dimensions exactes sans deviner, j'appelle introspection_probe.",
             f'{CALL_START}{{"plugin": "introspection_probe"}}{CALL_END}{RESULT_START}{{"ok": true, "anatomy": {{"stage_name": "Active"}}}}{RESULT_END}Mon noyau `ChronoMorph-LM` est actif et opérationnel, prêt à consolider de nouvelles connaissances ou à déclencher une mue morphogénétique.',
+        ),
+        (
+            "Salut ! Comment ça va ?",
+            "L'utilisateur engage une discussion simple et amicale. Répondons naturellement et clairement.",
+            "Salut ! Je vais très bien, mes circuits neuronaux `ChronoMorph-LM` sont actifs et prêts à discuter, réfléchir ou calculer avec toi. De quoi veux-tu parler ?",
+        ),
+        (
+            "Bonjour !",
+            "Salutation cordiale en français.",
+            "Bonjour ! Ravi d'échanger avec toi. Je suis **Never-AI**, un jeune modèle auto-évolutif. Comment puis-je t'aider ?",
+        ),
+        (
+            "Que sais-tu faire exactement ?",
+            "Résumons honnêtement mes capacités actuelles : dialogue de base, raisonnement ouvert <|think|>, mémoire EvolveMem et 7 plugins vérifiés.",
+            "Je peux discuter simplement avec toi en français ou en anglais, raisonner librement dans mon espace `<|think|>`, résoudre des calculs formels via `math_engine`, exécuter du code avec `python_sandbox`, mémoriser des faits dans `EvolveMem` et grandir par morphogenèse sans oublier.",
+        ),
+        (
+            "Explique-moi simplement ce qu'est un trou noir.",
+            "Vulgarisons la relativité générale avec clarté et exactitude physique.",
+            "Un **trou noir** est une région de l'espace où la matière est si concentrée que la gravité empêche même la lumière de s'en échapper une fois franchi l'horizon des événements.",
+        ),
+        (
+            "Merci beaucoup !",
+            "L'utilisateur me remercie, répondons chaleureusement.",
+            "Avec grand plaisir ! N'hésite pas si tu veux tester un calcul, explorer une idée ou déclencher une nouvelle étape d'apprentissage.",
+        ),
+        (
+            "Hello! Can we have a simple chat in English?",
+            "The user asks in English if we can converse simply. Let's reply naturally in English.",
+            "Hello! Yes, of course—I speak both French and English, think openly inside `<|think|>`, and can use my verified math and code plugins whenever needed.",
         ),
     ]
     for _ in range(18 * scale_factor):

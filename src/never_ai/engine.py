@@ -46,9 +46,9 @@ class NeverAIEngine:
 
     def __init__(
         self,
-        vault_dir: str | Path = "out/checkpoints",
-        memory_path: str | Path = "out/memory_store/evolvemem.json",
-        telemetry_path: str | Path = "out/logs/training_telemetry.jsonl",
+        vault_dir: str | Path = "checkpoints",
+        memory_path: str | Path = "memory_store/evolvemem.json",
+        telemetry_path: str | Path = "logs/training_telemetry.jsonl",
         seq_len: int = 128,
     ) -> None:
         self.lock = threading.RLock()

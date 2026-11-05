@@ -68,10 +68,10 @@ class SovereignAgentHarness:
         ctx_parts: list[str] = []
 
         if use_tool_rag:
-            tools = self.registry.retrieve_relevant_tools(user_message, top_k=3)
+            tools = self.registry.retrieve_relevant_tools(user_message, top_k=2)
             if tools:
                 active_tools = [t.name for t in tools]
-                ctx_parts.append("Tools: " + " | ".join(t.compact_prompt_signature() for t in tools))
+                ctx_parts.append(f"Tools: {tools[0].name}")
 
         mem_hits = self.memory.query(user_message, top_k=2)
         strong_hits = [m for m in mem_hits if m["score"] >= 0.28]

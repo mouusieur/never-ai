@@ -37,24 +37,25 @@ class VaultManager:
         ckpt_dir = self.vault_root / tag
         ckpt_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Save live trunk weights atomically
-        live_tensors = {
-            k: v.detach().cpu().contiguous() for k, v in model.state_dict().items()
+        # Store tensors in compact bfloat16 on disk (4x smaller than dual fp32!)
+        source_sd = consolidated_state_dict if consolidated_state_dict is not None else model.state_dict()
+        compact_tensors = {
+            k: (
+                v.detach().cpu().to(torch.bfloat16).contiguous()
+                if v.is_floating_point()
+                else v.detach().cpu().contiguous()
+            )
+            for k, v in source_sd.items()
         }
-        tmp_live = ckpt_dir / "model_live.safetensors.tmp"
-        final_live = ckpt_dir / "model_live.safetensors"
-        save_file(live_tensors, str(tmp_live))
-        os.replace(tmp_live, final_live)
-
-        # 2. Save WSM 1-sqrt consolidated weights if provided
-        if consolidated_state_dict is not None:
-            cons_tensors = {
-                k: v.detach().cpu().contiguous() for k, v in consolidated_state_dict.items()
-            }
-            tmp_cons = ckpt_dir / "model_wsm.safetensors.tmp"
-            final_cons = ckpt_dir / "model_wsm.safetensors"
-            save_file(cons_tensors, str(tmp_cons))
-            os.replace(tmp_cons, final_cons)
+        target_name = "model_wsm.safetensors" if consolidated_state_dict is not None else "model_live.safetensors"
+        tmp_file = ckpt_dir / f"{target_name}.tmp"
+        final_file = ckpt_dir / target_name
+        save_file(compact_tensors, str(tmp_file))
+        os.replace(tmp_file, final_file)
+        # Remove redundant twin file if present to keep workspace < 100 MB
+        other_file = ckpt_dir / ("model_live.safetensors" if consolidated_state_dict is not None else "model_wsm.safetensors")
+        if other_file.exists():
+            other_file.unlink()
 
         # 3. Save config, tokenizer & metadata
         model.cfg.save(ckpt_dir / "config.json")
@@ -90,9 +91,18 @@ class VaultManager:
 
         wsm_path = ckpt_dir / "model_wsm.safetensors"
         live_path = ckpt_dir / "model_live.safetensors"
-        weights_path = wsm_path if (prefer_wsm and wsm_path.exists()) else live_path
+        weights_path = (
+            wsm_path
+            if (prefer_wsm and wsm_path.exists())
+            else (live_path if live_path.exists() else wsm_path)
+        )
 
-        state = load_file(str(weights_path), device="cpu")
+        raw_state = load_file(str(weights_path), device="cpu")
+        target_dtype = torch.float32 if str(device) == "cpu" else torch.bfloat16
+        state = {
+            k: (v.to(target_dtype) if v.is_floating_point() else v)
+            for k, v in raw_state.items()
+        }
         model.load_state_dict(state)
         model.to(device)
 
