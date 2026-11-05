@@ -133,7 +133,7 @@ class MorphTokenizer:
                 continue
 
             if in_assistant and not in_plugin_result:
-                mask.append(1.0)
+                mask.append(2.5 if tid == EOS_ID else 1.0)
             else:
                 mask.append(0.0)
         return mask

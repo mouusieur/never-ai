@@ -1,21 +1,23 @@
-"""FastAPI Sovereign Desktop & Web Backend for Never-AI (bound to 0.0.0.0 or local WebView)."""
+"""FastAPI Sovereign Desktop & Streaming Chatbot Backend for Never-AI."""
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from never_ai.desktop.installer_builder import build_windows_installer_zip
 from never_ai.engine import NeverAIEngine
 
 
 app = FastAPI(
-    title="Never-AI Sovereign Client (ChronoMorph-LM)",
-    version="0.2.0",
+    title="Never-AI Sovereign Chatbot & Desktop Studio (ChronoMorph-LM)",
+    version="0.3.0",
 )
 
 app.add_middleware(
@@ -27,14 +29,15 @@ app.add_middleware(
 )
 
 _STATIC_DIR = Path(__file__).parent / "static"
-_BRAND_DIR = Path(__file__).resolve().parents[3] / "assets" / "brand"
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_BRAND_DIR = _REPO_ROOT / "assets" / "brand"
 _ENGINE: NeverAIEngine | None = None
 
 
 def get_engine() -> NeverAIEngine:
     global _ENGINE
     if _ENGINE is None:
-        _ENGINE = NeverAIEngine(seq_len=128)
+        _ENGINE = NeverAIEngine(seq_len=160)
     return _ENGINE
 
 
@@ -56,15 +59,26 @@ class ThreadCreateRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
-    max_new_tokens: int = Field(default=120, ge=8, le=320)
+    max_new_tokens: int = Field(default=140, ge=8, le=360)
     temperature: float = Field(default=0.2, ge=0.0, le=1.5)
     thread_id: str | None = None
     owner: str = Field(default="local")
 
 
+class TeachExchangeRequest(BaseModel):
+    question: str = Field(..., min_length=2)
+    thought: str = Field(default="Consolidation d'un échange validé par l'utilisateur.")
+    answer: str = Field(..., min_length=2)
+
+
+class BackgroundStartRequest(BaseModel):
+    auto_morphogenesis: bool = Field(default=True)
+    batch_size: int = Field(default=2, ge=1, le=8)
+
+
 class TrainBurstRequest(BaseModel):
     num_steps: int = Field(default=6, ge=1, le=100)
-    batch_size: int = Field(default=6, ge=2, le=16)
+    batch_size: int = Field(default=4, ge=1, le=16)
 
 
 class MorphogenesisRequest(BaseModel):
@@ -94,6 +108,20 @@ def favicon() -> FileResponse:
     if ico.exists():
         return FileResponse(ico, media_type="image/x-icon")
     raise HTTPException(status_code=404, detail="Icon not found")
+
+
+@app.get("/api/download/installer")
+def api_download_installer() -> Response:
+    """Build and stream the official Windows 10/11 Graphical Installer ZIP."""
+    zip_bytes = build_windows_installer_zip(_REPO_ROOT)
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="NeverAI-Installer-Windows-x64.zip"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @app.post("/api/auth/register")
@@ -179,20 +207,57 @@ def api_chat(req: ChatRequest) -> dict[str, Any]:
     )
 
 
+@app.post("/api/chat/stream")
+def api_chat_stream(req: ChatRequest) -> StreamingResponse:
+    def _sse_gen() -> Iterator[str]:
+        for ev in get_engine().chat_stream(
+            message=req.message,
+            max_new_tokens=req.max_new_tokens,
+            temperature=req.temperature,
+            thread_id=req.thread_id,
+            owner=req.owner,
+        ):
+            yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        _sse_gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.post("/api/chat/teach")
+def api_chat_teach(req: TeachExchangeRequest) -> dict[str, Any]:
+    return get_engine().learn_dialogue_exchange(
+        question=req.question,
+        thought=req.thought,
+        answer=req.answer,
+        priority=3.0,
+    )
+
+
 @app.post("/api/train/burst")
 def api_train_burst(req: TrainBurstRequest) -> dict[str, Any]:
     return get_engine().train_steps(
         num_steps=req.num_steps,
         batch_size=req.batch_size,
         snapshot_every=max(2, req.num_steps // 2),
-        log_every=max(1, req.num_steps // 2),
+        log_every=1,
     )
 
 
 @app.post("/api/train/background/start")
-def api_bg_start() -> dict[str, Any]:
-    started = get_engine().start_background_growth_loop(batch_size=6)
-    return {"ok": True, "started": started, "running": True}
+def api_bg_start(req: BackgroundStartRequest | None = None) -> dict[str, Any]:
+    auto_m = req.auto_morphogenesis if req is not None else True
+    b_sz = req.batch_size if req is not None else 2
+    started = get_engine().start_background_growth_loop(
+        batch_size=b_sz,
+        auto_morphogenesis=auto_m,
+    )
+    return {"ok": True, "started": started, "running": True, "auto_morphogenesis": auto_m}
 
 
 @app.post("/api/train/background/stop")

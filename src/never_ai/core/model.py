@@ -565,6 +565,7 @@ class ChronoMorphLM(nn.Module):
         stop_token_ids: set[int] | None = None,
         titans_states: list[TitansMemoryState | None] | None = None,
         latent_steps_on_bot: int = 3,
+        step_callback: Any | None = None,
     ) -> tuple[list[int], list[TitansMemoryState | None]]:
         """
         Autoregressive generation with:
@@ -659,6 +660,10 @@ class ChronoMorphLM(nn.Module):
                 in_call = False
 
             generated.append(next_id)
+            if step_callback is not None:
+                cont = step_callback(next_id)
+                if cont is False:
+                    break
             if next_id in stop_set:
                 break
 

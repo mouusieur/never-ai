@@ -70,9 +70,7 @@
       filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.04));
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .hero-monogram:hover {
-      transform: scale(1.025);
-    }
+    .hero-monogram:hover { transform: scale(1.025); }
 
     .landing-right {
       display: flex;
@@ -86,68 +84,66 @@
       line-height: 1.06;
       letter-spacing: -0.04em;
       color: var(--text-primary);
-      margin-bottom: 38px;
+      margin-bottom: 34px;
     }
     .landing-h2 {
-      font-size: clamp(1.5rem, 2.5vw, 1.95rem);
+      font-size: clamp(1.45rem, 2.5vw, 1.9rem);
       font-weight: 800;
       letter-spacing: -0.02em;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
       color: var(--text-primary);
     }
 
     .cta-stack {
-      width: 300px;
+      width: 320px;
       max-width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 11px;
     }
     .pill-btn {
       height: 42px;
       border-radius: 9999px;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 9px;
       cursor: pointer;
       transition: background 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
       border: 1px solid transparent;
-      padding: 0 20px;
+      padding: 0 18px;
       text-decoration: none;
       user-select: none;
     }
     .pill-btn:disabled { opacity: 0.5; cursor: wait; }
-    .pill-white {
-      background: var(--cta-bg);
-      color: var(--cta-text);
-    }
+    .pill-white { background: var(--cta-bg); color: var(--cta-text); }
     .pill-white:hover { background: var(--cta-hover); }
 
-    .pill-accent {
-      background: var(--accent);
-      color: #FFFFFF;
-    }
+    .pill-accent { background: var(--accent); color: #FFFFFF; }
     .pill-accent:hover { background: #1A8CD8; }
+
+    .pill-emerald {
+      background: rgba(0, 186, 124, 0.15);
+      border: 1px solid var(--emerald);
+      color: #6EE7B7;
+    }
+    .pill-emerald:hover { background: rgba(0, 186, 124, 0.25); }
 
     .pill-outline {
       background: transparent;
       border: 1px solid #536471;
       color: var(--accent);
     }
-    .pill-outline:hover {
-      background: rgba(29, 155, 240, 0.10);
-    }
+    .pill-outline:hover { background: rgba(29, 155, 240, 0.10); }
+
     .pill-outline-white {
       background: transparent;
       border: 1px solid #536471;
       color: var(--text-primary);
     }
-    .pill-outline-white:hover {
-      background: var(--bg-hover);
-    }
+    .pill-outline-white:hover { background: var(--bg-hover); }
 
     .or-divider {
       display: flex;
@@ -155,7 +151,7 @@
       gap: 10px;
       margin: 2px 0;
       color: var(--text-primary);
-      font-size: 14px;
+      font-size: 13.5px;
     }
     .or-divider::before, .or-divider::after {
       content: "";
@@ -173,14 +169,14 @@
     .legal-note strong { color: var(--text-primary); font-weight: 600; }
 
     .signin-block {
-      margin-top: 34px;
-      width: 300px;
+      margin-top: 26px;
+      width: 320px;
       max-width: 100%;
     }
     .signin-block h3 {
-      font-size: 17px;
+      font-size: 16.5px;
       font-weight: 700;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       color: var(--text-primary);
     }
 
@@ -189,12 +185,18 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
+      align-items: center;
       gap: 16px;
       font-size: 12px;
       color: var(--text-muted);
       border-top: 1px solid rgba(47, 51, 54, 0.45);
     }
-    .landing-footer span { white-space: nowrap; }
+    .landing-footer a {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .landing-footer a:hover { text-decoration: underline; }
 
     @media (max-width: 900px) {
       .landing-split {
@@ -256,14 +258,11 @@
       flex-direction: column;
       gap: 20px;
     }
-    @media (max-width: 580px) {
-      .modal-body { padding: 0 12px; }
-    }
+    @media (max-width: 580px) { .modal-body { padding: 0 12px; } }
     .modal-title {
       font-size: 29px;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: var(--text-primary);
     }
     .modal-sub {
       font-size: 14px;
@@ -271,7 +270,6 @@
       margin-top: -10px;
     }
 
-    /* X.com Floating Label Input */
     .x-field {
       position: relative;
       height: 58px;
@@ -316,18 +314,18 @@
     }
 
     /* =========================================================================
-       3. X.COM / GROK 3-COLUMN SOVEREIGN WORKSPACE
+       3. X.COM / GROK 3-COLUMN SOVEREIGN CHATBOT WORKSPACE
        ========================================================================= */
     #appView {
       height: 100vh;
-      max-width: 1380px;
+      max-width: 1420px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 265px minmax(0, 1fr) 335px;
+      grid-template-columns: 268px minmax(0, 1fr) 348px;
       background: #000000;
     }
-    @media (max-width: 1100px) {
-      #appView { grid-template-columns: 230px minmax(0, 1fr); }
+    @media (max-width: 1120px) {
+      #appView { grid-template-columns: 235px minmax(0, 1fr); }
       .right-rail { display: none !important; }
     }
     @media (max-width: 720px) {
@@ -335,7 +333,6 @@
       .left-rail { display: none !important; }
     }
 
-    /* Left Rail */
     .left-rail {
       border-right: 1px solid var(--border);
       padding: 12px 14px;
@@ -348,40 +345,41 @@
     .left-top {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       min-height: 0;
       flex: 1;
     }
     .brand-btn {
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .brand-btn:hover { background: var(--bg-hover); }
 
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 11px 14px;
+      gap: 15px;
+      padding: 10px 14px;
       border-radius: 9999px;
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 500;
       color: var(--text-primary);
       cursor: pointer;
+      text-decoration: none;
       transition: background 0.14s ease;
     }
     .nav-item:hover { background: var(--bg-hover); }
     .nav-item.active { font-weight: 800; }
-    .nav-item svg { width: 23px; height: 23px; flex-shrink: 0; }
+    .nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
 
     .threads-header {
-      margin-top: 14px;
+      margin-top: 12px;
       padding: 0 12px;
       font-size: 11px;
       font-weight: 700;
@@ -440,13 +438,13 @@
     }
     .profile-pill:hover { background: var(--bg-hover); }
     .avatar-circle {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: #FFFFFF;
       color: #000000;
       font-weight: 800;
-      font-size: 15px;
+      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -465,29 +463,46 @@
     .sticky-header {
       height: 54px;
       padding: 0 18px;
-      background: rgba(0, 0, 0, 0.68);
+      background: rgba(0, 0, 0, 0.72);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
       z-index: 10;
       flex-shrink: 0;
     }
     .header-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .stage-pill {
       font-size: 12px;
       font-weight: 700;
-      padding: 4px 11px;
+      padding: 4px 10px;
       border-radius: 9999px;
       border: 1px solid var(--border);
       background: var(--bg-card);
       color: var(--text-primary);
+      white-space: nowrap;
     }
+    .mode-select {
+      background: #000000;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+    .mode-select:hover { color: var(--text-primary); border-color: #536471; }
 
     .feed-scroll {
       flex: 1;
@@ -498,13 +513,13 @@
 
     .empty-hero {
       margin: auto;
-      padding: 40px 24px;
-      max-width: 540px;
+      padding: 36px 24px;
+      max-width: 560px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
     .empty-hero h2 {
       font-size: 26px;
@@ -512,7 +527,7 @@
       letter-spacing: -0.02em;
     }
     .empty-hero p {
-      font-size: 14.5px;
+      font-size: 14px;
       color: var(--text-muted);
       line-height: 1.5;
     }
@@ -521,27 +536,24 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       width: 100%;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     @media (max-width: 560px) { .prompt-grid { grid-template-columns: 1fr; } }
     .prompt-card {
       text-align: left;
-      padding: 13px 15px;
+      padding: 12px 14px;
       border-radius: 14px;
       background: #000000;
       border: 1px solid var(--border);
       color: var(--text-primary);
-      font-size: 13.5px;
+      font-size: 13px;
       line-height: 1.4;
       cursor: pointer;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
-    .prompt-card:hover {
-      background: var(--bg-card);
-      border-color: #536471;
-    }
+    .prompt-card:hover { background: var(--bg-card); border-color: #536471; }
 
-    /* Post-style Message Row (X aesthetic) */
+    /* Message Stream */
     .turn-item {
       padding: 16px 20px;
       border-bottom: 1px solid var(--border);
@@ -570,23 +582,22 @@
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
     }
     .turn-meta {
       display: flex;
       align-items: center;
       gap: 7px;
-      font-size: 14.5px;
+      font-size: 14px;
     }
     .turn-meta strong { color: var(--text-primary); font-weight: 700; }
-    .turn-meta span { color: var(--text-muted); font-size: 13.5px; }
+    .turn-meta span { color: var(--text-muted); font-size: 13px; }
 
     details.think-accordion {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 8px 12px;
-      margin: 2px 0 4px;
       font-size: 12.5px;
       color: var(--text-muted);
     }
@@ -603,6 +614,7 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       line-height: 1.45;
       color: #C4CBD2;
+      white-space: pre-wrap;
     }
 
     .plugin-pill-trace {
@@ -618,9 +630,10 @@
 
     .turn-text {
       font-size: 15.5px;
-      line-height: 1.55;
+      line-height: 1.56;
       color: var(--text-primary);
       white-space: pre-wrap;
+      word-break: break-word;
     }
     .turn-text code {
       background: var(--bg-card);
@@ -629,20 +642,62 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 0.9em;
     }
+    .code-card {
+      background: #0B0D10;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 6px 0;
+      overflow: hidden;
+    }
+    .code-card-head {
+      background: var(--bg-card);
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-card pre {
+      padding: 12px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      color: #E7E9EA;
+      margin: 0;
+    }
 
-    /* Composer Bar */
+    .msg-actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 2px;
+    }
+    .msg-act-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 6px;
+    }
+    .msg-act-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+    /* Composer */
     .composer-wrap {
-      padding: 12px 18px 16px;
+      padding: 10px 18px 14px;
       border-top: 1px solid var(--border);
       background: #000000;
     }
     .composer-box {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 8px 10px 8px 18px;
+      border-radius: 22px;
+      padding: 8px 10px 8px 16px;
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: 10px;
       transition: border-color 0.15s ease;
     }
@@ -650,14 +705,18 @@
       border-color: #536471;
       background: #000000;
     }
-    .composer-box input {
+    .composer-box textarea {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
       color: var(--text-primary);
-      font-size: 15.5px;
-      padding: 6px 0;
+      font-size: 15px;
+      line-height: 1.45;
+      padding: 4px 0;
+      resize: none;
+      max-height: 140px;
+      font-family: inherit;
     }
     .send-round {
       width: 36px;
@@ -667,7 +726,7 @@
       background: var(--cta-bg);
       color: #000000;
       font-weight: 900;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -675,9 +734,12 @@
       flex-shrink: 0;
     }
     .send-round:hover { background: var(--cta-hover); }
-    .send-round:disabled { opacity: 0.4; cursor: wait; }
+    .send-round.stop-mode {
+      background: var(--danger);
+      color: #FFFFFF;
+    }
 
-    /* Sub-panels inside Center Column (Anatomy / Plugins / SEAL) */
+    /* Right Rail & Cards */
     .subview-pad {
       padding: 20px;
       display: flex;
@@ -688,51 +750,80 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 16px;
+      padding: 15px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 11px;
     }
     .x-card h3 {
-      font-size: 17px;
+      font-size: 15.5px;
       font-weight: 800;
       letter-spacing: -0.01em;
     }
     .stat-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+      gap: 8px;
     }
     .stat-tile {
       background: #000000;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 11px 13px;
+      border-radius: 11px;
+      padding: 9px 11px;
     }
-    .stat-tile span { display: block; font-size: 11.5px; color: var(--text-muted); }
-    .stat-tile strong { font-size: 17px; font-weight: 800; margin-top: 3px; display: block; }
+    .stat-tile span { display: block; font-size: 11px; color: var(--text-muted); }
+    .stat-tile strong { font-size: 15.5px; font-weight: 800; margin-top: 2px; display: block; font-variant-numeric: tabular-nums; }
 
-    /* Right Rail */
     .right-rail {
-      padding: 12px 16px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       height: 100vh;
       overflow-y: auto;
     }
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      display: inline-block;
+    }
+    .live-dot.on {
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+      animation: pulseGlow 1.3s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.65; }
+    }
+
     canvas.loss-chart {
       width: 100%;
-      height: 125px;
+      height: 115px;
       background: #000000;
       border: 1px solid var(--border);
       border-radius: 12px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--emerald);
+      transition: width 0.3s ease;
     }
     .layer-mini-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
     }
     .layer-track {
@@ -742,10 +833,7 @@
       border-radius: 999px;
       overflow: hidden;
     }
-    .layer-fill {
-      height: 100%;
-      background: #EFF3F4;
-    }
+    .layer-fill { height: 100%; background: #EFF3F4; }
     .dark-input, .dark-select, .dark-textarea {
       width: 100%;
       background: #000000;
@@ -758,17 +846,13 @@
       outline: none;
     }
     .dark-input:focus, .dark-textarea:focus { border-color: var(--accent); }
-    .toast-bar {
-      font-size: 12.5px;
-      color: var(--emerald);
-      min-height: 16px;
-    }
+    .toast-bar { font-size: 12px; color: var(--emerald); min-height: 16px; }
   </style>
 </head>
 <body>
 
   <!-- =======================================================================
-       1. LANDING PAGE (X.COM MONOLITH SPLIT-SCREEN)
+       1. LANDING PAGE (X.COM MONOLITH SPLIT-SCREEN + WINDOWS INSTALLER)
        ======================================================================= -->
   <div id="landingView">
     <div class="landing-split">
@@ -786,22 +870,26 @@
 
         <div class="cta-stack">
           <button class="pill-btn pill-white" onclick="enterGuest()">
-            <svg width="18" height="18" viewBox="0 0 512 512" fill="none">
+            <svg width="17" height="17" viewBox="0 0 512 512" fill="none">
               <path d="M96 84H162V428H96V84Z" fill="#0F1419"/>
               <path d="M350 84H416V428H350V84Z" fill="#0F1419"/>
               <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#0F1419"/>
             </svg>
-            Accès immédiat (@local)
+            Ouvrir le Chatbot (@local)
           </button>
-
-          <div class="or-divider">ou</div>
 
           <button class="pill-btn pill-accent" onclick="openAuthModal('register')">
             Créer un profil souverain
           </button>
 
+          <div class="or-divider">application bureau</div>
+
+          <a class="pill-btn pill-outline-white" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
+            ⬇ Télécharger l'installateur Windows (.exe)
+          </a>
+
           <p class="legal-note">
-            Exécution <strong>100 % locale</strong> propulsée par <strong>ChronoMorph-LM</strong>. Vos conversations, votre clé et vos poids <code>.safetensors</code> restent sur votre machine.
+            Inclut l'assistant graphique noir Windows 10/11 (<code>Installer-NeverAI.bat</code>), l'icône officielle <code>never_ai.ico</code> et le moteur <strong>ChronoMorph-LM</strong> 100 % local.
           </p>
         </div>
 
@@ -815,13 +903,11 @@
     </div>
 
     <footer class="landing-footer">
-      <span>NEVER-AI Desktop (.exe)</span>
-      <span>ChronoMorph-LM</span>
-      <span>Morphogenèse Zero-Shock</span>
-      <span>CompositeMuon + WSM</span>
-      <span>Titans Neural Memory</span>
+      <a href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">⬇ Installateur Windows x64</a>
+      <span>ChronoMorph-LM v0.3</span>
+      <span>Croissance Continue Non-Bloquante</span>
+      <span>Streaming Token-par-Token</span>
       <span>7 Plugins + SkillForge</span>
-      <span>Souveraineté Cognitive</span>
     </footer>
   </div>
 
@@ -844,7 +930,7 @@
 
       <div class="modal-body">
         <h2 class="modal-title" id="authModalTitle">Créer votre profil</h2>
-        <p class="modal-sub" id="authModalSub">Stocké chiffré (PBKDF2-SHA256) uniquement sur votre appareil.</p>
+        <p class="modal-sub">Stocké chiffré (PBKDF2-SHA256) uniquement sur votre appareil.</p>
 
         <div class="x-field">
           <input id="authHandle" type="text" placeholder=" " autocomplete="off" onkeydown="if(event.key==='Enter') submitAuth()" />
@@ -876,14 +962,14 @@
   </div>
 
   <!-- =======================================================================
-       3. SOVEREIGN 3-COLUMN DESKTOP / WEB WORKSPACE
+       3. SOVEREIGN 3-COLUMN CHATBOT & CONTINUAL GROWTH WORKSPACE
        ======================================================================= -->
   <div id="appView" class="hidden">
     <!-- LEFT NAVIGATION RAIL -->
     <aside class="left-rail">
       <div class="left-top">
         <div class="brand-btn" onclick="switchTab('chat')" title="Never-AI">
-          <svg width="30" height="30" viewBox="0 0 512 512" fill="none">
+          <svg width="28" height="28" viewBox="0 0 512 512" fill="none">
             <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
             <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
             <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
@@ -910,7 +996,12 @@
           <span>Mémoire SEAL</span>
         </div>
 
-        <button class="pill-btn pill-white" style="margin-top:12px;height:46px;width:100%;" onclick="createNewThread()">
+        <a class="nav-item" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip" title="Télécharger l'installateur Windows">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Installateur .exe</span>
+        </a>
+
+        <button class="pill-btn pill-white" style="margin-top:8px;height:44px;width:100%;" onclick="createNewThread()">
           + Nouvelle discussion
         </button>
 
@@ -918,36 +1009,42 @@
         <div class="threads-list" id="threadsList"></div>
       </div>
 
-      <div class="profile-pill" onclick="logoutToLanding()" title="Retourner à l'écran d'accueil / Changer de profil">
+      <div class="profile-pill" onclick="logoutToLanding()" title="Retourner à l'accueil / Changer de profil">
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <div class="avatar-circle" id="userAvatar">N</div>
           <div style="min-width:0;">
-            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userDisplay">Explorateur</div>
-            <div style="font-size:13px;color:var(--text-muted);" id="userHandle">@local</div>
+            <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userDisplay">Explorateur</div>
+            <div style="font-size:12.5px;color:var(--text-muted);" id="userHandle">@local</div>
           </div>
         </div>
-        <span style="color:var(--text-muted);font-size:12px;">Quitter</span>
+        <span style="color:var(--text-muted);font-size:12px;">Accueil</span>
       </div>
     </aside>
 
     <!-- CENTER WORKSPACE COLUMN -->
     <main class="center-col">
       <header class="sticky-header">
-        <div class="header-title" id="centerTitle">Never-AI</div>
+        <div class="header-title" id="centerTitle">Discussion Souveraine</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span id="toastBar" class="toast-bar"></span>
+          <select class="mode-select" id="tempSelect" title="Style de génération">
+            <option value="0.12">Mode Précis</option>
+            <option value="0.30" selected>Mode Équilibré</option>
+            <option value="0.65">Mode Créatif</option>
+          </select>
+          <button class="mode-select" onclick="exportCurrentThread()" title="Exporter la conversation en Markdown">Exporter .md</button>
           <span class="stage-pill" id="headerStageBadge">Sprout-MoE</span>
         </div>
       </header>
 
-      <!-- TAB 1: CHAT -->
+      <!-- TAB 1: PRO STREAMING CHATBOT -->
       <div id="tab-chat" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="feed-scroll" id="chatFeed"></div>
 
         <div class="composer-wrap">
           <div class="composer-box">
-            <input id="composerInput" type="text" placeholder="Demandez n'importe quoi à Never-AI..." onkeydown="if(event.key==='Enter') sendMessage()" />
-            <button class="send-round" id="btnSend" onclick="sendMessage()" title="Envoyer">↑</button>
+            <textarea id="composerInput" rows="1" placeholder="Discutez, demandez un calcul, ou dites « Retiens que... » (Entrée pour envoyer)" oninput="autoGrow(this)" onkeydown="handleComposerKey(event)"></textarea>
+            <button class="send-round" id="btnSend" onclick="onSendOrStop()" title="Envoyer">↑</button>
           </div>
         </div>
       </div>
@@ -959,9 +1056,9 @@
             <h3>Cortex ChronoMorph-LM Actif</h3>
             <div class="stat-grid" id="anatStatsGrid"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-              <button class="pill-btn pill-white" onclick="runBurst(8)" id="btnBurstMain">+8 Pas CompositeMuon + WSM</button>
-              <button class="pill-btn pill-outline-white" onclick="triggerMolt('moe_double')" id="btnMoltMain">Mue Morphogénétique (MoE ×2)</button>
-              <button class="pill-btn pill-outline" onclick="toggleBg()" id="btnBgMain">Croissance Continue: OFF</button>
+              <button class="pill-btn pill-emerald" onclick="toggleBg()" id="btnBgMain">Activer la Croissance Continue</button>
+              <button class="pill-btn pill-white" onclick="runBurst(6)">+6 Pas CompositeMuon + WSM</button>
+              <button class="pill-btn pill-outline-white" onclick="triggerMolt('moe_double')">Mue Morphogénétique (MoE ×2)</button>
             </div>
           </div>
 
@@ -1008,34 +1105,63 @@
       </div>
     </main>
 
-    <!-- RIGHT TELEMETRY RAIL -->
+    <!-- RIGHT LIVE CONTINUAL GROWTH & INSTALLER RAIL -->
     <aside class="right-rail">
+      <!-- LIVE CONTINUAL GROWTH CARD (FIXED & NON-BLOCKING!) -->
       <div class="x-card">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <h3>État du Cerveau</h3>
-          <span style="font-size:12px;color:var(--emerald);font-weight:700;" id="railTokens">0 tok</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="live-dot" id="bgLiveDot"></span>
+            <h3>Croissance Continue</h3>
+          </div>
+          <span style="font-size:11.5px;color:var(--text-muted);" id="bgStateLabel">En pause</span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+        <button class="pill-btn pill-white" style="width:100%;height:40px;" id="btnRailBgToggle" onclick="toggleBg()">
+          ▶ Démarrer la Croissance Continue
+        </button>
+
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);cursor:pointer;">
+          <input type="checkbox" id="chkAutoMolt" checked />
+          Auto-Mue Morphogénétique aux jalons
+        </label>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+          <div class="stat-tile"><span>Pas Session</span><strong id="railBgSteps">0</strong></div>
+          <div class="stat-tile"><span>Dernière Loss</span><strong id="railBgLoss">-</strong></div>
           <div class="stat-tile"><span>Total Params</span><strong id="railTotal">-</strong></div>
-          <div class="stat-tile"><span>Actifs / Token</span><strong id="railActive">-</strong></div>
+          <div class="stat-tile"><span>Tokens Appris</span><strong id="railTokens">-</strong></div>
         </div>
-        <canvas class="loss-chart" id="lossCanvas" width="300" height="125"></canvas>
-        <div style="display:flex;gap:8px;">
-          <button class="pill-btn pill-white" style="flex:1;height:36px;font-size:13px;" onclick="runBurst(5)" id="btnRailBurst">+5 Pas Muon</button>
-          <button class="pill-btn pill-outline-white" style="flex:1;height:36px;font-size:13px;" onclick="triggerMolt('moe_double')">Mue MoE</button>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;">
+            <span>Prochaine Mue Zero-Shock</span>
+            <span id="moltPctTxt">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="moltProgressFill" style="width:0%"></div></div>
+        </div>
+
+        <canvas class="loss-chart" id="lossCanvas" width="310" height="115"></canvas>
+
+        <div style="display:flex;gap:7px;">
+          <button class="pill-btn pill-outline-white" style="flex:1;height:34px;font-size:12.5px;" onclick="runBurst(4)">+4 Pas</button>
+          <button class="pill-btn pill-outline-white" style="flex:1;height:34px;font-size:12.5px;" onclick="triggerMolt('ffn')">Mue FFN</button>
         </div>
       </div>
 
       <div class="x-card">
         <h3>Ouverture Gate-Zero (&alpha;)</h3>
-        <div id="railLayers" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <div id="railLayers" style="display:flex;flex-direction:column;gap:5px;"></div>
       </div>
 
       <div class="x-card">
-        <h3>Application Windows .exe</h3>
-        <p style="font-size:12.5px;color:var(--text-muted);line-height:1.45;">
-          Lanceur natif WebView2 sombre + icône <code>never_ai.ico</code> prêt dans <code>packaging/windows/build_exe.ps1</code> et GitHub Actions.
+        <h3>Installateur Windows (.exe)</h3>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;">
+          Téléchargez l'assistant d'installation graphique noir Windows 10/11 avec raccourci Bureau et icône officielle.
         </p>
+        <a class="pill-btn pill-white" style="width:100%;height:38px;font-size:13px;" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
+          ⬇ Télécharger l'installateur
+        </a>
       </div>
     </aside>
   </div>
@@ -1046,6 +1172,8 @@
     let currentMessages = [];
     let authMode = 'register';
     let bgActive = false;
+    let activeStreamCtrl = null;
+    let pollTimer = null;
 
     const SMALL_NEVER_SVG = `<svg width="18" height="18" viewBox="0 0 512 512" fill="none"><path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/><path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/><path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/></svg>`;
 
@@ -1061,6 +1189,17 @@
       if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 4500);
     }
 
+    function autoGrow(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(140, el.scrollHeight) + 'px';
+    }
+    function handleComposerKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        onSendOrStop();
+      }
+    }
+
     /* ---------------- AUTH & LANDING ---------------- */
     function openAuthModal(mode) {
       authMode = mode;
@@ -1069,17 +1208,14 @@
       renderAuthMode();
       setTimeout(() => document.getElementById('authHandle').focus(), 40);
     }
-
     function closeAuthModal() {
       document.getElementById('authModal').classList.add('hidden');
     }
-
     function toggleAuthMode(e) {
       e.preventDefault();
       authMode = authMode === 'register' ? 'login' : 'register';
       renderAuthMode();
     }
-
     function renderAuthMode() {
       const isReg = authMode === 'register';
       document.getElementById('authModalTitle').textContent = isReg ? 'Créer votre profil local' : 'Connectez-vous à Never-AI';
@@ -1136,6 +1272,7 @@
 
       loadThreads();
       refreshStatus();
+      schedulePolling();
     }
 
     function logoutToLanding() {
@@ -1151,10 +1288,15 @@
       try {
         const res = await fetch(`/api/auth/me?token=${encodeURIComponent(tok)}`);
         const d = await res.json();
-        if (d.authenticated && d.profile) {
-          activateSession(d.profile);
-        }
+        if (d.authenticated && d.profile) activateSession(d.profile);
       } catch (e) {}
+    }
+
+    function schedulePolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => {
+        if (currentUser) refreshStatus();
+      }, 1400);
     }
 
     /* ---------------- NAVIGATION & THREADS ---------------- */
@@ -1213,6 +1355,7 @@
       if (d.thread) {
         currentThreadId = d.thread.id;
         currentMessages = [];
+        document.getElementById('centerTitle').textContent = 'Nouvelle discussion';
         renderChatFeed();
         await loadThreads();
         document.getElementById('composerInput').focus();
@@ -1243,31 +1386,46 @@
       await loadThreads();
     }
 
-    /* ---------------- CHAT STREAM ---------------- */
+    function exportCurrentThread() {
+      if (!currentMessages.length) {
+        toast('Aucun message à exporter.');
+        return;
+      }
+      const md = currentMessages.map(m =>
+        m.role === 'user' ? `### Vous\n${m.content}\n` : `### Never-AI\n${m.thoughts?.length ? '> <|think|> ' + m.thoughts.join(' ') + '\n\n' : ''}${m.content}\n`
+      ).join('\n---\n\n');
+      const blob = new Blob([md], {type: 'text/markdown;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `never-ai-discussion-${currentThreadId || 'export'}.md`;
+      a.click();
+    }
+
+    /* ---------------- PRO STREAMING CHATBOT ---------------- */
     function renderChatFeed() {
       const feed = document.getElementById('chatFeed');
       if (!currentMessages.length) {
         feed.innerHTML = `
           <div class="empty-hero">
-            <svg width="54" height="54" viewBox="0 0 512 512" fill="none">
+            <svg width="52" height="52" viewBox="0 0 512 512" fill="none">
               <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
               <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
               <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
             </svg>
             <h2>Que voulez-vous explorer ?</h2>
-            <p>Modèle souverain <strong>ChronoMorph-LM</strong> entraîné depuis zéro, doté d'un espace de pensée libre <code>&lt;|think|&gt;</code> et de plugins formels vérifiés.</p>
+            <p>Chatbot souverain <strong>ChronoMorph-LM</strong> en streaming temps réel : pensée libre <code>&lt;|think|&gt;</code>, mémoire épisodique personnelle, code exécutable et croissance continue.</p>
             <div class="prompt-grid">
               <div class="prompt-card" onclick="quickAsk('Salut ! Comment ça va ?')">
-                <strong>Saluer Never-AI</strong><br/><span style="color:var(--text-muted)">Engager une discussion simple</span>
+                <strong>Engager la discussion</strong><br/><span style="color:var(--text-muted)">Salutation naturelle en français</span>
               </div>
-              <div class="prompt-card" onclick="quickAsk('Pourquoi tu t\\'appelles Never-AI ?')">
-                <strong>Identité & Vision</strong><br/><span style="color:var(--text-muted)">Comprendre la philosophie Never-AI</span>
+              <div class="prompt-card" onclick="quickAsk('Je m\\'appelle Alex, retiens-le !')">
+                <strong>Mémoire Épisodique</strong><br/><span style="color:var(--text-muted)">Tester la mémorisation personnelle</span>
               </div>
-              <div class="prompt-card" onclick="quickAsk('Calcule 28 * 34 + 19')">
-                <strong>Calcul Exact SymPy</strong><br/><span style="color:var(--text-muted)">Vérification neuro-symbolique</span>
+              <div class="prompt-card" onclick="quickAsk('Calcule 42 * 37 + 19')">
+                <strong>Calcul Formel SymPy</strong><br/><span style="color:var(--text-muted)">Exécution neuro-symbolique exacte</span>
               </div>
-              <div class="prompt-card" onclick="quickAsk('Inspecte ton anatomie neuronale actuelle.')">
-                <strong>Sonde Synaptique</strong><br/><span style="color:var(--text-muted)">Lire les paramètres en direct</span>
+              <div class="prompt-card" onclick="quickAsk('Peux-tu m\\'écrire une fonction Python qui vérifie si un mot est un palindrome ?')">
+                <strong>Génération & Sandbox Code</strong><br/><span style="color:var(--text-muted)">Code Python exécutable en 1 clic</span>
               </div>
             </div>
           </div>
@@ -1279,7 +1437,7 @@
       const uName = currentUser ? currentUser.display_name : 'Vous';
       const uInit = (uName[0] || 'U').toUpperCase();
 
-      feed.innerHTML = currentMessages.map(m => {
+      feed.innerHTML = currentMessages.map((m, idx) => {
         if (m.role === 'user') {
           return `
             <div class="turn-item">
@@ -1292,24 +1450,35 @@
           `;
         }
         let extras = '';
-        if (m.thoughts && m.thoughts.length) {
+        if (m.thoughts && m.thoughts.length && m.thoughts.join('').trim()) {
           extras += `
-            <details class="think-accordion">
-              <summary>Sanctuaire de pensée &lt;|think|&gt;</summary>
-              <div class="think-content">${esc(m.thoughts.join(' — '))}</div>
+            <details class="think-accordion" ${m.streaming ? 'open' : ''}>
+              <summary>${m.streaming && !m.content ? 'Réflexion interne en cours...' : 'Sanctuaire de pensée &lt;|think|&gt;'}</summary>
+              <div class="think-content">${esc(m.thoughts.join(''))}</div>
             </details>
           `;
         }
         if (m.tool_traces && m.tool_traces.length) {
-          extras += `<div class="plugin-pill-trace">⚡ Plugin vérifié : ${esc(JSON.stringify(m.tool_traces[0]))}</div>`;
+          extras += `<div class="plugin-pill-trace">⚡ Plugin exécuté : ${esc(JSON.stringify(m.tool_traces[0]))}</div>`;
         }
+
+        const prevUserMsg = idx > 0 && currentMessages[idx - 1].role === 'user' ? currentMessages[idx - 1].content : '';
+        const actionsHtml = m.streaming ? '' : `
+          <div class="msg-actions">
+            <button class="msg-act-btn" onclick="copyMsg(${idx})">Copier</button>
+            ${prevUserMsg ? `<button class="msg-act-btn" onclick="regenMsg(${idx - 1})">↻ Régénérer</button>` : ''}
+            ${prevUserMsg ? `<button class="msg-act-btn" onclick="teachMsg(${idx - 1}, ${idx})">★ Consolider dans le cerveau</button>` : ''}
+          </div>
+        `;
+
         return `
           <div class="turn-item">
             <div class="turn-avatar never-av">${SMALL_NEVER_SVG}</div>
             <div class="turn-body">
-              <div class="turn-meta"><strong>Never-AI</strong><span>@chronomorph · Surprise Titans ${m.titans_mean_surprise ?? 0}</span></div>
+              <div class="turn-meta"><strong>Never-AI</strong><span>@chronomorph ${m.streaming ? '· génération live…' : ''}</span></div>
               ${extras}
-              <div class="turn-text">${formatRichText(m.content)}</div>
+              <div class="turn-text">${formatRichMessage(m.content || (m.streaming ? '▍' : ''), idx)}</div>
+              ${actionsHtml}
             </div>
           </div>
         `;
@@ -1317,11 +1486,90 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
-    function formatRichText(raw) {
-      let safe = esc(raw);
+    function formatRichMessage(raw, msgIdx) {
+      // Extract ```python ... ``` blocks into interactive cards!
+      const parts = [];
+      let lastIndex = 0;
+      const re = /```(?:python|py)?\s*\n([\s\S]*?)```/gi;
+      let match;
+      let codeIdx = 0;
+      while ((match = re.exec(raw)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push(formatInline(raw.slice(lastIndex, match.index)));
+        }
+        const code = match[1].trim();
+        const encoded = encodeURIComponent(code);
+        parts.push(`
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>python</span>
+              <div style="display:flex;gap:8px;">
+                <button class="msg-act-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('${encoded}'));toast('Code copié !')">Copier</button>
+                <button class="msg-act-btn" style="color:#6EE7B7;" onclick="runInlineSandbox('${encoded}')">▶ Exécuter Sandbox</button>
+              </div>
+            </div>
+            <pre>${esc(code)}</pre>
+          </div>
+        `);
+        lastIndex = re.lastIndex;
+        codeIdx++;
+      }
+      if (lastIndex < raw.length) {
+        parts.push(formatInline(raw.slice(lastIndex)));
+      }
+      return parts.join('');
+    }
+
+    function formatInline(txt) {
+      let safe = esc(txt);
       safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+      safe = safe.replace(/`([^`\n]+)`/g, '<code>$1</code>');
       return safe;
+    }
+
+    async function runInlineSandbox(encodedCode) {
+      const code = decodeURIComponent(encodedCode);
+      toast('Exécution dans python_sandbox...');
+      const res = await fetch('/api/plugins/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plugin: 'python_sandbox', params: {code}})
+      });
+      const d = await res.json();
+      const out = (d.stdout || d.error || '(aucune sortie)').trim();
+      toast(`Sandbox stdout: ${out.slice(0, 60)}`);
+    }
+
+    function copyMsg(idx) {
+      const m = currentMessages[idx];
+      if (m) {
+        navigator.clipboard.writeText(m.content || '');
+        toast('Réponse copiée !');
+      }
+    }
+
+    function regenMsg(userIdx) {
+      const u = currentMessages[userIdx];
+      if (!u) return;
+      document.getElementById('composerInput').value = u.content;
+      sendMessage();
+    }
+
+    async function teachMsg(userIdx, botIdx) {
+      const u = currentMessages[userIdx];
+      const b = currentMessages[botIdx];
+      if (!u || !b) return;
+      await fetch('/api/chat/teach', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          question: u.content,
+          thought: (b.thoughts || [])[0] || 'Échange validé.',
+          answer: b.content
+        })
+      });
+      toast('Ajouté au réservoir de Croissance Continue !');
+      refreshStatus();
     }
 
     function quickAsk(txt) {
@@ -1329,13 +1577,25 @@
       sendMessage();
     }
 
+    function onSendOrStop() {
+      if (activeStreamCtrl) {
+        activeStreamCtrl.abort();
+        activeStreamCtrl = null;
+        return;
+      }
+      sendMessage();
+    }
+
     async function sendMessage() {
       const inp = document.getElementById('composerInput');
       const text = inp.value.trim();
-      if (!text) return;
+      if (!text || activeStreamCtrl) return;
       inp.value = '';
+      inp.style.height = 'auto';
 
       const owner = currentUser ? currentUser.handle : 'local';
+      const temperature = parseFloat(document.getElementById('tempSelect').value || '0.3');
+
       if (!currentThreadId) {
         const tr = await fetch('/api/threads', {
           method: 'POST',
@@ -1346,43 +1606,99 @@
       }
 
       currentMessages.push({role: 'user', content: text});
+      const botMsg = {role: 'never', content: '', thoughts: [''], tool_traces: [], streaming: true};
+      currentMessages.push(botMsg);
       renderChatFeed();
 
       const btn = document.getElementById('btnSend');
-      btn.disabled = true;
+      btn.textContent = '■';
+      btn.classList.add('stop-mode');
+      activeStreamCtrl = new AbortController();
+
       try {
-        const res = await fetch('/api/chat', {
+        const res = await fetch('/api/chat/stream', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             message: text,
-            max_new_tokens: 120,
-            temperature: 0.15,
+            max_new_tokens: 135,
+            temperature,
             thread_id: currentThreadId,
             owner
-          })
+          }),
+          signal: activeStreamCtrl.signal
         });
-        const d = await res.json();
-        currentMessages.push({
-          role: 'never',
-          content: d.visible_answer || d.raw_generation,
-          thoughts: d.thoughts || [],
-          tool_traces: d.tool_traces || [],
-          titans_mean_surprise: d.titans_mean_surprise
-        });
-        if (d.thread_title) {
-          document.getElementById('centerTitle').textContent = d.thread_title;
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const {value, done} = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, {stream: true});
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+
+          for (const chunk of lines) {
+            if (!chunk.startsWith('data: ')) continue;
+            const ev = JSON.parse(chunk.slice(6));
+            if (ev.type === 'think_delta') {
+              botMsg.thoughts[0] += ev.text;
+              renderChatFeed();
+            } else if (ev.type === 'tool_call') {
+              botMsg.tool_traces.push(ev.trace);
+              renderChatFeed();
+            } else if (ev.type === 'answer_delta') {
+              botMsg.content += ev.text;
+              renderChatFeed();
+            } else if (ev.type === 'answer_replace') {
+              botMsg.content = ev.text;
+              renderChatFeed();
+            } else if (ev.type === 'done' && ev.result) {
+              botMsg.content = ev.result.visible_answer || botMsg.content;
+              botMsg.thoughts = ev.result.thoughts || botMsg.thoughts;
+              botMsg.tool_traces = ev.result.tool_traces || botMsg.tool_traces;
+              botMsg.titans_mean_surprise = ev.result.titans_mean_surprise;
+              if (ev.result.thread_title) {
+                document.getElementById('centerTitle').textContent = ev.result.thread_title;
+              }
+            }
+          }
         }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          botMsg.content = botMsg.content || 'Erreur de communication locale.';
+        }
+      } finally {
+        botMsg.streaming = false;
+        activeStreamCtrl = null;
+        btn.textContent = '↑';
+        btn.classList.remove('stop-mode');
         renderChatFeed();
         loadThreads();
         refreshStatus();
-      } finally {
-        btn.disabled = false;
         inp.focus();
       }
     }
 
-    /* ---------------- TELEMETRY, MORPHOGENESIS & PLUGINS ---------------- */
+    /* ---------------- CONTINUAL GROWTH & TELEMETRY ---------------- */
+    async function toggleBg() {
+      if (bgActive) {
+        await fetch('/api/train/background/stop', {method: 'POST'});
+        toast('Croissance Continue mise en pause.');
+      } else {
+        const autoM = document.getElementById('chkAutoMolt').checked;
+        await fetch('/api/train/background/start', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({auto_morphogenesis: autoM, batch_size: 2})
+        });
+        toast('Croissance Continue activée en tâche de fond !');
+      }
+      await refreshStatus();
+    }
+
     async function refreshStatus() {
       try {
         const res = await fetch('/api/status');
@@ -1392,29 +1708,46 @@
 
         document.getElementById('headerStageBadge').textContent = `${a.stage_name} · Gen ${a.generation}`;
         document.getElementById('railTotal').textContent = `${(a.total_params / 1e6).toFixed(2)}M`;
-        document.getElementById('railActive').textContent = `${(a.active_params / 1e6).toFixed(2)}M`;
-        document.getElementById('railTokens').textContent = `${fmt(d.total_tokens_trained)} tok`;
-        document.getElementById('btnBgMain').textContent = `Croissance Continue: ${bgActive ? 'ON' : 'OFF'}`;
+        document.getElementById('railTokens').textContent = fmt(d.total_tokens_trained);
+        document.getElementById('railBgSteps').textContent = fmt(d.bg_steps_session || 0);
+        document.getElementById('railBgLoss').textContent = d.bg_last_ce_loss != null ? d.bg_last_ce_loss.toFixed(3) : '-';
 
-        // Right rail compact Gate-Zero bars
+        const pct = d.bg_next_molt_pct || 0;
+        document.getElementById('moltPctTxt').textContent = `${pct}%`;
+        document.getElementById('moltProgressFill').style.width = `${pct}%`;
+
+        // Live state indicators
+        const dot = document.getElementById('bgLiveDot');
+        const lbl = document.getElementById('bgStateLabel');
+        const btnRail = document.getElementById('btnRailBgToggle');
+        const btnMain = document.getElementById('btnBgMain');
+
+        dot.classList.toggle('on', bgActive);
+        lbl.textContent = bgActive ? `Active (${d.bg_tok_per_sec || 0} tok/s)` : 'En pause';
+        lbl.style.color = bgActive ? 'var(--emerald)' : 'var(--text-muted)';
+
+        btnRail.textContent = bgActive ? '⏸ Mettre en pause la Croissance' : '▶ Démarrer la Croissance Continue';
+        btnRail.className = bgActive ? 'pill-btn pill-emerald' : 'pill-btn pill-white';
+
+        btnMain.textContent = bgActive ? '⏸ Croissance Continue : ACTIVE' : '▶ Activer la Croissance Continue';
+
         document.getElementById('railLayers').innerHTML = (a.layers || []).map(l => {
           const w = Math.min(100, Math.abs(l.alpha_gate) * 100).toFixed(1);
           return `
             <div class="layer-mini-row">
-              <span style="width:24px;">L${l.layer}</span>
+              <span style="width:22px;">L${l.layer}</span>
               <div class="layer-track"><div class="layer-fill" style="width:${w}%"></div></div>
-              <span style="width:44px;text-align:right;">${l.alpha_gate.toFixed(2)}</span>
+              <span style="width:42px;text-align:right;">${l.alpha_gate.toFixed(2)}</span>
             </div>
           `;
         }).join('');
 
-        // Full Anatomy tab
         document.getElementById('anatStatsGrid').innerHTML = `
           <div class="stat-tile"><span>Stade</span><strong>${esc(a.stage_name)}</strong></div>
           <div class="stat-tile"><span>Paramètres Totaux</span><strong>${fmt(a.total_params)}</strong></div>
           <div class="stat-tile"><span>Actifs / Token</span><strong>${fmt(a.active_params)}</strong></div>
           <div class="stat-tile"><span>Architecture</span><strong>L=${a.n_layers} · d=${a.d_model}</strong></div>
-          <div class="stat-tile"><span>Experts MoE</span><strong>${a.use_moe ? a.n_routed_experts + ' (Top-' + a.top_k_experts + ')' : 'Dense'}</strong></div>
+          <div class="stat-tile"><span>Réservoir Replay</span><strong>${fmt(d.replay_buffer_size)}</strong></div>
           <div class="stat-tile"><span>Mémoires EvolveMem</span><strong>${fmt(d.memories_count)}</strong></div>
         `;
 
@@ -1443,39 +1776,39 @@
       if (pts.length < 2) {
         ctx.fillStyle = '#71767B';
         ctx.font = '11px sans-serif';
-        ctx.fillText('Cliquez sur +5 Pas Muon pour tracer la courbe', 18, H / 2);
+        ctx.fillText('Démarrez la Croissance Continue pour voir le flux live', 14, H / 2);
         return;
       }
       const vals = pts.map(p => p.ce_loss);
-      const lo = Math.max(0, Math.min(...vals) - 0.1);
-      const hi = Math.max(...vals) + 0.1;
+      const lo = Math.max(0, Math.min(...vals) - 0.08);
+      const hi = Math.max(...vals) + 0.08;
 
       ctx.strokeStyle = '#2F3336';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
 
-      ctx.strokeStyle = '#FFFFFF';
+      ctx.strokeStyle = bgActive ? '#00BA7C' : '#FFFFFF';
       ctx.lineWidth = 2;
       ctx.beginPath();
       pts.forEach((p, i) => {
-        const x = 12 + (i / (pts.length - 1)) * (W - 24);
-        const y = H - 16 - ((p.ce_loss - lo) / Math.max(1e-5, hi - lo)) * (H - 32);
+        const x = 10 + (i / (pts.length - 1)) * (W - 20);
+        const y = H - 14 - ((p.ce_loss - lo) / Math.max(1e-5, hi - lo)) * (H - 28);
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
       ctx.stroke();
 
       const last = pts[pts.length - 1];
       ctx.fillStyle = '#E7E9EA';
-      ctx.font = '11px monospace';
-      ctx.fillText(`CE ${last.ce_loss} · ${last.tok_per_sec} tok/s`, 12, 15);
+      ctx.font = '10.5px monospace';
+      ctx.fillText(`CE ${last.ce_loss} · Step #${last.global_step}`, 10, 14);
     }
 
     async function runBurst(steps) {
-      toast(`Entraînement Muon + WSM (${steps} pas)...`);
+      toast(`Burst Muon + WSM (${steps} pas)...`);
       const res = await fetch('/api/train/burst', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({num_steps: steps, batch_size: 6})
+        body: JSON.stringify({num_steps: steps, batch_size: 4})
       });
       const d = await res.json();
       toast(`Val CE = ${d.val_ce_loss} (PPL ${d.val_perplexity})`);
@@ -1491,15 +1824,10 @@
       });
       const d = await res.json();
       if (res.ok) {
-        toast(`Mue réussie : ${(d.new_total_params/1e6).toFixed(1)}M params (choc=${d.max_abs_logit_diff.toExponential(1)})`);
+        toast(`Mue réussie : ${(d.new_total_params/1e6).toFixed(2)}M params (choc=${d.max_abs_logit_diff.toExponential(1)})`);
       } else {
         toast(d.detail || 'Erreur');
       }
-      refreshStatus();
-    }
-
-    async function toggleBg() {
-      await fetch(bgActive ? '/api/train/background/stop' : '/api/train/background/start', {method: 'POST'});
       refreshStatus();
     }
 
@@ -1551,9 +1879,6 @@
     }
 
     restoreSessionOnBoot();
-    setInterval(() => {
-      if (currentUser) refreshStatus();
-    }, 5000);
   </script>
 </body>
 </html>

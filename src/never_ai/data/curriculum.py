@@ -321,8 +321,12 @@ class ContinualDatasetAndReplay:
             mask = self.tokenizer.build_target_loss_mask(ids)
 
             if len(ids) >= L:
+                last_end = 0
                 for offset in range(0, len(ids) - L + 1, self.seq_len):
                     packed.append((ids[offset : offset + L], mask[offset : offset + L]))
+                    last_end = offset + L
+                if last_end < len(ids):
+                    packed.append((ids[-L:], mask[-L:]))
                 continue
 
             if len(cur_ids) + len(ids) > L and len(cur_ids) >= 16:
