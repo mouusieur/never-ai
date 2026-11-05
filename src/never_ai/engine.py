@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import queue
+import re
 import threading
 import time
 from typing import Any, Iterator
@@ -23,6 +24,7 @@ from never_ai.core.special_tokens import (
 )
 from never_ai.core.tokenizer import MorphTokenizer
 from never_ai.data.curriculum import ContinualDatasetAndReplay, synthesize_bilingual_curriculum
+from never_ai.data.omega_domains import OMEGA_DOMAIN_KNOWLEDGE
 from never_ai.evolution.seal_and_grpo import (
     GRPOReasoningTrainer,
     ImmutableEvalHarness,
@@ -41,6 +43,7 @@ from never_ai.morphogenesis.operators import (
 from never_ai.optim.composite_muon import CompositeMuonOptimizer, WSMCheckpointMerger
 from never_ai.plugins.agent_harness import SovereignAgentHarness
 from never_ai.plugins.builtin import build_default_plugin_registry
+from never_ai.plugins.deep_research import SOVEREIGN_PERSONAS
 from never_ai.vault.manager import VaultManager
 
 
@@ -95,12 +98,13 @@ class NeverAIEngine:
         self.dataset = ContinualDatasetAndReplay(self.tokenizer, seq_len=self.seq_len)
         self.dataset.load_corpora(train_docs, val_docs)
 
+        is_mature_ckpt = bool(ckpts) and self.model.cfg.d_model > 256
         self.optimizer = CompositeMuonOptimizer(
             self.model,
-            muon_lr=1.2e-2,
-            adamw_lr=2.5e-3,
+            muon_lr=2.2e-3 if is_mature_ckpt else 7.5e-3,
+            adamw_lr=6.0e-4 if is_mature_ckpt else 2.2e-3,
             weight_decay=0.01,
-            warmup_steps=25,
+            warmup_steps=20,
         )
         self.wsm = WSMCheckpointMerger(max_snapshots=6)
         self.wsm.record_snapshot(self.model)
@@ -117,6 +121,7 @@ class NeverAIEngine:
         self.harness = SovereignAgentHarness(
             self.model, self.tokenizer, self.registry, self.memory
         )
+        self._seed_omega_domains_if_needed()
 
         self.telemetry_history: list[dict[str, Any]] = self._load_recent_telemetry()
         self._bg_running = False
@@ -158,6 +163,48 @@ class NeverAIEngine:
         with self.telemetry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
+    def _seed_omega_domains_if_needed(self) -> None:
+        """Ensure the 10 Sovereign Omega knowledge domains are indexed in EvolveMem with question keys."""
+        omega_count = sum(
+            1
+            for u in self.memory.units.values()
+            if u.category == "domain_omega" and any(t.startswith("qtxt:") for t in u.tags)
+        )
+        if omega_count == len(OMEGA_DOMAIN_KNOWLEDGE):
+            return
+        # Clean older v1 domain_omega entries if present
+        stale = [uid for uid, u in self.memory.units.items() if u.category == "domain_omega"]
+        for uid in stale:
+            del self.memory.units[uid]
+        for idx, item in enumerate(OMEGA_DOMAIN_KNOWLEDGE):
+            dom = item["domain"]
+            q_words = [w.lower() for w in re.findall(r"\w{3,}", item["q"])]
+            extra_tags = [str(t).lower() for t in item.get("tags", [])]
+            self.memory.store(
+                key=item.get("key", f"omega_{dom}_{idx}"),
+                content=item["a"],
+                category="domain_omega",
+                tags=[f"dom:{dom}", f"qtxt:{item['q'].lower()}", f"th:{item['thought']}", *extra_tags, *q_words],
+                persist=False,
+            )
+        self.memory.save()
+
+    def list_rag_documents(self) -> list[dict[str, Any]]:
+        docs: dict[str, dict[str, Any]] = {}
+        for u in self.memory.units.values():
+            if u.category == "document_rag":
+                src = next((t[4:] for t in u.tags if t.startswith("src:")), u.key)
+                entry = docs.setdefault(src, {"filename": src, "chunks": 0, "chars": 0, "created_at": u.created_at})
+                entry["chunks"] += 1
+                entry["chars"] += len(u.content)
+        return list(docs.values())
+
+    def domain_summary(self) -> list[dict[str, Any]]:
+        counts: dict[str, int] = {}
+        for item in OMEGA_DOMAIN_KNOWLEDGE:
+            counts[item["domain"]] = counts.get(item["domain"], 0) + 1
+        return [{"domain": k, "units": v} for k, v in counts.items()]
+
     def _refresh_status_cache(self) -> None:
         """Build an atomic lock-free status dictionary so /api/status responds in <1ms."""
         pct_next_molt = min(
@@ -165,6 +212,7 @@ class NeverAIEngine:
             round(100.0 * self._bg_tokens_since_molt / max(1, self.AUTO_MOLT_TOKEN_INTERVAL), 1),
         )
         self._status_cache = {
+            "version": "1.0.0-omega",
             "background_training": self._bg_running,
             "auto_morphogenesis": self._auto_morphogenesis,
             "bg_steps_session": self._bg_steps_session,
@@ -180,6 +228,9 @@ class NeverAIEngine:
             "anatomy": self.model.inspect_anatomy(),
             "wsm": self.wsm.describe(),
             "memories_count": len(self.memory.units),
+            "rag_documents": self.list_rag_documents(),
+            "domains": self.domain_summary(),
+            "personas": list(SOVEREIGN_PERSONAS.values()),
             "plugins": self.registry.list_plugins(),
             "checkpoints": self.vault.list_checkpoints(),
             "recent_telemetry": list(self.telemetry_history[-80:]),
@@ -408,6 +459,8 @@ class NeverAIEngine:
             )
             self.harness.registry = self.registry
 
+            self.optimizer.muon_base_lr = min(self.optimizer.muon_base_lr, 2.5e-3)
+            self.optimizer.adamw_base_lr = min(self.optimizer.adamw_base_lr, 6.5e-4)
             self.optimizer.rebuild_for_model(self.model)
             self.wsm.clear()
             self.wsm.record_snapshot(self.model)
@@ -469,6 +522,189 @@ class NeverAIEngine:
             self._refresh_status_cache()
             return rep
 
+    def ingest_document_rag(
+        self,
+        filename: str,
+        content: str,
+        owner: str = "local",
+        chunk_size: int = 850,
+    ) -> dict[str, Any]:
+        """Index a user-uploaded document into EvolveMem RAG and Continual Replay."""
+        clean_name = Path(filename).name[:80] or "document.txt"
+        text = content.strip()
+        if not text:
+            return {"ok": False, "error": "Document vide"}
+
+        paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
+        chunks: list[str] = []
+        cur = ""
+        for para in paragraphs:
+            if len(cur) + len(para) + 2 <= chunk_size:
+                cur = f"{cur}\n\n{para}".strip() if cur else para
+            else:
+                if cur:
+                    chunks.append(cur)
+                while len(para) > chunk_size:
+                    chunks.append(para[:chunk_size])
+                    para = para[chunk_size - 120 :]
+                cur = para
+        if cur:
+            chunks.append(cur)
+
+        with self.lock:
+            # Remove prior chunks for same filename to avoid duplicates on re-upload
+            to_del = [
+                uid
+                for uid, u in self.memory.units.items()
+                if u.category == "document_rag" and f"src:{clean_name}" in u.tags
+            ]
+            for uid in to_del:
+                del self.memory.units[uid]
+
+            for idx, ch in enumerate(chunks[:60]):
+                kw = [w.lower() for w in re.findall(r"\w{4,}", ch)[:8]]
+                self.memory.store(
+                    key=f"rag_{clean_name}_{idx}",
+                    content=ch,
+                    category="document_rag",
+                    tags=[f"src:{clean_name}", owner, *kw],
+                    persist=False,
+                )
+            self.memory.save()
+
+            # Inject first chunk summary into Continual Replay Reservoir
+            self.learn_dialogue_exchange(
+                question=f"Que contient le document {clean_name} ?",
+                thought=f"Synthétisons le contenu indexé du fichier local {clean_name}.",
+                answer=f"Le document `{clean_name}` contient notamment :\n> {chunks[0][:400]}",
+                priority=2.8,
+            )
+            self._refresh_status_cache()
+
+        return {
+            "ok": True,
+            "filename": clean_name,
+            "chunks_indexed": min(len(chunks), 60),
+            "total_chars": len(text),
+            "rag_documents": self.list_rag_documents(),
+        }
+
+    def clear_rag_document(self, filename: str) -> dict[str, Any]:
+        with self.lock:
+            to_del = [
+                uid
+                for uid, u in self.memory.units.items()
+                if u.category == "document_rag" and f"src:{filename}" in u.tags
+            ]
+            for uid in to_del:
+                del self.memory.units[uid]
+            self.memory.save()
+            self._refresh_status_cache()
+        return {"ok": True, "removed_chunks": len(to_del), "rag_documents": self.list_rag_documents()}
+
+    def teach_correction(
+        self,
+        prompt: str,
+        corrected_answer: str,
+        thought: str = "",
+        owner: str = "local",
+        train_steps: int = 3,
+    ) -> dict[str, Any]:
+        """
+        Live Human Preference & Correction Teaching:
+        1. Stores verified human correction in EvolveMem (`human_correction`)
+        2. Pushes high-priority trajectory to Continual Replay Reservoir
+        3. Runs immediate targeted CompositeMuon + 30% Replay gradient descent!
+        """
+        q_clean = prompt.strip()
+        a_clean = corrected_answer.strip()
+        th_clean = thought.strip() or "Intégration de la démonstration vérifiée enseignée par l'utilisateur."
+        norm_q = re.sub(r"\W+", " ", q_clean.lower()).strip()
+
+        with self.lock:
+            self.memory.store(
+                key=f"corr_{abs(hash(norm_q)) % 1_000_000}",
+                content=a_clean,
+                category="human_correction",
+                tags=[f"qnorm:{norm_q}", owner, "human_feedback"],
+            )
+            self.learn_dialogue_exchange(
+                question=q_clean,
+                thought=th_clean,
+                answer=a_clean,
+                priority=4.0,
+            )
+
+            losses: list[float] = []
+            doc = f"{BOS_TOKEN}{USER_TOKEN}{q_clean}{NEVER_TOKEN}{THINK_START}{th_clean}{THINK_END}{a_clean}{EOS_TOKEN}"
+            ids = self.tokenizer.encode(doc)
+            mask = self.tokenizer.build_target_loss_mask(ids)
+            L = self.seq_len + 1
+            if len(ids) < L:
+                pad_n = L - len(ids)
+                ids = ids + [0] * pad_n
+                mask = mask + [0.0] * pad_n
+            else:
+                ids = ids[-L:]
+                mask = mask[-L:]
+
+            t_ids = torch.tensor([ids[:-1]], dtype=torch.long, device=self.device)
+            t_tgt = torch.tensor([ids[1:]], dtype=torch.long, device=self.device)
+            t_msk = torch.tensor([mask[1:]], dtype=torch.float32, device=self.device)
+
+            self.model.train()
+            for _ in range(max(1, train_steps)):
+                rep = self.dataset.sample_batch(batch_size=2, split="train", replay_ratio=0.5, device=self.device)
+                inp = torch.cat([t_ids, rep.input_ids], dim=0)
+                tgt = torch.cat([t_tgt, rep.targets], dim=0)
+                msk = torch.cat([t_msk, rep.loss_mask], dim=0)
+                self.optimizer.zero_grad()
+                out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=True)
+                assert out.loss is not None
+                out.loss.backward()
+                self.optimizer.step(self.model)
+                self.model.update_moe_biases()
+                self.total_tokens_trained += int(inp.numel())
+                losses.append(round(out.ce_loss, 4))
+
+            self._append_telemetry(
+                {
+                    "type": "human_teaching",
+                    "timestamp": round(time.time(), 2),
+                    "prompt_preview": q_clean[:60],
+                    "steps": train_steps,
+                    "initial_ce": losses[0] if losses else 0.0,
+                    "final_ce": losses[-1] if losses else 0.0,
+                }
+            )
+            self._refresh_status_cache()
+
+        return {
+            "ok": True,
+            "steps": train_steps,
+            "losses": losses,
+            "memories_count": len(self.memory.units),
+            "replay_buffer_size": len(self.dataset.replay_reservoir),
+        }
+
+    def run_full_benchmark(self) -> dict[str, Any]:
+        """Run both Held-Out Neural Perplexity/CE and the 9-Domain Deterministic Plugin Benchmark."""
+        with self.lock:
+            neural_eval = self.eval_harness.evaluate(self.model)
+            plugin_bench = self.registry.invoke("live_benchmark_suite")
+            report = {
+                "ok": True,
+                "timestamp": round(time.time(), 2),
+                "stage": self.model.cfg.stage_name,
+                "generation": self.model.cfg.generation,
+                "neural_eval": neural_eval,
+                "symbolic_benchmark": plugin_bench,
+                "domains": self.domain_summary(),
+            }
+            self._append_telemetry({"type": "benchmark", **report})
+            self._refresh_status_cache()
+            return report
+
     def _get_recent_thread_messages(self, thread_id: str | None) -> list[dict[str, Any]]:
         if not thread_id:
             return []
@@ -480,21 +716,27 @@ class NeverAIEngine:
     def chat(
         self,
         message: str,
-        max_new_tokens: int = 140,
+        max_new_tokens: int = 160,
         temperature: float = 0.2,
         thread_id: str | None = None,
         owner: str = "local",
+        deep_think: bool = False,
+        persona: str = "polymathe",
     ) -> dict[str, Any]:
         self._active_chats += 1
         try:
             recent_hist = self._get_recent_thread_messages(thread_id)
             with self.lock:
+                if not recent_hist:
+                    self.harness.reset_session_fast_weights()
                 result = self.harness.run_turn(
                     message,
                     max_new_tokens=max_new_tokens,
                     temperature=temperature,
                     owner=owner,
                     recent_history=recent_hist,
+                    deep_think=deep_think,
+                    persona=persona,
                 )
                 learned = result.pop("learned_pair", None)
                 if learned:
@@ -516,10 +758,12 @@ class NeverAIEngine:
     def chat_stream(
         self,
         message: str,
-        max_new_tokens: int = 140,
+        max_new_tokens: int = 160,
         temperature: float = 0.2,
         thread_id: str | None = None,
         owner: str = "local",
+        deep_think: bool = False,
+        persona: str = "polymathe",
     ) -> Iterator[dict[str, Any]]:
         """Stream live SSE events (`think_delta`, `tool_call`, `answer_delta`, `done`)."""
         q: queue.Queue[dict[str, Any] | None] = queue.Queue()
@@ -530,12 +774,16 @@ class NeverAIEngine:
             try:
                 recent_hist = self._get_recent_thread_messages(thread_id)
                 with self.lock:
+                    if not recent_hist:
+                        self.harness.reset_session_fast_weights()
                     res = self.harness.run_turn(
                         message,
                         max_new_tokens=max_new_tokens,
                         temperature=temperature,
                         owner=owner,
                         recent_history=recent_hist,
+                        deep_think=deep_think,
+                        persona=persona,
                         on_event=lambda ev: (False if aborted_flag.is_set() else (q.put(ev) or True)),
                     )
                     learned = res.pop("learned_pair", None)

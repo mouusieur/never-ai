@@ -88,6 +88,7 @@ class EvolveMemStore:
         category: str = "semantic",
         tags: list[str] | None = None,
         importance: float = 1.0,
+        persist: bool = True,
     ) -> MemoryUnit:
         digest = hashlib.sha256(f"{key}::{content}".encode("utf-8")).hexdigest()[:10]
         mem_id = f"mem_{digest}"
@@ -101,7 +102,8 @@ class EvolveMemStore:
         )
         self.units[mem_id] = unit
         self.vectors[mem_id] = compute_char_ngram_embedding(f"{key} {content} {' '.join(unit.tags)}")
-        self.save()
+        if persist:
+            self.save()
         return unit
 
     def query(

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "never-ai"
-version = "0.2.0"
+version = "1.0.0"
 description = "ChronoMorph-LM: Self-Growing, Continually Learning Open-Thought Language Model & Sovereign Desktop App"
 readme = "README.md"
 requires-python = ">=3.11"

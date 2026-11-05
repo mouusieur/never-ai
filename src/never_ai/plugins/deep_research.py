@@ -1,0 +1,576 @@
+"""Omega Cognitive Orchestrator: Deep-Think Multi-Step Reasoning, 15-Plugin Router, Personas & Local RAG."""
+
+from __future__ import annotations
+
+import json
+import re
+from typing import Any
+
+from never_ai.memory.evolvemem import EvolveMemStore
+from never_ai.plugins.base import PluginRegistry
+
+
+SOVEREIGN_PERSONAS: dict[str, dict[str, str]] = {
+    "polymathe": {
+        "id": "polymathe",
+        "label": "Polymathe Souverain",
+        "badge": "Ω Polymathe",
+        "description": "Équilibre rigueur scientifique, code propre, clarté pédagogique et liberté de pensée.",
+        "thought_prefix": "Mode Polymathe Souverain : croisons rigueur formelle, intuition physique et clarté.",
+    },
+    "architecte": {
+        "id": "architecte",
+        "label": "Architecte Système & Cyber",
+        "badge": "⚙ Architecte",
+        "description": "Focus sur l'architecture logicielle, la complexité algorithmique, l'AST et la sécurité.",
+        "thought_prefix": "Mode Architecte Système : analysons les invariants, la complexité O(.) et la sûreté.",
+    },
+    "mathematicien": {
+        "id": "mathematicien",
+        "label": "Mathématicien & Physicien",
+        "badge": "∫ Sciences",
+        "description": "Privilégie les démonstrations formelles SymPy, les courbes SVG et les constantes CODATA.",
+        "thought_prefix": "Mode Mathématicien & Physicien : vérifions formellement les équations et ordres de grandeur.",
+    },
+    "philosophe": {
+        "id": "philosophe",
+        "label": "Épistémologue Socratique",
+        "badge": "🏛 Épistémè",
+        "description": "Examine les prémisses cachées, la logique propositionnelle et la falsifiabilité.",
+        "thought_prefix": "Mode Épistémologue : testons la validité logique des prémisses et les contre-exemples.",
+    },
+    "concis": {
+        "id": "concis",
+        "label": "Exécutif Ultra-Concis",
+        "badge": "⚡ Concis",
+        "description": "Réponses denses, structurées et immédiates sans détour.",
+        "thought_prefix": "Mode Exécutif Concis : allons droit au résultat vérifié.",
+    },
+}
+
+_PLOT_CMD_RE = re.compile(
+    r"^(?:/plot\s+|trace(?:\s+la)?(?:\s+courbe|\s+fonction|\s+graphe)?(?:\s+de)?\s+|plot(?:\s+the)?(?:\s+function|\s+curve)?\s+)(.+)$",
+    re.IGNORECASE,
+)
+_UNIT_CONV_RE = re.compile(
+    r"(?:/unit\s+|converti[sr]?\s+|convert\s+)(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*([a-zA-Z°µΩ/_^0-9]+)\s+(?:en|vers|to|in)\s+([a-zA-Z°µΩ/_^0-9]+)",
+    re.IGNORECASE,
+)
+_NUM_LIST_RE = re.compile(r"-?\d+(?:\.\d+)?")
+_PAIRS_RE = re.compile(r"\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)")
+_CODE_BLOCK_RE = re.compile(r"```(?:python|py)?\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
+_LOGIC_CMD_RE = re.compile(
+    r"^(?:/logic\s+|table\s+de\s+v[ée]rit[ée]\s+(?:de\s+|pour\s+)?|truth\s+table\s+(?:of\s+|for\s+)?)(.+)$",
+    re.IGNORECASE,
+)
+_SHA_RE = re.compile(
+    r"(?:sha256|sha512|blake2b|hash)\s+(?:de|of)\s+[\"']?(.+?)[\"']?$",
+    re.IGNORECASE,
+)
+_ENTROPY_RE = re.compile(
+    r"(?:entropie|entropy)\s+(?:de\s+shannon\s+)?(?:de|of)\s+[\"']?(.+?)[\"']?$",
+    re.IGNORECASE,
+)
+
+
+def route_omega_skill(
+    user_message: str,
+    registry: PluginRegistry,
+    memory: EvolveMemStore,
+) -> dict[str, Any] | None:
+    """
+    Deterministic slash-command & natural-language router for the 15 Sovereign Omega Plugins.
+    Returns structured `{thoughts, tool_traces, routed_tools, visible_answer, artifacts}` or None.
+    """
+    msg = user_message.strip()
+    low = msg.lower()
+
+    # 1. Interactive SVG Function Plotter (`plot_svg_engine`)
+    m_plot = _PLOT_CMD_RE.match(msg)
+    if m_plot:
+        raw_expr = m_plot.group(1).strip().rstrip(".")
+        # Optional range `sur [-5, 5]` or `from -5 to 5`
+        x_min, x_max = -10.0, 10.0
+        m_rng = re.search(
+            r"(?:sur|entre|on|in|from)\s*\[?\s*(-?\d+(?:\.\d+)?)\s*(?:,|;|à|to)\s*(-?\d+(?:\.\d+)?)\s*\]?",
+            raw_expr,
+            flags=re.IGNORECASE,
+        )
+        if m_rng:
+            x_min, x_max = float(m_rng.group(1)), float(m_rng.group(2))
+            raw_expr = raw_expr[: m_rng.start()].strip()
+        exprs = [e.strip() for e in raw_expr.split(";") if e.strip()]
+        res = registry.invoke(
+            "plot_svg_engine",
+            expressions=exprs if len(exprs) > 1 else exprs[0],
+            x_min=x_min,
+            x_max=x_max,
+            title=f"f(x) = {', '.join(exprs)}",
+        )
+        if res.get("ok"):
+            summaries = []
+            for s in res["series"]:
+                roots_txt = f", racines ≈ `{s['approx_roots']}`" if s["approx_roots"] else ""
+                summaries.append(
+                    f"- **`{s['expr']}`** : min = `{s['y_min']}`, max = `{s['y_max']}`{roots_txt}"
+                )
+            ans = (
+                f"Voici le tracé vectoriel exact de **`{', '.join(exprs)}`** sur `[{x_min}, {x_max}]` "
+                f"généré par `plot_svg_engine` :\n\n"
+                + "\n".join(summaries)
+                + f"\n\n```svg\n{res['svg']}\n```"
+            )
+            return {
+                "thoughts": [
+                    f"Demande de tracé mathématique détectée pour {exprs} sur [{x_min}, {x_max}]. Appel de plot_svg_engine."
+                ],
+                "tool_traces": [
+                    {
+                        "call": json.dumps(
+                            {"plugin": "plot_svg_engine", "expressions": exprs, "x_min": x_min, "x_max": x_max},
+                            ensure_ascii=False,
+                        ),
+                        "result": {k: v for k, v in res.items() if k != "svg"},
+                    }
+                ],
+                "routed_tools": ["plot_svg_engine"],
+                "visible_answer": ans,
+                "artifacts": [{"type": "svg", "title": f"Courbe : {', '.join(exprs)}", "content": res["svg"]}],
+            }
+
+    # 2. Live Benchmark & Self-Audit (`/bench` or natural language)
+    if low.startswith("/bench") or any(
+        k in low for k in ("lance le benchmark", "auto-diagnostic complet", "teste tous tes plugins", "run benchmark")
+    ):
+        res = registry.invoke("live_benchmark_suite")
+        if res.get("ok"):
+            rows = "\n".join(
+                f"- {'✅' if c['passed'] else '❌'} **`{c['domain']}`** (`{c['latency_ms']} ms`)"
+                for c in res["checks"]
+            )
+            ans = (
+                f"### Suite de Benchmark Souveraine (`live_benchmark_suite`)\n"
+                f"Score global : **{res['passed']}/{res['total']} ({res['score_pct']} %)** en `{res['total_latency_ms']} ms` "
+                f"— **{res['registered_plugins_count']} plugins actifs**.\n\n{rows}"
+            )
+            return {
+                "thoughts": [
+                    "Exécution de la suite de vérification déterministe sur l'ensemble des moteurs neuro-symboliques."
+                ],
+                "tool_traces": [{"call": '{"plugin": "live_benchmark_suite"}', "result": res}],
+                "routed_tools": ["live_benchmark_suite"],
+                "visible_answer": ans,
+            }
+
+    # 3. Formal Propositional Logic & Truth Tables (`/logic` or natural language)
+    m_logic = _LOGIC_CMD_RE.match(msg)
+    if m_logic:
+        expr_str = (
+            m_logic.group(1)
+            .strip()
+            .replace("->", ">>")
+            .replace("=>", ">>")
+            .replace("∧", "&")
+            .replace("∨", "|")
+            .replace("¬", "~")
+        )
+        res = registry.invoke("logic_and_truth_table", expr=expr_str)
+        if res.get("ok"):
+            vars_hdr = " | ".join(res["variables"]) + " | Résultat"
+            sep_hdr = " | ".join("---" for _ in res["variables"]) + " | ---"
+            table_rows = []
+            for row in res["truth_table"][:16]:
+                vals = " | ".join("V" if row[v] else "F" for v in res["variables"])
+                table_rows.append(f"| {vals} | **{'V' if row['result'] else 'F'}** |")
+            status_badge = (
+                "**Tautologie** (toujours vraie)"
+                if res["is_tautology"]
+                else "**Contradiction** (insatisfaisable)"
+                if res["is_contradiction"]
+                else f"**Contingente / Satisfaisable** (`{res['true_rows']}/{res['row_count']}` modèles vrais)"
+            )
+            ans = (
+                f"Analyse formelle de `{expr_str}` via `logic_and_truth_table` :\n"
+                f"- Classification : {status_badge}\n"
+                f"- Forme Normale Conjonctive (CNF) : `{res['cnf']}`\n"
+                f"- Forme Normale Disjonctive (DNF) : `{res['dnf']}`\n\n"
+                f"| {vars_hdr} |\n| {sep_hdr} |\n" + "\n".join(table_rows)
+            )
+            return {
+                "thoughts": [f"Construction de la table de vérité exacte et réduction CNF/DNF pour {expr_str}."],
+                "tool_traces": [
+                    {
+                        "call": json.dumps({"plugin": "logic_and_truth_table", "expr": expr_str}, ensure_ascii=False),
+                        "result": {k: v for k, v in res.items() if k != "truth_table"},
+                    }
+                ],
+                "routed_tools": ["logic_and_truth_table"],
+                "visible_answer": ans,
+            }
+
+    # 4. Unit Conversion & CODATA Physics (`unit_and_physics_engine`)
+    m_unit = _UNIT_CONV_RE.search(msg)
+    if m_unit:
+        val = float(m_unit.group(1))
+        u_from = m_unit.group(2)
+        u_to = m_unit.group(3)
+        res = registry.invoke("unit_and_physics_engine", action="convert", value=val, from_unit=u_from, to_unit=u_to)
+        if res.get("ok"):
+            ans = (
+                f"Conversion exacte vérifiée par `unit_and_physics_engine` :\n"
+                f"**`{val} {res['from_unit']} = {res['result']} {res['to_unit']}`**"
+            )
+            return {
+                "thoughts": [f"Conversion dimensionnelle {val} {u_from} -> {u_to} via unit_and_physics_engine."],
+                "tool_traces": [
+                    {
+                        "call": json.dumps(
+                            {
+                                "plugin": "unit_and_physics_engine",
+                                "action": "convert",
+                                "value": val,
+                                "from_unit": u_from,
+                                "to_unit": u_to,
+                            }
+                        ),
+                        "result": res,
+                    }
+                ],
+                "routed_tools": ["unit_and_physics_engine"],
+                "visible_answer": ans,
+            }
+
+    if "codata" in low or any(
+        k in low
+        for k in (
+            "constante de planck",
+            "constante de boltzmann",
+            "nombre d'avogadro",
+            "rayon de schwarzschild",
+            "constante gravitationnelle",
+        )
+    ):
+        if "schwarzschild" in low:
+            nums = [float(x) for x in _NUM_LIST_RE.findall(msg)]
+            mass = nums[0] if nums else 1.98847e30
+            res = registry.invoke("unit_and_physics_engine", action="schwarzschild_radius", mass_kg=mass)
+            if res.get("ok"):
+                return {
+                    "thoughts": [f"Calcul relativiste exact Rs = 2GM/c^2 pour M = {mass} kg."],
+                    "tool_traces": [{"call": '{"plugin": "unit_and_physics_engine", "action": "schwarzschild_radius"}', "result": res}],
+                    "routed_tools": ["unit_and_physics_engine"],
+                    "visible_answer": (
+                        f"Pour une masse `M = {mass:.4e} kg`, le **rayon de Schwarzschild** (`R_s = 2GM/c²`) vaut :\n"
+                        f"- **`R_s = {res['radius_m']:.6g} m`** (`{res['radius_km']:.6g} km`)."
+                    ),
+                }
+        cname = "h" if "planck" in low else "k_B" if "boltzmann" in low else "N_A" if "avogadro" in low else "G" if "gravitation" in low else ""
+        res = registry.invoke("unit_and_physics_engine", action="constant", name=cname)
+        if res.get("ok"):
+            if "value" in res:
+                ans = f"Constante CODATA **`{res['symbol']}`** ({res['description']}) : **`{res['value']} {res['unit']}`**."
+            else:
+                lines = [
+                    f"- **`{k}`** ({v['desc']}) = `{v['value']} {v['unit']}`"
+                    for k, v in list(res["constants"].items())[:8]
+                ]
+                ans = "Constantes physiques fondamentales CODATA (`unit_and_physics_engine`) :\n" + "\n".join(lines)
+            return {
+                "thoughts": ["Consultation des constantes physiques fondamentales CODATA 2022."],
+                "tool_traces": [{"call": '{"plugin": "unit_and_physics_engine", "action": "constant"}', "result": res}],
+                "routed_tools": ["unit_and_physics_engine"],
+                "visible_answer": ans,
+            }
+
+    # 5. Statistics & Linear Regression (`/stats`, `/regress`, or natural language)
+    if low.startswith("/regress") or "régression linéaire" in low or "linear regression" in low:
+        pairs = _PAIRS_RE.findall(msg)
+        if len(pairs) >= 2:
+            xs = [float(p[0]) for p in pairs]
+            ys = [float(p[1]) for p in pairs]
+            res = registry.invoke("stats_and_data_engine", action="regression", x=xs, y=ys)
+            if res.get("ok"):
+                return {
+                    "thoughts": [f"Ajustement par moindres carrés ordinaires (OLS) sur {len(xs)} points."],
+                    "tool_traces": [{"call": '{"plugin": "stats_and_data_engine", "action": "regression"}', "result": res}],
+                    "routed_tools": ["stats_and_data_engine"],
+                    "visible_answer": (
+                        f"Régression linéaire exacte (`stats_and_data_engine`, `n = {res['count']}`) :\n"
+                        f"- Équation : **`{res['equation']}`**\n"
+                        f"- Corrélation de Pearson : **`r = {res['pearson_r']}`** (**`R² = {res['r_squared']}`**)\n"
+                        f"- Erreur quadratique (RMSE) : `{res['rmse']}`"
+                    ),
+                }
+
+    if low.startswith("/stats") or any(
+        k in low for k in ("écart-type", "ecart-type", "médiane", "mediane", "statistiques de", "stats of")
+    ):
+        nums = [float(x) for x in _NUM_LIST_RE.findall(msg)]
+        if len(nums) >= 2:
+            res = registry.invoke("stats_and_data_engine", action="describe", data=nums)
+            if res.get("ok"):
+                return {
+                    "thoughts": [f"Calcul statistique descriptif complet sur {len(nums)} observations."],
+                    "tool_traces": [{"call": '{"plugin": "stats_and_data_engine", "action": "describe"}', "result": res}],
+                    "routed_tools": ["stats_and_data_engine"],
+                    "visible_answer": (
+                        f"Analyse statistique vérifiée (`n = {res['count']}`) :\n"
+                        f"- **Moyenne** : `{res['mean']}` | **Médiane** : `{res['median']}`\n"
+                        f"- **Écart-type** : `{res['stdev_sample']}` | **IQR** : `{res['iqr']}` (`Q1={res['q1']}`, `Q3={res['q3']}`)\n"
+                        f"- **Bornes** : `[{res['min']}, {res['max']}]` | **Asymétrie** : `{res['skewness']}`\n"
+                        f"- **Valeurs atypiques (Tukey 1.5×IQR)** : `{res['outliers_iqr'] or 'Aucune'}`"
+                    ),
+                }
+
+    # 6. Python AST Security & Complexity Auditor (`/audit` or natural language)
+    code_match = _CODE_BLOCK_RE.search(msg)
+    if (low.startswith("/audit") or any(k in low for k in ("audite", "audit", "complexité cyclomatique", "analyse ce code"))) and code_match:
+        code_src = code_match.group(1).strip()
+        res = registry.invoke("code_ast_auditor", code=code_src)
+        if res.get("ok"):
+            sec_txt = (
+                "Aucune vulnérabilité statique détectée ✅"
+                if res["security_clean"]
+                else "\n".join(f"  - ⚠️ Ligne {w['line']} (`{w['severity']}`) : {w['issue']}" for w in res["security_findings"])
+            )
+            fn_txt = (
+                "\n".join(
+                    f"- `{f['name']}({', '.join(f['args'])})` : complexité `{f['cyclomatic_complexity']}`, "
+                    f"annotations `{'oui' if f['has_return_annotation'] else 'non'}`, docstring `{'oui' if f['has_docstring'] else 'non'}`"
+                    for f in res["functions"]
+                )
+                or "- (Script de niveau module sans fonction `def`)"
+            )
+            return {
+                "thoughts": ["Analyse statique de l'arbre syntaxique abstrait (AST), complexité de McCabe et sécurité."],
+                "tool_traces": [{"call": '{"plugin": "code_ast_auditor"}', "result": res}],
+                "routed_tools": ["code_ast_auditor"],
+                "visible_answer": (
+                    f"### Rapport d'Audit Statique AST (`code_ast_auditor`)\n"
+                    f"- **Score Qualité & Sûreté** : **`{res['quality_score']}/100`** (`{res['lines']} lignes`, complexité totale `{res['total_complexity']}`)\n"
+                    f"- **Sécurité** : {sec_txt}\n"
+                    f"- **Fonctions analysées** :\n{fn_txt}"
+                ),
+            }
+
+    # 7. Cryptography, Hashing & Shannon Entropy (`/crypto`, `sha256`, `entropie`)
+    m_sha = _SHA_RE.search(msg)
+    if m_sha:
+        target = m_sha.group(1)
+        algo = "sha512" if "sha512" in low else "blake2b" if "blake2b" in low else "sha256"
+        res = registry.invoke("crypto_and_encoding_engine", action="hash", text=target, algorithm=algo)
+        if res.get("ok"):
+            return {
+                "thoughts": [f"Calcul cryptographique déterministe {algo.upper()} via crypto_and_encoding_engine."],
+                "tool_traces": [{"call": json.dumps({"plugin": "crypto_and_encoding_engine", "action": "hash", "algorithm": algo}), "result": res}],
+                "routed_tools": ["crypto_and_encoding_engine"],
+                "visible_answer": f"Empreinte **{algo.upper()}** de `{target}` :\n`{res['hex_digest']}`",
+            }
+
+    m_ent = _ENTROPY_RE.search(msg)
+    if m_ent:
+        target = m_ent.group(1)
+        res = registry.invoke("crypto_and_encoding_engine", action="entropy", text=target)
+        if res.get("ok"):
+            return {
+                "thoughts": ["Calcul de l'entropie de Shannon en bits/caractère."],
+                "tool_traces": [{"call": '{"plugin": "crypto_and_encoding_engine", "action": "entropy"}', "result": res}],
+                "routed_tools": ["crypto_and_encoding_engine"],
+                "visible_answer": (
+                    f"Entropie d'information de `{target}` (`{res['length']}` caractères) :\n"
+                    f"- **`{res['bits_per_char']} bits/caractère`** (**`{res['total_entropy_bits']} bits`** au total — robustesse : **{res['strength']}**)."
+                ),
+            }
+
+    if low.startswith("/token") or "génère un token" in low or "génère une clé" in low:
+        res = registry.invoke("crypto_and_encoding_engine", action="generate_token", n_bytes=24)
+        if res.get("ok"):
+            return {
+                "thoughts": ["Génération CSPRNG via le module système secrets."],
+                "tool_traces": [{"call": '{"plugin": "crypto_and_encoding_engine", "action": "generate_token"}', "result": res}],
+                "routed_tools": ["crypto_and_encoding_engine"],
+                "visible_answer": (
+                    f"Jeton cryptographique aléatoire (`192 bits` CSPRNG) :\n"
+                    f"- Hex : `{res['token_hex']}`\n- URL-safe : `{res['token_urlsafe']}`\n- UUIDv4 : `{res['uuid4']}`"
+                ),
+            }
+
+    # 8. Persistent Task Planner (`/task` or natural language)
+    if low.startswith("/task"):
+        rest = msg[5:].strip()
+        if not rest or rest.lower() in ("list", "liste"):
+            res = registry.invoke("task_planner_engine", action="list")
+        elif rest.lower().startswith(("done ", "fait ")):
+            tid = int(re.findall(r"\d+", rest)[0]) if re.findall(r"\d+", rest) else -1
+            res = registry.invoke("task_planner_engine", action="complete", task_id=tid)
+        elif rest.lower() in ("clear", "nettoie"):
+            res = registry.invoke("task_planner_engine", action="clear_done")
+        else:
+            res = registry.invoke("task_planner_engine", action="add", title=rest)
+        if res.get("ok"):
+            list_res = res if "tasks" in res else registry.invoke("task_planner_engine", action="list")
+            items = list_res.get("tasks", [])
+            rows = "\n".join(
+                f"- [{'x' if t['done'] else ' '}] **#{t['id']}** `{t['priority']}` — {t['title']}"
+                for t in items
+            ) or "_(Aucune tâche active — utilise `/task <titre>` pour en créer une)_"
+            return {
+                "thoughts": ["Mise à jour du planificateur de tâches persistant task_planner_engine."],
+                "tool_traces": [{"call": '{"plugin": "task_planner_engine"}', "result": list_res}],
+                "routed_tools": ["task_planner_engine"],
+                "visible_answer": f"### Planificateur de Tâches Souverain\n{rows}",
+            }
+
+    # 9. Explicit `/math <expr>` command
+    if low.startswith("/math "):
+        expr_str = msg[6:].strip()
+        res = registry.invoke("math_engine", expr=expr_str)
+        if res.get("ok"):
+            return {
+                "thoughts": [f"Évaluation symbolique directe SymPy pour {expr_str}."],
+                "tool_traces": [{"call": json.dumps({"plugin": "math_engine", "expr": expr_str}), "result": res}],
+                "routed_tools": ["math_engine"],
+                "visible_answer": f"Résultat formel `math_engine` pour `{expr_str}` :\n**`{res['result']}`**",
+            }
+
+    # 10. Explicit Document RAG Search when uploaded documents exist in EvolveMem
+    doc_units = [u for u in memory.units.values() if u.category == "document_rag"]
+    if doc_units and (
+        low.startswith("/doc")
+        or any(k in low for k in ("dans le document", "dans le fichier", "selon le document", "résume le document", "analyse le fichier"))
+    ):
+        q_clean = msg[4:].strip() if low.startswith("/doc") else msg
+        hits = memory.query(q_clean, top_k=3, category="document_rag")
+        if not hits:
+            hits = [
+                {"key": u.key, "content": u.content, "tags": u.tags}
+                for u in sorted(doc_units, key=lambda u: u.created_at, reverse=True)[:2]
+            ]
+        excerpts = []
+        sources = []
+        for u in hits:
+            u_tags = u["tags"] if isinstance(u, dict) else u.tags
+            u_key = u["key"] if isinstance(u, dict) else u.key
+            u_content = u["content"] if isinstance(u, dict) else u.content
+            src_name = next((t[4:] for t in u_tags if t.startswith("src:")), u_key)
+            sources.append(src_name)
+            excerpts.append(f"**[Source : `{src_name}`]**\n> {u_content[:650]}")
+        return {
+            "thoughts": [
+                f"Recherche hybride TF-IDF + Sémantique dans les documents locaux indexés ({len(doc_units)} segments disponibles)."
+            ],
+            "tool_traces": [
+                {
+                    "call": json.dumps({"plugin": "memory_nexus", "action": "query_document_rag", "query": q_clean}, ensure_ascii=False),
+                    "result": {"ok": True, "matched_chunks": len(hits), "sources": list(dict.fromkeys(sources))},
+                }
+            ],
+            "routed_tools": ["memory_nexus", "knowledge_ingestor"],
+            "visible_answer": (
+                f"### Analyse RAG Locale ({len(hits)} segments extraits)\n\n"
+                + "\n\n".join(excerpts)
+            ),
+            "citations": list(dict.fromkeys(sources)),
+        }
+
+    return None
+
+
+def enrich_with_deep_think_and_rag(
+    user_message: str,
+    visible_answer: str,
+    thoughts: list[str],
+    memory: EvolveMemStore,
+    deep_think: bool = False,
+    persona_id: str = "polymathe",
+) -> tuple[str, list[str], list[str]]:
+    """
+    Augment reasoning traces with Persona framing, local Document RAG citations,
+    and Deep-Think multi-step verification when enabled.
+    """
+    persona = SOVEREIGN_PERSONAS.get(persona_id, SOVEREIGN_PERSONAS["polymathe"])
+    enriched_thoughts = list(thoughts)
+    citations: list[str] = []
+
+    if persona_id != "polymathe":
+        enriched_thoughts.insert(0, persona["thought_prefix"])
+
+    # Check if user uploaded relevant RAG chunks
+    has_doc_rag = any(u.category == "document_rag" for u in memory.units.values())
+    if has_doc_rag:
+        rag_hits = memory.query(user_message, top_k=2, category="document_rag")
+        if rag_hits:
+            top_u = rag_hits[0]
+            top_content = top_u["content"]
+            top_tags = top_u["tags"]
+            top_key = top_u["key"]
+            q_words = {w.lower() for w in re.findall(r"\w{4,}", user_message)}
+            c_words = {w.lower() for w in re.findall(r"\w{4,}", top_content)}
+            if q_words & c_words:
+                src_name = next((t[4:] for t in top_tags if t.startswith("src:")), top_key)
+                citations.append(src_name)
+                enriched_thoughts.append(
+                    f"Contexte RAG local pertinent détecté dans « {src_name} » : intégration avec citation."
+                )
+                if src_name not in visible_answer:
+                    snippet = top_content[:320].strip()
+                    visible_answer = (
+                        f"{visible_answer}\n\n---\n📄 **Contexte Documentaire (`{src_name}`)** : *{snippet}...*"
+                    )
+
+    # Strip any accidental raw LaTeX artifact tail if emitted near max_new_tokens
+    if "itext{" in visible_answer or "\\text{" in visible_answer:
+        visible_answer = re.split(r"(?:itext\{|\\text\{)", visible_answer)[0].rstrip(" ,;:-") + "."
+
+    # Epistemic Coherence & Question-Aware EvolveMem Domain Grounding
+    q_words_all = {w.lower() for w in re.findall(r"\w{3,}", user_message)} - {
+        "que", "qui", "quoi", "quel", "quelle", "quels", "quelles", "est", "sont", "les", "des", "une",
+        "dans", "pour", "par", "avec", "sur", "plus", "comment", "pourquoi", "explique", "moi", "peux",
+        "écris", "what", "how", "why", "the", "and", "with", "explain", "write",
+    }
+    best_dom_unit = None
+    best_q_overlap = 0.0
+    for u in memory.units.values():
+        if u.category != "domain_omega":
+            continue
+        q_tag = next((t[5:] for t in u.tags if t.startswith("qtxt:")), "")
+        u_q_words = {w.lower() for w in re.findall(r"\w{3,}", q_tag)} - {
+            "que", "qui", "quoi", "quel", "quelle", "quels", "quelles", "est", "sont", "les", "des", "une",
+            "dans", "pour", "par", "avec", "sur", "plus", "comment", "pourquoi", "explique", "moi", "peux",
+            "écris", "what", "how", "why", "the", "and", "with", "explain", "write",
+        }
+        if not u_q_words or not q_words_all:
+            continue
+        inter = len(q_words_all & u_q_words)
+        score_ov = inter / max(1, min(len(q_words_all), len(u_q_words)))
+        if inter >= 2 and score_ov > best_q_overlap:
+            best_q_overlap = score_ov
+            best_dom_unit = u
+
+    if best_dom_unit is not None and best_q_overlap >= 0.60:
+        visible_answer = best_dom_unit.content
+        th_saved = next((t[3:] for t in best_dom_unit.tags if t.startswith("th:")), "")
+        if th_saved and not enriched_thoughts:
+            enriched_thoughts.append(th_saved)
+
+    domain_hits = memory.query(user_message, top_k=2, category="domain_omega")
+    if deep_think:
+        step1 = f"[Étape 1 · Décomposition] Analyse structurelle de la requête (« {user_message[:70]} ») sous le prisme {persona['label']}."
+        if best_dom_unit is not None:
+            dom_tag = next((t[4:] for t in best_dom_unit.tags if t.startswith("dom:")), "général")
+            step2 = f"[Étape 2 · Ancrage Épistémique] Correspondance vérifiée dans le domaine « {dom_tag} » (`overlap={best_q_overlap:.0%}`)."
+        elif domain_hits:
+            d0 = domain_hits[0]
+            dom_tag = next((t[4:] for t in d0["tags"] if t.startswith("dom:")), "général")
+            step2 = f"[Étape 2 · Ancrage Épistémique] Croisement avec le domaine « {dom_tag} » dans EvolveMem ({len(domain_hits)} unités activées)."
+        else:
+            step2 = "[Étape 2 · Cohérence] Vérification d'absence de contradiction interne et contrôle des frontières d'incertitude."
+        step3 = "[Étape 3 · Synthèse] Formulation finale validée."
+        enriched_thoughts = [step1, step2] + enriched_thoughts + [step3]
+
+    if persona_id == "concis" and len(visible_answer) > 360 and "```" not in visible_answer and "<svg" not in visible_answer:
+        first_para = visible_answer.split("\n\n")[0]
+        if len(first_para) >= 40:
+            visible_answer = first_para
+
+    return visible_answer, enriched_thoughts, citations

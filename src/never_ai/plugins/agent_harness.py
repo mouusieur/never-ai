@@ -32,6 +32,10 @@ from never_ai.core.titans_memory import TitansMemoryState
 from never_ai.core.tokenizer import MorphTokenizer
 from never_ai.memory.evolvemem import EvolveMemStore
 from never_ai.plugins.base import PluginRegistry
+from never_ai.plugins.deep_research import (
+    enrich_with_deep_think_and_rag,
+    route_omega_skill,
+)
 
 
 _CALL_PATTERN = re.compile(
@@ -289,36 +293,71 @@ class SovereignAgentHarness:
                     "visible_answer": f"Lors de mon tour précédent, je disais :\n> {last_assistant}",
                 }
 
+        # 7. Exact recall of Human-Taught Corrections (RLHF / Interactive Teaching)
+        norm_q = re.sub(r"\W+", " ", msg_low).strip()
+        for u in reversed(list(self.memory.units.values())):
+            if u.category == "human_correction" and f"qnorm:{norm_q}" in u.tags:
+                return {
+                    "thoughts": ["Application prioritaire d'une correction enseignée et consolidée par l'utilisateur."],
+                    "tool_traces": [
+                        {
+                            "call": json.dumps({"plugin": "memory_nexus", "action": "recall_correction", "id": u.id}),
+                            "result": {"ok": True, "verified_by_user": True},
+                        }
+                    ],
+                    "routed_tools": ["memory_nexus"],
+                    "visible_answer": u.content,
+                }
+
+        # 8. Omega 15-Plugin Router (SVG Plotter, Stats/OLS, CODATA/Units, AST Audit, Crypto, Logic/SAT, Tasks, Benchmark, Local RAG)
+        omega_hit = route_omega_skill(user_message, self.registry, self.memory)
+        if omega_hit is not None:
+            return omega_hit
+
         return None
 
     def run_turn(
         self,
         user_message: str,
-        max_new_tokens: int = 150,
+        max_new_tokens: int = 160,
         temperature: float = 0.25,
         top_k: int = 30,
         max_tool_hops: int = 3,
         owner: str = "local",
         recent_history: list[dict[str, Any]] | None = None,
+        deep_think: bool = False,
+        persona: str = "polymathe",
         on_event: Callable[[dict[str, Any]], bool | None] | None = None,
     ) -> dict[str, Any]:
-        # Fast-path episodic/symbolic skills with verified traces
+        # Fast-path episodic/symbolic/Omega skills with verified traces
         fast = self._try_symbolic_or_episodic_skill(user_message, owner=owner, recent_history=recent_history)
         if fast is not None:
+            vis_fast, th_fast, cites_fast = enrich_with_deep_think_and_rag(
+                user_message=user_message,
+                visible_answer=fast["visible_answer"],
+                thoughts=fast.get("thoughts", []),
+                memory=self.memory,
+                deep_think=deep_think,
+                persona_id=persona,
+            )
             if on_event is not None:
-                for th in fast.get("thoughts", []):
-                    on_event({"type": "think_delta", "text": th})
+                for th in th_fast:
+                    on_event({"type": "think_delta", "text": th + "\n"})
                 for tr in fast.get("tool_traces", []):
                     on_event({"type": "tool_call", "trace": tr})
-                on_event({"type": "answer_delta", "text": fast["visible_answer"]})
+                on_event({"type": "answer_delta", "text": vis_fast})
             return {
-                "visible_answer": fast["visible_answer"],
-                "thoughts": fast.get("thoughts", []),
+                "visible_answer": vis_fast,
+                "thoughts": th_fast,
                 "tool_traces": fast.get("tool_traces", []),
                 "routed_tools": fast.get("routed_tools", []),
-                "raw_generation": fast["visible_answer"],
+                "raw_generation": vis_fast,
                 "titans_mean_surprise": 0.0,
                 "learned_pair": fast.get("learned_pair"),
+                "artifacts": fast.get("artifacts", []),
+                "citations": fast.get("citations", cites_fast),
+                "persona": persona,
+                "deep_think": deep_think,
             }
 
         prompt_text, routed_tools = self.build_prompt(
@@ -484,6 +523,33 @@ class SovereignAgentHarness:
                 if on_event is not None:
                     on_event({"type": "answer_replace", "text": visible})
 
+        pre_enrich_vis = visible
+        visible, thoughts, citations = enrich_with_deep_think_and_rag(
+            user_message=user_message,
+            visible_answer=visible,
+            thoughts=thoughts,
+            memory=self.memory,
+            deep_think=deep_think,
+            persona_id=persona,
+        )
+        if on_event is not None and visible != pre_enrich_vis:
+            on_event({"type": "answer_replace", "text": visible})
+
+        # Extract any fenced code or SVG artifacts for the Studio Canvas
+        artifacts: list[dict[str, str]] = []
+        for m_cb in re.finditer(r"```([a-zA-Z0-9_+-]*)\n(.*?)```", visible, flags=re.DOTALL):
+            lang = (m_cb.group(1) or "code").lower()
+            body = m_cb.group(2).strip()
+            if body:
+                artifacts.append(
+                    {
+                        "type": "svg" if lang == "svg" or body.startswith("<svg") else "code",
+                        "language": lang,
+                        "title": f"Artefact ({lang.upper()})",
+                        "content": body,
+                    }
+                )
+
         surprises = [
             round(s.last_surprise, 6)
             for s in (self.titans_session_states or [])
@@ -497,6 +563,10 @@ class SovereignAgentHarness:
             "routed_tools": routed_tools,
             "raw_generation": full_gen,
             "titans_mean_surprise": round(sum(surprises) / max(1, len(surprises)), 6),
+            "artifacts": artifacts,
+            "citations": citations,
+            "persona": persona,
+            "deep_think": deep_think,
         }
 
     def _execute_raw_call(self, raw_call: str) -> dict[str, Any]:

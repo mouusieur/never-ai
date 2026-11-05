@@ -10,7 +10,7 @@
   1. *Milliseconde (Inférence)* : **Neural Long-Term Memory (`Titans-MAG`)** mettant à jour un MLP mémoire en direct selon la surprise.
   2. *Minute/Heure (Sommeil)* : Auto-éditions synthétiques **`SEAL`** + réservoir de replay à 30 % + mémoire hybride auto-évolutive **`EvolveMem`**.
   3. *Jalon (Morphogenèse)* : Curriculum adaptatif multi-stades bilingue (FR/EN + Code + Math + Raisonnement).
-- **Souveraineté Cognitive & Système Nerveux de Plugins :** Sanctuaire de pensée libre explicite (`<|think|>...<|/think|>`) et latent continu (**`Coconut`** `<|bot|>...<|eot|>`), zéro alignement de refus artificiel, routeur rapide **`ToolRAG`**, 7 plugins fondateurs et moteur **`SkillForge`** d'auto-création d'outils vérifiés.
+- **Souveraineté Cognitive, 10 Domaines & 15 Plugins Formels (`v1.0 Omega`) :** Sanctuaire de pensée libre explicite (`<|think|>...<|/think|>`) et mode multi-étapes **`Deep Think`**, 10 domaines polymathiques FR/EN, RAG documentaire local, enseignement humain interactif (`CompositeMuon` en direct), routeur **`ToolRAG`**, **15 plugins souverains** (SymPy, traceur de courbes SVG `plot_svg_engine`, statistiques & régression OLS, constantes CODATA & unités, audit sécurité/complexité AST Python, cryptographie & entropie, logique propositionnelle SAT, sandbox Python, planificateur de tâches, suite de benchmark live) et moteur **`SkillForge`** d'auto-création d'outils vérifiés.
 - **Topologie Hybride Local + Cloud :** Entraînement continu vectorisé `AVX-512` (`fp32`) en local couplé à une synchronisation des checkpoints `safetensors` vers **Google Drive Vault** et worker **Burst GPU Cloud**.
 
 ## Application Desktop Windows (`.exe`) & Direction Artistique « Monolith Noir »
@@ -30,3 +30,4 @@ Ou automatiquement dans le cloud via le workflow GitHub Actions [`.github/workfl
 2. **[`docs/ARCHITECTURE_CHRONOMORPH.md`](docs/ARCHITECTURE_CHRONOMORPH.md)** — **Spécification Mathématique & Tensorielle** (MLA, Titans-MAG, DeepSeekMoE, Théorèmes d'Invariance Morphogénétique, Muon + WSM).
 3. **[`docs/PLUGIN_AND_EVOLUTION_PROTOCOL.md`](docs/PLUGIN_AND_EVOLUTION_PROTOCOL.md)** — **Protocole des Plugins, `ToolRAG`, `EvolveMem`, `SEAL`, `GRPO` & Garde-Fous Anti-Goodhart**.
 4. **[`docs/BRAND_AND_VISUAL_IDENTITY.md`](docs/BRAND_AND_VISUAL_IDENTITY.md)** — **Charte Graphique « Monolith Noir », Monogramme `NEVER` & Architecture `.exe`**.
+5. **[`docs/MEGA_PLAN_OMEGA.md`](docs/MEGA_PLAN_OMEGA.md)** — **Plan d'Évolution `Never-AI v1.0 Omega`** (10 Domaines Polymathiques, 15 Plugins Déterministes, Deep Think, RAG Local & Enseignement Interactif).

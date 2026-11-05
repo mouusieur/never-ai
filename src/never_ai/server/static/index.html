@@ -847,6 +847,153 @@
     }
     .dark-input:focus, .dark-textarea:focus { border-color: var(--accent); }
     .toast-bar { font-size: 12px; color: var(--emerald); min-height: 16px; }
+
+    /* OMEGA v1.0 STUDIO EXTENSIONS */
+    .composer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .omega-chip {
+      height: 28px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #0A0C0E;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+    .omega-chip:hover { color: var(--text-primary); border-color: #536471; background: var(--bg-card); }
+    .omega-chip.active-blue {
+      background: rgba(29, 155, 240, 0.16);
+      border-color: var(--accent);
+      color: #7FD1FF;
+    }
+    .omega-chip.active-emerald {
+      background: rgba(0, 186, 124, 0.16);
+      border-color: var(--emerald);
+      color: #6EE7B7;
+    }
+    .persona-select {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #0A0C0E;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+    .rag-chips-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 7px;
+    }
+    .rag-doc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(29, 155, 240, 0.12);
+      border: 1px solid rgba(29, 155, 240, 0.45);
+      color: #93C5FD;
+      font-size: 11.5px;
+    }
+    .rag-doc-pill button {
+      background: transparent;
+      border: none;
+      color: #93C5FD;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .slash-menu {
+      background: #0B0D10;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 8px;
+      padding: 6px;
+      max-height: 210px;
+      overflow-y: auto;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+    }
+    .slash-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 12.5px;
+    }
+    .slash-item:hover { background: var(--bg-card); }
+    .slash-cmd { color: var(--accent); font-family: monospace; font-weight: 700; }
+    .svg-plot-card {
+      margin: 10px 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #08090C;
+    }
+    .svg-plot-body {
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+    }
+    .svg-plot-body svg {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+    .md-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 12.5px;
+    }
+    .md-table th, .md-table td {
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .md-table th { background: var(--bg-card); color: var(--text-pure); }
+    .teach-drawer {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0B0D10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .domain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .domain-card {
+      background: #090B0E;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color 0.14s ease, transform 0.14s ease;
+    }
+    .domain-card:hover { border-color: var(--accent); transform: translateY(-1px); }
   </style>
 </head>
 <body>
@@ -904,10 +1051,10 @@
 
     <footer class="landing-footer">
       <a href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">⬇ Installateur Windows x64</a>
-      <span>ChronoMorph-LM v0.3</span>
-      <span>Croissance Continue Non-Bloquante</span>
-      <span>Streaming Token-par-Token</span>
-      <span>7 Plugins + SkillForge</span>
+      <span>ChronoMorph-LM v1.0 Omega</span>
+      <span>10 Domaines Polymathiques</span>
+      <span>15 Plugins Natifs + Courbes SVG</span>
+      <span>Deep Think & RAG Local</span>
     </footer>
   </div>
 
@@ -981,6 +1128,11 @@
           <span>Discussion</span>
         </div>
 
+        <div class="nav-item" id="nav-omega" onclick="switchTab('omega')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Domaines & Bench Ω</span>
+        </div>
+
         <div class="nav-item" id="nav-anatomy" onclick="switchTab('anatomy')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
           <span>Anatomie & Mue</span>
@@ -988,7 +1140,7 @@
 
         <div class="nav-item" id="nav-plugins" onclick="switchTab('plugins')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          <span>Plugins & Forge</span>
+          <span>15 Plugins & Forge</span>
         </div>
 
         <div class="nav-item" id="nav-seal" onclick="switchTab('seal')">
@@ -1037,14 +1189,76 @@
         </div>
       </header>
 
-      <!-- TAB 1: PRO STREAMING CHATBOT -->
+      <!-- TAB 1: PRO STREAMING CHATBOT (OMEGA) -->
       <div id="tab-chat" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="feed-scroll" id="chatFeed"></div>
 
         <div class="composer-wrap">
+          <div id="ragChipsBar" class="rag-chips-bar hidden"></div>
+          <div id="slashMenu" class="slash-menu hidden"></div>
+
+          <div class="composer-toolbar">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <button class="omega-chip" id="btnDeepThink" onclick="toggleDeepThink()" title="Raisonnement multi-étapes & ancrage épistémique EvolveMem">
+                ⚡ Deep Think
+              </button>
+              <select class="persona-select" id="personaSelect" title="Posture cognitive de Never-AI">
+                <option value="polymathe">Ω Polymathe Souverain</option>
+                <option value="architecte">⚙ Architecte & Cyber</option>
+                <option value="mathematicien">∫ Math & Physique</option>
+                <option value="philosophe">🏛 Épistémologue</option>
+                <option value="concis">⚡ Exécutif Concis</option>
+              </select>
+              <input type="file" id="ragFileInput" class="hidden" accept=".txt,.md,.py,.json,.csv,.tex,.html,.log,.yaml,.yml" onchange="handleRagFileSelect(event)" />
+              <button class="omega-chip" onclick="document.getElementById('ragFileInput').click()" title="Indexer un document local dans EvolveMem RAG">
+                📎 Document RAG
+              </button>
+              <button class="omega-chip" onclick="toggleSlashPalette()" title="Ouvrir la palette de commandes (Ctrl+K)">
+                / Outils (15)
+              </button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="omega-chip" id="btnVoiceMic" onclick="toggleVoiceDictation()" title="Dictée vocale (Web Speech)">
+                🎤 Voix
+              </button>
+            </div>
+          </div>
+
           <div class="composer-box">
-            <textarea id="composerInput" rows="1" placeholder="Discutez, demandez un calcul, ou dites « Retiens que... » (Entrée pour envoyer)" oninput="autoGrow(this)" onkeydown="handleComposerKey(event)"></textarea>
+            <textarea id="composerInput" rows="1" placeholder="Discutez, tapez /plot sin(x)*cos(2*x), /logic, /stats, /bench ou joignez un fichier RAG…" oninput="onComposerInput(this)" onkeydown="handleComposerKey(event)"></textarea>
             <button class="send-round" id="btnSend" onclick="onSendOrStop()" title="Envoyer">↑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB OMEGA: 10 DOMAINS, LOCAL RAG & SOVEREIGN BENCHMARK -->
+      <div id="tab-omega" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="x-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div>
+                <h3>Benchmark Souverain v1.0 Omega (Neuronal + 15 Plugins)</h3>
+                <p style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">
+                  Évalue en direct la perplexité neuronale held-out et audite les 9 moteurs formels (SymPy, SVG, Stats/OLS, CODATA, AST, Crypto, SAT, Sandbox, Tasks).
+                </p>
+              </div>
+              <button class="pill-btn pill-white" id="btnRunBench" onclick="runOmegaBenchmark()">▶ Lancer le Benchmark Complet</button>
+            </div>
+            <div id="benchResultBox" style="font-size:13px;color:var(--text-muted);">Cliquez sur « Lancer le Benchmark Complet » pour auditer le cerveau en temps réel.</div>
+          </div>
+
+          <div class="x-card">
+            <h3>10 Domaines Polymathiques Souverains (FR / EN)</h3>
+            <p style="font-size:12.5px;color:var(--text-muted);">Cliquez sur une carte pour tester immédiatement Never-AI sur ce domaine :</p>
+            <div class="domain-grid" id="omegaDomainsGrid"></div>
+          </div>
+
+          <div class="x-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h3>Coffre Documentaire RAG Local (EvolveMem)</h3>
+              <button class="pill-btn pill-outline-white" style="height:34px;font-size:12.5px;" onclick="document.getElementById('ragFileInput').click()">+ Importer un fichier</button>
+            </div>
+            <div id="omegaRagList" style="font-size:13px;color:var(--text-muted);">Aucun document importé pour le moment.</div>
           </div>
         </div>
       </div>
@@ -1069,20 +1283,30 @@
         </div>
       </div>
 
-      <!-- TAB 3: PLUGINS & SKILLFORGE -->
+      <!-- TAB 3: PLUGINS & SKILLFORGE (15 PLUGINS) -->
       <div id="tab-plugins" class="feed-scroll hidden">
         <div class="subview-pad">
           <div class="x-card">
-            <h3>Exécuteur Direct du Système Nerveux (7 Plugins Natifs)</h3>
+            <h3>Exécuteur Direct du Système Nerveux (15 Plugins Souverains)</h3>
             <select class="dark-select" id="plugName" onchange="syncPluginPreset()">
+              <option value="plot_svg_engine">plot_svg_engine — Traceur de courbes mathématiques vectorielles SVG</option>
               <option value="math_engine">math_engine — Calcul formel & exact (SymPy)</option>
+              <option value="stats_and_data_engine">stats_and_data_engine — Statistiques descriptives, corrélation & régression OLS</option>
+              <option value="unit_and_physics_engine">unit_and_physics_engine — Constantes CODATA, Schwarzschild & unités</option>
+              <option value="logic_and_truth_table">logic_and_truth_table — Logique propositionnelle, tables de vérité & SAT</option>
+              <option value="code_ast_auditor">code_ast_auditor — Audit statique AST Python, complexité & sécurité</option>
+              <option value="crypto_and_encoding_engine">crypto_and_encoding_engine — SHA-256/512, entropie de Shannon & jetons CSPRNG</option>
               <option value="python_sandbox">python_sandbox — Exécution Python isolée</option>
-              <option value="introspection_probe">introspection_probe — Anatomie synaptique</option>
-              <option value="memory_nexus">memory_nexus — Recherche & stockage EvolveMem</option>
+              <option value="task_planner_engine">task_planner_engine — Planificateur de tâches persistant</option>
+              <option value="live_benchmark_suite">live_benchmark_suite — Auto-diagnostic scientifique multi-domaines</option>
+              <option value="introspection_probe">introspection_probe — Anatomie synaptique temps réel</option>
+              <option value="memory_nexus">memory_nexus — Recherche hybride & stockage EvolveMem</option>
+              <option value="knowledge_ingestor">knowledge_ingestor — Ingestion documentaire RAG</option>
               <option value="workspace_fs">workspace_fs — Lecture sécurisée de l'espace</option>
             </select>
-            <input class="dark-input" id="plugParams" value='{"expr": "solve(x**2 - 7*x + 12, x)"}' />
+            <input class="dark-input" id="plugParams" value='{"expressions": ["sin(x)", "cos(x)*0.7"], "x_min": -6.28, "x_max": 6.28, "title": "Ondes Harmoniques"}' />
             <button class="pill-btn pill-white" style="align-self:flex-start;" onclick="execPlugin()">Exécuter le plugin</button>
+            <div id="plugSvgPreview"></div>
             <pre id="plugOutput" style="background:#000;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12.5px;color:#A5F3FC;overflow:auto;max-height:260px;">Résultat affiché ici.</pre>
           </div>
         </div>
@@ -1166,14 +1390,58 @@
     </aside>
   </div>
 
+  <!-- ARTEFACT CANVAS MODAL (SVG PLOTS & CODE STUDIO) -->
+  <div id="canvasModal" class="modal-backdrop hidden" onclick="if(event.target===this) closeCanvasModal()">
+    <div class="auth-modal" style="max-width:820px;padding:18px 24px 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 id="canvasModalTitle" style="font-size:17px;font-weight:800;">Artefact Souverain</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="pill-btn pill-outline-white" style="height:32px;font-size:12px;" onclick="downloadCanvasArtifact()">⬇ Télécharger</button>
+          <button class="icon-circle" onclick="closeCanvasModal()">✕</button>
+        </div>
+      </div>
+      <div id="canvasModalBody" style="background:#050608;border:1px solid var(--border);border-radius:12px;padding:16px;overflow:auto;max-height:72vh;display:flex;justify-content:center;"></div>
+    </div>
+  </div>
+
   <script>
     let currentUser = null;
     let currentThreadId = null;
     let currentMessages = [];
     let authMode = 'register';
     let bgActive = false;
+    let deepThinkActive = false;
     let activeStreamCtrl = null;
     let pollTimer = null;
+    let ragDocsCache = [];
+    let activeCanvasSvg = '';
+    let speechRec = null;
+
+    const SLASH_COMMANDS = [
+      {cmd: '/plot sin(x) * cos(2*x)', desc: 'Tracer une courbe mathématique vectorielle SVG'},
+      {cmd: '/logic ((P >> Q) & P) >> Q', desc: 'Table de vérité formelle, CNF/DNF & satisfaisabilité SAT'},
+      {cmd: '/stats 12, 15, 18, 22, 24, 95', desc: 'Moyenne, médiane, écart-type, IQR & outliers de Tukey'},
+      {cmd: '/regress (1, 2.1), (2, 3.9), (3, 6.2), (4, 8.0)', desc: 'Régression linéaire OLS exacte (pente, R², RMSE)'},
+      {cmd: '/unit 100 km/h en m/s', desc: 'Conversion dimensionnelle & constantes physiques CODATA'},
+      {cmd: '/math integrate(x**2 * exp(x), x)', desc: 'Calcul symbolique exact via SymPy'},
+      {cmd: '/task Préparer la prochaine mue morphogénétique', desc: 'Ajouter ou lister les tâches persistantes'},
+      {cmd: '/bench', desc: 'Exécuter l\'auto-diagnostic des 15 plugins souverains'},
+      {cmd: '/doc Résume les points clés du fichier', desc: 'Interroger vos documents locaux indexés en RAG'},
+      {cmd: '/token', desc: 'Générer un jeton cryptographique CSPRNG 192 bits'}
+    ];
+
+    const OMEGA_DOMAIN_CARDS = [
+      {title: '💬 Conversation & Identité', sub: 'Dialogue naturel FR/EN & introspection', q: 'Que sais-tu faire exactement ?'},
+      {title: '∫ Mathématiques & Courbes', sub: 'Algèbre, analyse, SymPy & tracés SVG', q: 'Trace la courbe de sin(x) * exp(-0.15*x) ; 0.5*cos(x) sur [-8, 8]'},
+      {title: '⚙ Informatique & Algorithmes', sub: 'Dijkstra, Python propre, AST & complexité', q: 'Écris l\'algorithme de Dijkstra en Python avec un tas binaire (heapq).'},
+      {title: '⚛ Physique & Astrophysique', sub: 'Relativité, quantique, thermodynamique & CODATA', q: 'Énonce les trois principes de la thermodynamique.'},
+      {title: '🧬 Biologie & Neurosciences', sub: 'ADN, CRISPR-Cas9 & plasticité de Hebb', q: 'Comment fonctionne l\'édition génétique CRISPR-Cas9 ?'},
+      {title: '🏛 Philosophie & Logique SAT', sub: 'Épistémologie de Popper & calcul formel', q: '/logic ((P >> Q) & (Q >> R)) >> (P >> R)'},
+      {title: '📜 Histoire des Sciences', sub: 'Imprimerie, Lumières, Turing & Shannon', q: 'Quel rôle Alan Turing et Claude Shannon ont-ils joué dans la naissance de l\'ère numérique ?'},
+      {title: '📈 Économie & Théorie des Jeux', sub: 'Équilibre de Nash, inflation & stats OLS', q: 'Qu\'est-ce qu\'un équilibre de Nash en théorie des jeux ?'},
+      {title: '🛡 Cybersécurité & Crypto', sub: 'AES-GCM, Ed25519, SQLi & entropie', q: 'Quelle est la différence entre chiffrement symétrique, asymétrique et hachage cryptographique ?'},
+      {title: '🌐 English Polymath', sub: 'P vs NP, Transformer complexity & science', q: 'Explain the time and memory complexity of standard Self-Attention versus Multi-Head Latent Attention (MLA).'}
+    ];
 
     const SMALL_NEVER_SVG = `<svg width="18" height="18" viewBox="0 0 512 512" fill="none"><path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/><path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/><path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/></svg>`;
 
@@ -1193,12 +1461,71 @@
       el.style.height = 'auto';
       el.style.height = Math.min(140, el.scrollHeight) + 'px';
     }
+    function onComposerInput(el) {
+      autoGrow(el);
+      const val = el.value;
+      if (val.startsWith('/')) {
+        renderSlashMenu(val.trim().toLowerCase());
+      } else {
+        document.getElementById('slashMenu').classList.add('hidden');
+      }
+    }
+    function renderSlashMenu(filterTxt = '') {
+      const box = document.getElementById('slashMenu');
+      const items = SLASH_COMMANDS.filter(c => !filterTxt || c.cmd.toLowerCase().includes(filterTxt) || c.desc.toLowerCase().includes(filterTxt.slice(1)));
+      if (!items.length) {
+        box.classList.add('hidden');
+        return;
+      }
+      box.innerHTML = items.map(it => `
+        <div class="slash-item" onclick="applySlashCmd('${esc(it.cmd).replace(/'/g, "\\'")}')">
+          <span class="slash-cmd">${esc(it.cmd)}</span>
+          <span style="color:var(--text-muted);font-size:11.5px;">${esc(it.desc)}</span>
+        </div>
+      `).join('');
+      box.classList.remove('hidden');
+    }
+    function toggleSlashPalette() {
+      const box = document.getElementById('slashMenu');
+      if (!box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+      } else {
+        renderSlashMenu('');
+      }
+    }
+    function applySlashCmd(cmd) {
+      const inp = document.getElementById('composerInput');
+      inp.value = cmd;
+      document.getElementById('slashMenu').classList.add('hidden');
+      autoGrow(inp);
+      inp.focus();
+    }
+    function toggleDeepThink() {
+      deepThinkActive = !deepThinkActive;
+      document.getElementById('btnDeepThink').classList.toggle('active-blue', deepThinkActive);
+      toast(deepThinkActive ? 'Mode Deep Think multi-étapes ACTIVÉ' : 'Mode Deep Think désactivé');
+    }
     function handleComposerKey(e) {
+      if (e.key === 'Escape') {
+        document.getElementById('slashMenu').classList.add('hidden');
+        return;
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        document.getElementById('slashMenu').classList.add('hidden');
         onSendOrStop();
       }
     }
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (currentUser) {
+          switchTab('chat');
+          toggleSlashPalette();
+          document.getElementById('composerInput').focus();
+        }
+      }
+    });
 
     /* ---------------- AUTH & LANDING ---------------- */
     function openAuthModal(mode) {
@@ -1301,17 +1628,35 @@
 
     /* ---------------- NAVIGATION & THREADS ---------------- */
     function switchTab(tab) {
-      ['chat', 'anatomy', 'plugins', 'seal'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
-        document.getElementById(`nav-${t}`).classList.toggle('active', t === tab);
+      ['chat', 'omega', 'anatomy', 'plugins', 'seal'].forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const navEl = document.getElementById(`nav-${t}`);
+        if (tabEl) tabEl.classList.toggle('hidden', t !== tab);
+        if (navEl) navEl.classList.toggle('active', t === tab);
       });
       const titles = {
-        chat: 'Discussion Souveraine',
+        chat: 'Discussion Souveraine Ω',
+        omega: '10 Domaines, RAG & Benchmark Ω',
         anatomy: 'Anatomie & Morphogenèse',
-        plugins: 'Système Nerveux & Forge',
+        plugins: '15 Plugins Souverains & Forge',
         seal: 'Consolidation Synaptique SEAL'
       };
       document.getElementById('centerTitle').textContent = titles[tab] || 'Never-AI';
+      if (tab === 'omega') renderOmegaDomainsTab();
+    }
+
+    function renderOmegaDomainsTab() {
+      const grid = document.getElementById('omegaDomainsGrid');
+      if (grid) {
+        grid.innerHTML = OMEGA_DOMAIN_CARDS.map(d => `
+          <div class="domain-card" onclick="switchTab('chat');quickAsk('${esc(d.q).replace(/'/g, "\\'")}')">
+            <div style="font-weight:700;font-size:13.5px;color:var(--text-pure);margin-bottom:4px;">${esc(d.title)}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${esc(d.sub)}</div>
+            <div style="font-size:11.5px;color:var(--accent);">Tester →</div>
+          </div>
+        `).join('');
+      }
+      renderRagViews();
     }
 
     async function loadThreads() {
@@ -1401,7 +1746,7 @@
       a.click();
     }
 
-    /* ---------------- PRO STREAMING CHATBOT ---------------- */
+    /* ---------------- PRO STREAMING CHATBOT (OMEGA) ---------------- */
     function renderChatFeed() {
       const feed = document.getElementById('chatFeed');
       if (!currentMessages.length) {
@@ -1412,20 +1757,20 @@
               <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
               <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
             </svg>
-            <h2>Que voulez-vous explorer ?</h2>
-            <p>Chatbot souverain <strong>ChronoMorph-LM</strong> en streaming temps réel : pensée libre <code>&lt;|think|&gt;</code>, mémoire épisodique personnelle, code exécutable et croissance continue.</p>
+            <h2>Never-AI v1.0 Omega</h2>
+            <p>Cerveau souverain <strong>ChronoMorph-LM</strong> : 10 domaines FR/EN, <strong>15 plugins formels</strong> (courbes SVG, SAT, CODATA, stats OLS, AST), <strong>Deep Think</strong>, RAG documentaire et enseignement en direct.</p>
             <div class="prompt-grid">
-              <div class="prompt-card" onclick="quickAsk('Salut ! Comment ça va ?')">
-                <strong>Engager la discussion</strong><br/><span style="color:var(--text-muted)">Salutation naturelle en français</span>
+              <div class="prompt-card" onclick="quickAsk('/plot sin(x) * cos(2*x) ; 0.4*x sur [-6, 6]')">
+                <strong>📈 Traceur Vectoriel SVG</strong><br/><span style="color:var(--text-muted)">Tracer et analyser des fonctions mathématiques</span>
               </div>
-              <div class="prompt-card" onclick="quickAsk('Je m\\'appelle Alex, retiens-le !')">
-                <strong>Mémoire Épisodique</strong><br/><span style="color:var(--text-muted)">Tester la mémorisation personnelle</span>
+              <div class="prompt-card" onclick="quickAsk('/logic ((P >> Q) & P) >> Q')">
+                <strong>🏛 Logique Formelle & SAT</strong><br/><span style="color:var(--text-muted)">Table de vérité complète, CNF/DNF & tautologie</span>
               </div>
-              <div class="prompt-card" onclick="quickAsk('Calcule 42 * 37 + 19')">
-                <strong>Calcul Formel SymPy</strong><br/><span style="color:var(--text-muted)">Exécution neuro-symbolique exacte</span>
+              <div class="prompt-card" onclick="quickAsk('Écris l\\'algorithme de Dijkstra en Python avec un tas binaire (heapq).')">
+                <strong>⚙ Algorithmes & Sandbox</strong><br/><span style="color:var(--text-muted)">Génération Python propre exécutable en 1 clic</span>
               </div>
-              <div class="prompt-card" onclick="quickAsk('Peux-tu m\\'écrire une fonction Python qui vérifie si un mot est un palindrome ?')">
-                <strong>Génération & Sandbox Code</strong><br/><span style="color:var(--text-muted)">Code Python exécutable en 1 clic</span>
+              <div class="prompt-card" onclick="quickAsk('Qu\\'est-ce qu\\'un équilibre de Nash en théorie des jeux ?')">
+                <strong>🌐 10 Domaines Polymathiques</strong><br/><span style="color:var(--text-muted)">Physique, biologie, économie, histoire, cyber</span>
               </div>
             </div>
           </div>
@@ -1453,21 +1798,31 @@
         if (m.thoughts && m.thoughts.length && m.thoughts.join('').trim()) {
           extras += `
             <details class="think-accordion" ${m.streaming ? 'open' : ''}>
-              <summary>${m.streaming && !m.content ? 'Réflexion interne en cours...' : 'Sanctuaire de pensée &lt;|think|&gt;'}</summary>
-              <div class="think-content">${esc(m.thoughts.join(''))}</div>
+              <summary>${m.streaming && !m.content ? 'Réflexion interne en cours...' : `Sanctuaire de pensée &lt;|think|&gt; ${m.deep_think ? '· ⚡ Deep Think' : ''}`}</summary>
+              <div class="think-content">${esc(m.thoughts.join('\n'))}</div>
             </details>
           `;
         }
         if (m.tool_traces && m.tool_traces.length) {
-          extras += `<div class="plugin-pill-trace">⚡ Plugin exécuté : ${esc(JSON.stringify(m.tool_traces[0]))}</div>`;
+          extras += `<div class="plugin-pill-trace">⚡ Plugin vérifié : ${esc(JSON.stringify(m.tool_traces[0]).slice(0, 180))}</div>`;
         }
 
         const prevUserMsg = idx > 0 && currentMessages[idx - 1].role === 'user' ? currentMessages[idx - 1].content : '';
         const actionsHtml = m.streaming ? '' : `
           <div class="msg-actions">
             <button class="msg-act-btn" onclick="copyMsg(${idx})">Copier</button>
+            <button class="msg-act-btn" onclick="speakMsg(${idx})">🔊 Écouter</button>
             ${prevUserMsg ? `<button class="msg-act-btn" onclick="regenMsg(${idx - 1})">↻ Régénérer</button>` : ''}
-            ${prevUserMsg ? `<button class="msg-act-btn" onclick="teachMsg(${idx - 1}, ${idx})">★ Consolider dans le cerveau</button>` : ''}
+            ${prevUserMsg ? `<button class="msg-act-btn" onclick="teachMsg(${idx - 1}, ${idx})">👍 Renforcer</button>` : ''}
+            ${prevUserMsg ? `<button class="msg-act-btn" style="color:#7FD1FF;" onclick="openTeachDrawer(${idx})">✏️ Corriger & Enseigner</button>` : ''}
+          </div>
+          <div id="teachDrawer-${idx}" class="teach-drawer hidden">
+            <div style="font-size:12px;color:var(--text-muted);">Enseignez la réponse idéale à Never-AI : ses poids <strong>CompositeMuon</strong> et sa mémoire <strong>EvolveMem</strong> l'apprendront immédiatement.</div>
+            <textarea class="dark-textarea" id="teachInput-${idx}" rows="3">${esc(m.content || '')}</textarea>
+            <div style="display:flex;gap:8px;">
+              <button class="pill-btn pill-white" style="height:32px;font-size:12px;" onclick="submitHumanCorrection(${idx - 1}, ${idx})">⚡ Enseigner aux Poids (Muon)</button>
+              <button class="pill-btn pill-outline-white" style="height:32px;font-size:12px;" onclick="document.getElementById('teachDrawer-${idx}').classList.add('hidden')">Annuler</button>
+            </div>
           </div>
         `;
 
@@ -1475,7 +1830,7 @@
           <div class="turn-item">
             <div class="turn-avatar never-av">${SMALL_NEVER_SVG}</div>
             <div class="turn-body">
-              <div class="turn-meta"><strong>Never-AI</strong><span>@chronomorph ${m.streaming ? '· génération live…' : ''}</span></div>
+              <div class="turn-meta"><strong>Never-AI</strong><span>@chronomorph ${m.persona && m.persona !== 'polymathe' ? '· ' + esc(m.persona) : ''} ${m.streaming ? '· génération live…' : ''}</span></div>
               ${extras}
               <div class="turn-text">${formatRichMessage(m.content || (m.streaming ? '▍' : ''), idx)}</div>
               ${actionsHtml}
@@ -1487,37 +1842,79 @@
     }
 
     function formatRichMessage(raw, msgIdx) {
-      // Extract ```python ... ``` blocks into interactive cards!
       const parts = [];
       let lastIndex = 0;
-      const re = /```(?:python|py)?\s*\n([\s\S]*?)```/gi;
+      const re = /```([a-zA-Z0-9_+-]*)\s*\n([\s\S]*?)```/gi;
       let match;
-      let codeIdx = 0;
       while ((match = re.exec(raw)) !== null) {
         if (match.index > lastIndex) {
-          parts.push(formatInline(raw.slice(lastIndex, match.index)));
+          parts.push(formatInlineBlocks(raw.slice(lastIndex, match.index)));
         }
-        const code = match[1].trim();
+        const lang = (match[1] || 'python').toLowerCase();
+        const code = match[2].trim();
         const encoded = encodeURIComponent(code);
-        parts.push(`
-          <div class="code-card">
-            <div class="code-card-head">
-              <span>python</span>
-              <div style="display:flex;gap:8px;">
-                <button class="msg-act-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('${encoded}'));toast('Code copié !')">Copier</button>
-                <button class="msg-act-btn" style="color:#6EE7B7;" onclick="runInlineSandbox('${encoded}')">▶ Exécuter Sandbox</button>
+        if (lang === 'svg' || code.startsWith('<svg')) {
+          parts.push(`
+            <div class="svg-plot-card">
+              <div class="code-card-head">
+                <span>📈 Graphique Vectoriel SVG</span>
+                <div style="display:flex;gap:8px;">
+                  <button class="msg-act-btn" style="color:#7FD1FF;" onclick="openCanvasModal(decodeURIComponent('${encoded}'))">⛶ Plein Écran</button>
+                  <button class="msg-act-btn" onclick="downloadRawSvg(decodeURIComponent('${encoded}'))">⬇ .svg</button>
+                </div>
               </div>
+              <div class="svg-plot-body">${code}</div>
             </div>
-            <pre>${esc(code)}</pre>
-          </div>
-        `);
+          `);
+        } else {
+          const canRunPy = lang === 'python' || lang === 'py' || lang === '';
+          parts.push(`
+            <div class="code-card">
+              <div class="code-card-head">
+                <span>${esc(lang || 'code')}</span>
+                <div style="display:flex;gap:8px;">
+                  <button class="msg-act-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('${encoded}'));toast('Code copié !')">Copier</button>
+                  ${canRunPy ? `<button class="msg-act-btn" style="color:#6EE7B7;" onclick="runInlineSandbox('${encoded}')">▶ Exécuter Sandbox</button>` : ''}
+                </div>
+              </div>
+              <pre>${esc(code)}</pre>
+            </div>
+          `);
+        }
         lastIndex = re.lastIndex;
-        codeIdx++;
       }
       if (lastIndex < raw.length) {
-        parts.push(formatInline(raw.slice(lastIndex)));
+        parts.push(formatInlineBlocks(raw.slice(lastIndex)));
       }
       return parts.join('');
+    }
+
+    function formatInlineBlocks(txt) {
+      // Support markdown tables (for truth tables!) + headings + inline bold/code
+      const lines = txt.split('\n');
+      const out = [];
+      let i = 0;
+      while (i < lines.length) {
+        if (lines[i].trim().startsWith('|') && i + 1 < lines.length && lines[i + 1].includes('---')) {
+          const hdrs = lines[i].trim().replace(/^\||\|$/g, '').split('|').map(c => `<th>${formatInline(c.trim())}</th>`).join('');
+          i += 2;
+          const rows = [];
+          while (i < lines.length && lines[i].trim().startsWith('|')) {
+            const cells = lines[i].trim().replace(/^\||\|$/g, '').split('|').map(c => `<td>${formatInline(c.trim())}</td>`).join('');
+            rows.push(`<tr>${cells}</tr>`);
+            i++;
+          }
+          out.push(`<table class="md-table"><thead><tr>${hdrs}</tr></thead><tbody>${rows.join('')}</tbody></table>`);
+          continue;
+        }
+        if (lines[i].startsWith('### ')) {
+          out.push(`<div style="font-weight:800;font-size:15px;color:#FFF;margin:6px 0 4px;">${formatInline(lines[i].slice(4))}</div>`);
+        } else {
+          out.push(formatInline(lines[i]));
+        }
+        i++;
+      }
+      return out.join('\n');
     }
 
     function formatInline(txt) {
@@ -1525,6 +1922,196 @@
       safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       safe = safe.replace(/`([^`\n]+)`/g, '<code>$1</code>');
       return safe;
+    }
+
+    function openCanvasModal(svgMarkup) {
+      activeCanvasSvg = svgMarkup;
+      document.getElementById('canvasModalBody').innerHTML = svgMarkup;
+      document.getElementById('canvasModal').classList.remove('hidden');
+    }
+    function closeCanvasModal() {
+      document.getElementById('canvasModal').classList.add('hidden');
+    }
+    function downloadRawSvg(svgMarkup) {
+      const blob = new Blob([svgMarkup], {type: 'image/svg+xml;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `never-ai-plot-${Date.now()}.svg`;
+      a.click();
+    }
+    function downloadCanvasArtifact() {
+      if (activeCanvasSvg) downloadRawSvg(activeCanvasSvg);
+    }
+
+    function openTeachDrawer(botIdx) {
+      const el = document.getElementById(`teachDrawer-${botIdx}`);
+      if (el) el.classList.toggle('hidden');
+    }
+
+    async function submitHumanCorrection(userIdx, botIdx) {
+      const u = currentMessages[userIdx];
+      const inp = document.getElementById(`teachInput-${botIdx}`);
+      if (!u || !inp) return;
+      const corrected = inp.value.trim();
+      if (corrected.length < 2) return;
+      toast('Apprentissage synaptique Muon en cours...');
+      const owner = currentUser ? currentUser.handle : 'local';
+      const res = await fetch('/api/chat/feedback', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          prompt: u.content,
+          corrected_answer: corrected,
+          owner,
+          train_steps: 3
+        })
+      });
+      const d = await res.json();
+      if (d.ok) {
+        currentMessages[botIdx].content = corrected;
+        renderChatFeed();
+        const lossInfo = d.losses && d.losses.length ? ` (CE ${d.losses[0]} → ${d.losses[d.losses.length - 1]})` : '';
+        toast(`Enseignement consolidé dans les poids !${lossInfo}`);
+        refreshStatus();
+      }
+    }
+
+    function speakMsg(idx) {
+      const m = currentMessages[idx];
+      if (!m || !('speechSynthesis' in window)) {
+        toast('Synthèse vocale non disponible sur ce navigateur.');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const clean = (m.content || '').replace(/```[\s\S]*?```/g, '').replace(/[*_`#>]/g, '');
+      const utt = new SpeechSynthesisUtterance(clean);
+      utt.lang = /\b(the|and|with|explain)\b/i.test(clean) ? 'en-US' : 'fr-FR';
+      window.speechSynthesis.speak(utt);
+      toast('Lecture vocale en cours...');
+    }
+
+    function toggleVoiceDictation() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        toast('Dictée vocale Web Speech non supportée sur ce navigateur.');
+        return;
+      }
+      const btn = document.getElementById('btnVoiceMic');
+      if (speechRec) {
+        speechRec.stop();
+        speechRec = null;
+        btn.classList.remove('active-emerald');
+        return;
+      }
+      speechRec = new SR();
+      speechRec.lang = 'fr-FR';
+      speechRec.interimResults = false;
+      btn.classList.add('active-emerald');
+      toast('Parlez maintenant...');
+      speechRec.onresult = (ev) => {
+        const transcript = ev.results[0][0].transcript;
+        const inp = document.getElementById('composerInput');
+        inp.value = (inp.value ? inp.value + ' ' : '') + transcript;
+        autoGrow(inp);
+      };
+      speechRec.onend = () => {
+        speechRec = null;
+        btn.classList.remove('active-emerald');
+      };
+      speechRec.start();
+    }
+
+    async function handleRagFileSelect(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      const owner = currentUser ? currentUser.handle : 'local';
+      toast(`Indexation RAG de ${file.name}...`);
+      const res = await fetch('/api/rag/upload', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({filename: file.name, content: text, owner})
+      });
+      const d = await res.json();
+      ev.target.value = '';
+      if (d.ok) {
+        ragDocsCache = d.rag_documents || [];
+        renderRagViews();
+        toast(`Document « ${d.filename} » indexé (${d.chunks_indexed} segments RAG) !`);
+        refreshStatus();
+      }
+    }
+
+    async function removeRagDoc(filename) {
+      const res = await fetch(`/api/rag/documents/${encodeURIComponent(filename)}`, {method: 'DELETE'});
+      const d = await res.json();
+      ragDocsCache = d.rag_documents || [];
+      renderRagViews();
+      toast(`Document « ${filename} » retiré.`);
+    }
+
+    function renderRagViews() {
+      const bar = document.getElementById('ragChipsBar');
+      if (bar) {
+        if (!ragDocsCache.length) {
+          bar.classList.add('hidden');
+          bar.innerHTML = '';
+        } else {
+          bar.classList.remove('hidden');
+          bar.innerHTML = ragDocsCache.map(doc => `
+            <span class="rag-doc-pill">
+              📄 <span style="cursor:pointer;" onclick="quickAsk('/doc Résume le fichier ${esc(doc.filename).replace(/'/g, "\\'")}')">${esc(doc.filename)} (${doc.chunks})</span>
+              <button onclick="removeRagDoc('${esc(doc.filename).replace(/'/g, "\\'")}')" title="Retirer">✕</button>
+            </span>
+          `).join('');
+        }
+      }
+      const ragList = document.getElementById('omegaRagList');
+      if (ragList) {
+        if (!ragDocsCache.length) {
+          ragList.innerHTML = 'Aucun document local importé. Utilisez « 📎 Document RAG » pour indexer vos fichiers (.md, .txt, .py, .csv, .json).';
+        } else {
+          ragList.innerHTML = ragDocsCache.map(doc => `
+            <div class="stat-tile" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div><strong>📄 ${esc(doc.filename)}</strong> <span style="display:inline;">· ${doc.chunks} segments · ${fmt(doc.chars)} caractères</span></div>
+              <div style="display:flex;gap:8px;">
+                <button class="msg-act-btn" style="color:var(--accent);" onclick="switchTab('chat');quickAsk('/doc Résume ${esc(doc.filename).replace(/'/g, "\\'")}')">Interroger</button>
+                <button class="msg-act-btn" style="color:var(--danger);" onclick="removeRagDoc('${esc(doc.filename).replace(/'/g, "\\'")}')">Supprimer</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    async function runOmegaBenchmark() {
+      const btn = document.getElementById('btnRunBench');
+      const box = document.getElementById('benchResultBox');
+      btn.disabled = true;
+      box.textContent = 'Audit neuronal held-out + exécution des 9 vérificateurs formels en cours...';
+      try {
+        const res = await fetch('/api/benchmark', {method: 'POST'});
+        const d = await res.json();
+        const sb = d.symbolic_benchmark || {};
+        const ne = d.neural_eval || {};
+        const rows = (sb.checks || []).map(c => `
+          <div class="stat-tile" style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>${c.passed ? '✅' : '❌'} ${esc(c.domain)}</strong>
+            <span style="display:inline;">${c.latency_ms} ms</span>
+          </div>
+        `).join('');
+        box.innerHTML = `
+          <div class="stat-grid" style="margin-bottom:10px;">
+            <div class="stat-tile"><span>Score Neuro-Symbolique</span><strong style="color:var(--emerald);">${sb.passed}/${sb.total} (${sb.score_pct}%)</strong></div>
+            <div class="stat-tile"><span>Validation CE Loss</span><strong>${ne.val_ce_loss}</strong></div>
+            <div class="stat-tile"><span>Perplexité Held-Out</span><strong>${ne.val_perplexity}</strong></div>
+            <div class="stat-tile"><span>Plugins Enregistrés</span><strong>${sb.registered_plugins_count}</strong></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">${rows}</div>
+        `;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function runInlineSandbox(encodedCode) {
@@ -1595,6 +2182,7 @@
 
       const owner = currentUser ? currentUser.handle : 'local';
       const temperature = parseFloat(document.getElementById('tempSelect').value || '0.3');
+      const persona = document.getElementById('personaSelect').value || 'polymathe';
 
       if (!currentThreadId) {
         const tr = await fetch('/api/threads', {
@@ -1606,7 +2194,7 @@
       }
 
       currentMessages.push({role: 'user', content: text});
-      const botMsg = {role: 'never', content: '', thoughts: [''], tool_traces: [], streaming: true};
+      const botMsg = {role: 'never', content: '', thoughts: [''], tool_traces: [], persona, deep_think: deepThinkActive, streaming: true};
       currentMessages.push(botMsg);
       renderChatFeed();
 
@@ -1621,10 +2209,12 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             message: text,
-            max_new_tokens: 135,
+            max_new_tokens: 165,
             temperature,
             thread_id: currentThreadId,
-            owner
+            owner,
+            deep_think: deepThinkActive,
+            persona
           }),
           signal: activeStreamCtrl.signal
         });
@@ -1715,6 +2305,11 @@
         const pct = d.bg_next_molt_pct || 0;
         document.getElementById('moltPctTxt').textContent = `${pct}%`;
         document.getElementById('moltProgressFill').style.width = `${pct}%`;
+
+        if (Array.isArray(d.rag_documents)) {
+          ragDocsCache = d.rag_documents;
+          renderRagViews();
+        }
 
         // Live state indicators
         const dot = document.getElementById('bgLiveDot');
@@ -1834,13 +2429,23 @@
     function syncPluginPreset() {
       const p = document.getElementById('plugName').value;
       const presets = {
+        plot_svg_engine: '{"expressions": ["sin(x)", "cos(x)*0.7"], "x_min": -6.28, "x_max": 6.28, "title": "Ondes Harmoniques"}',
         math_engine: '{"expr": "solve(x**2 - 7*x + 12, x)"}',
+        stats_and_data_engine: '{"action": "describe", "data": [12, 15, 18, 22, 24, 95]}',
+        unit_and_physics_engine: '{"action": "convert", "value": 100, "from_unit": "km/h", "to_unit": "m/s"}',
+        logic_and_truth_table: '{"expr": "((P >> Q) & P) >> Q"}',
+        code_ast_auditor: '{"code": "def fib(n: int) -> int:\\n    \\"\\"\\"Fibonacci.\\"\\"\\"\\n    return n if n < 2 else fib(n-1) + fib(n-2)"}',
+        crypto_and_encoding_engine: '{"action": "entropy", "text": "ChronoMorph-Omega-2026!"}',
         python_sandbox: '{"code": "print([2**k for k in range(10)])"}',
+        task_planner_engine: '{"action": "list"}',
+        live_benchmark_suite: '{}',
         introspection_probe: '{}',
         memory_nexus: '{"action": "query", "content": "morphogenesis"}',
+        knowledge_ingestor: '{"title": "Note Test", "text": "La morphogenèse préserve la fonction exacte."}',
         workspace_fs: '{"action": "list", "path": "."}'
       };
       document.getElementById('plugParams').value = presets[p] || '{}';
+      document.getElementById('plugSvgPreview').innerHTML = '';
     }
 
     async function execPlugin() {
@@ -1853,7 +2458,16 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({plugin, params})
       });
-      document.getElementById('plugOutput').textContent = JSON.stringify(await res.json(), null, 2);
+      const data = await res.json();
+      const svgBox = document.getElementById('plugSvgPreview');
+      if (data.svg) {
+        svgBox.innerHTML = `<div class="svg-plot-card"><div class="svg-plot-body">${data.svg}</div></div>`;
+        const copy = Object.assign({}, data, {svg: '[SVG rendu ci-dessus]'});
+        document.getElementById('plugOutput').textContent = JSON.stringify(copy, null, 2);
+      } else {
+        svgBox.innerHTML = '';
+        document.getElementById('plugOutput').textContent = JSON.stringify(data, null, 2);
+      }
     }
 
     async function execSeal() {

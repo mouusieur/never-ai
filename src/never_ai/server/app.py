@@ -1,10 +1,11 @@
-"""FastAPI Sovereign Desktop & Streaming Chatbot Backend for Never-AI."""
+"""FastAPI Sovereign Desktop & Streaming Chatbot Backend for Never-AI v1.0 Omega."""
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import json
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, AsyncIterator, Iterator
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,19 +15,6 @@ from pydantic import BaseModel, Field
 from never_ai.desktop.installer_builder import build_windows_installer_zip
 from never_ai.engine import NeverAIEngine
 
-
-app = FastAPI(
-    title="Never-AI Sovereign Chatbot & Desktop Studio (ChronoMorph-LM)",
-    version="0.3.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -39,6 +27,27 @@ def get_engine() -> NeverAIEngine:
     if _ENGINE is None:
         _ENGINE = NeverAIEngine(seq_len=160)
     return _ENGINE
+
+
+@asynccontextmanager
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    get_engine()
+    yield
+
+
+app = FastAPI(
+    title="Never-AI v1.0 Omega — Sovereign Chatbot & Desktop Studio (ChronoMorph-LM)",
+    version="1.0.0",
+    lifespan=_lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class AuthRegisterRequest(BaseModel):
@@ -59,16 +68,32 @@ class ThreadCreateRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
-    max_new_tokens: int = Field(default=140, ge=8, le=360)
+    max_new_tokens: int = Field(default=160, ge=8, le=360)
     temperature: float = Field(default=0.2, ge=0.0, le=1.5)
     thread_id: str | None = None
     owner: str = Field(default="local")
+    deep_think: bool = Field(default=False)
+    persona: str = Field(default="polymathe")
 
 
 class TeachExchangeRequest(BaseModel):
     question: str = Field(..., min_length=2)
     thought: str = Field(default="Consolidation d'un échange validé par l'utilisateur.")
     answer: str = Field(..., min_length=2)
+
+
+class FeedbackCorrectionRequest(BaseModel):
+    prompt: str = Field(..., min_length=2)
+    corrected_answer: str = Field(..., min_length=2)
+    thought: str = Field(default="")
+    owner: str = Field(default="local")
+    train_steps: int = Field(default=3, ge=1, le=12)
+
+
+class RAGUploadRequest(BaseModel):
+    filename: str = Field(..., min_length=1, max_length=120)
+    content: str = Field(..., min_length=1)
+    owner: str = Field(default="local")
 
 
 class BackgroundStartRequest(BaseModel):
@@ -110,7 +135,7 @@ def favicon() -> FileResponse:
     raise HTTPException(status_code=404, detail="Icon not found")
 
 
-@app.get("/api/download/installer")
+@app.api_route("/api/download/installer", methods=["GET", "HEAD"])
 def api_download_installer() -> Response:
     """Build and stream the official Windows 10/11 Graphical Installer ZIP."""
     zip_bytes = build_windows_installer_zip(_REPO_ROOT)
@@ -191,6 +216,27 @@ def api_delete_thread(thread_id: str) -> dict[str, Any]:
     return {"ok": deleted}
 
 
+@app.get("/api/threads/{thread_id}/export")
+def api_export_thread(thread_id: str) -> Response:
+    t = get_engine().conversations.get_thread(thread_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Conversation introuvable.")
+    lines = [f"# {t['title']}\n", f"_Export Never-AI v1.0 Omega · @{t.get('owner', 'local')}_\n"]
+    for m in t.get("messages", []):
+        role_lbl = "Utilisateur" if m.get("role") == "user" else "Never-AI"
+        lines.append(f"## {role_lbl}\n")
+        if m.get("thoughts"):
+            th_txt = "\n".join(f"> {th}" for th in m["thoughts"])
+            lines.append(f"**Pensée interne `<|think|>` :**\n{th_txt}\n")
+        lines.append(f"{m.get('content', '')}\n")
+    md_bytes = "\n".join(lines).encode("utf-8")
+    return Response(
+        content=md_bytes,
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="never-ai-{thread_id}.md"'},
+    )
+
+
 @app.get("/api/status")
 def api_status() -> dict[str, Any]:
     return get_engine().status()
@@ -204,6 +250,8 @@ def api_chat(req: ChatRequest) -> dict[str, Any]:
         temperature=req.temperature,
         thread_id=req.thread_id,
         owner=req.owner,
+        deep_think=req.deep_think,
+        persona=req.persona,
     )
 
 
@@ -216,6 +264,8 @@ def api_chat_stream(req: ChatRequest) -> StreamingResponse:
             temperature=req.temperature,
             thread_id=req.thread_id,
             owner=req.owner,
+            deep_think=req.deep_think,
+            persona=req.persona,
         ):
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
 
@@ -227,6 +277,41 @@ def api_chat_stream(req: ChatRequest) -> StreamingResponse:
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@app.post("/api/chat/feedback")
+def api_chat_feedback(req: FeedbackCorrectionRequest) -> dict[str, Any]:
+    return get_engine().teach_correction(
+        prompt=req.prompt,
+        corrected_answer=req.corrected_answer,
+        thought=req.thought,
+        owner=req.owner,
+        train_steps=req.train_steps,
+    )
+
+
+@app.get("/api/rag/documents")
+def api_rag_list() -> dict[str, Any]:
+    return {"documents": get_engine().list_rag_documents()}
+
+
+@app.post("/api/rag/upload")
+def api_rag_upload(req: RAGUploadRequest) -> dict[str, Any]:
+    return get_engine().ingest_document_rag(
+        filename=req.filename,
+        content=req.content,
+        owner=req.owner,
+    )
+
+
+@app.delete("/api/rag/documents/{filename}")
+def api_rag_delete(filename: str) -> dict[str, Any]:
+    return get_engine().clear_rag_document(filename=filename)
+
+
+@app.post("/api/benchmark")
+def api_benchmark() -> dict[str, Any]:
+    return get_engine().run_full_benchmark()
 
 
 @app.post("/api/chat/teach")

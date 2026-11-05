@@ -400,7 +400,19 @@ def build_default_plugin_registry(
     anatomy_provider: Callable[[], dict[str, Any]],
     workspace_root: str | Path = ".",
 ) -> PluginRegistry:
+    from never_ai.plugins.omega_tools import (
+        CodeASTAuditorPlugin,
+        CryptoAndEncodingPlugin,
+        LiveBenchmarkSuitePlugin,
+        LogicAndTruthTablePlugin,
+        PlotSVGEnginePlugin,
+        StatsAndDataEnginePlugin,
+        TaskPlannerPlugin,
+        UnitAndPhysicsEnginePlugin,
+    )
+
     reg = PluginRegistry()
+    # Core 7 Sovereign Plugins
     reg.register(MathEnginePlugin())
     reg.register(PythonSandboxPlugin())
     reg.register(MemoryNexusPlugin(mem_store))
@@ -408,4 +420,13 @@ def build_default_plugin_registry(
     reg.register(KnowledgeIngestorPlugin(mem_store))
     reg.register(IntrospectionProbePlugin(anatomy_provider))
     reg.register(SkillForgePlugin(reg))
+    # Omega 8 Scientific, Data, Logic, Security & Productivity Plugins
+    reg.register(PlotSVGEnginePlugin())
+    reg.register(StatsAndDataEnginePlugin())
+    reg.register(UnitAndPhysicsEnginePlugin())
+    reg.register(CodeASTAuditorPlugin())
+    reg.register(CryptoAndEncodingPlugin())
+    reg.register(LogicAndTruthTablePlugin())
+    reg.register(TaskPlannerPlugin(mem_store.storage_path.parent / "tasks.json"))
+    reg.register(LiveBenchmarkSuitePlugin(lambda: reg))
     return reg

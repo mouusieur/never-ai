@@ -215,6 +215,10 @@ class ConversationStore:
                 "thoughts": assistant_payload.get("thoughts", []),
                 "tool_traces": assistant_payload.get("tool_traces", []),
                 "routed_tools": assistant_payload.get("routed_tools", []),
+                "artifacts": assistant_payload.get("artifacts", []),
+                "citations": assistant_payload.get("citations", []),
+                "persona": assistant_payload.get("persona", "polymathe"),
+                "deep_think": assistant_payload.get("deep_think", False),
                 "titans_mean_surprise": assistant_payload.get("titans_mean_surprise", 0.0),
                 "timestamp": now,
             }
