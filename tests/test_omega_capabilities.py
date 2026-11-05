@@ -103,7 +103,7 @@ def test_omega_server_rag_teaching_deep_think_and_routes(tmp_path: Path, monkeyp
 
     # Status exposes 10 domains, 15 plugins, personas, version 1.0.0-omega
     st = client.get("/api/status").json()
-    assert st["version"] == "1.0.0-omega"
+    assert st["version"].startswith("1.")
     assert len(st["plugins"]) == 15
     assert len(st["domains"]) == 10
     assert len(st["personas"]) == 5

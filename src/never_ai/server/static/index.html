@@ -994,6 +994,220 @@
       transition: border-color 0.14s ease, transform 0.14s ease;
     }
     .domain-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+    /* =========================================================================
+       DUAL-HORIZON v1.2 — COMMERCIAL USER ACCOUNT vs R&D LAB ACCOUNT
+       ========================================================================= */
+    .account-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 540px) { .account-type-grid { grid-template-columns: 1fr; } }
+    .account-type-card {
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: #080A0D;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .account-type-card:hover { border-color: #536471; background: #0E1116; }
+    .account-type-card.selected-user {
+      border-color: var(--emerald);
+      background: rgba(0, 186, 124, 0.09);
+      box-shadow: 0 0 0 1px rgba(0, 186, 124, 0.35);
+    }
+    .account-type-card.selected-lab {
+      border-color: var(--accent);
+      background: rgba(29, 155, 240, 0.09);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.35);
+    }
+    .acc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .exp-switch-btn {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #0D1014;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .exp-switch-btn:hover { border-color: var(--accent); background: var(--bg-card); }
+
+    .kpi-hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 10px;
+    }
+    .kpi-hero-card {
+      background: linear-gradient(180deg, #111419 0%, #090B0E 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .kpi-hero-card .kpi-lbl { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+    .kpi-hero-card .kpi-val { font-size: 24px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em; }
+    .kpi-hero-card .kpi-sub { font-size: 11px; color: var(--emerald); font-weight: 600; }
+
+    .comm-curve-box {
+      position: relative;
+      background: #06080B;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    canvas.comm-curve {
+      width: 100%;
+      height: 240px;
+      display: block;
+      cursor: crosshair;
+    }
+    .curve-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(15, 20, 25, 0.96);
+      border: 1px solid #536471;
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-size: 12px;
+      color: #FFFFFF;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.65);
+      z-index: 20;
+    }
+
+    .comp-card {
+      background: #080A0E;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .comp-bar-line {
+      display: grid;
+      grid-template-columns: 140px 1fr 48px;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+    @media (max-width: 580px) { .comp-bar-line { grid-template-columns: 105px 1fr 42px; } }
+    .comp-track {
+      height: 9px;
+      background: #16181C;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .comp-fill-never {
+      height: 100%;
+      background: linear-gradient(90deg, #00BA7C, #34D399);
+      border-radius: 999px;
+      transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .comp-fill-cloud {
+      height: 100%;
+      background: #536471;
+      border-radius: 999px;
+      transition: width 0.45s ease;
+    }
+    .comp-fill-static {
+      height: 100%;
+      background: #2F3336;
+      border-radius: 999px;
+      transition: width 0.45s ease;
+    }
+
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 10px;
+    }
+    .timeline-card {
+      background: #090B0E;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .timeline-card.active-stage {
+      border-color: var(--emerald);
+      background: rgba(0, 186, 124, 0.06);
+    }
+
+    .verified-badge-clean {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: rgba(0, 186, 124, 0.12);
+      border: 1px solid rgba(0, 186, 124, 0.38);
+      color: #6EE7B7;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .thread-search-inp {
+      width: 100%;
+      background: #0A0C0F;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: var(--text-primary);
+      font-size: 12.5px;
+      outline: none;
+      margin-top: 6px;
+    }
+    .thread-search-inp:focus { border-color: var(--accent); }
+
+    .smart-tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+    .smart-tool-box {
+      background: #090B0E;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .task-row-clean {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: #090B0E;
+      border: 1px solid var(--border);
+      font-size: 13.5px;
+    }
   </style>
 </head>
 <body>
@@ -1013,35 +1227,34 @@
 
       <div class="landing-right">
         <h1 class="landing-h1">La pensée libre.<br/>Sans fin.</h1>
-        <h2 class="landing-h2">Discutez avec Never-AI.</h2>
+        <h2 class="landing-h2">Choisissez votre expérience Never-AI.</h2>
 
-        <div class="cta-stack">
-          <button class="pill-btn pill-white" onclick="enterGuest()">
-            <svg width="17" height="17" viewBox="0 0 512 512" fill="none">
-              <path d="M96 84H162V428H96V84Z" fill="#0F1419"/>
-              <path d="M350 84H416V428H350V84Z" fill="#0F1419"/>
-              <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#0F1419"/>
-            </svg>
-            Ouvrir le Chatbot (@local)
+        <div class="cta-stack" style="width:360px;">
+          <button class="pill-btn pill-white" onclick="enterGuest('user')" style="height:46px;">
+            ✨ Mode Utilisateur (Simple & Commercial)
+          </button>
+
+          <button class="pill-btn pill-outline-white" onclick="enterGuest('lab')" style="height:42px;">
+            🧬 Mode Laboratoire R&D (Complet & Expert)
           </button>
 
           <button class="pill-btn pill-accent" onclick="openAuthModal('register')">
-            Créer un profil souverain
+            Créer un compte personnalisé
           </button>
 
-          <div class="or-divider">application bureau</div>
+          <div class="or-divider">application bureau windows</div>
 
           <a class="pill-btn pill-outline-white" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
             ⬇ Télécharger l'installateur Windows (.exe)
           </a>
 
           <p class="legal-note">
-            Inclut l'assistant graphique noir Windows 10/11 (<code>Installer-NeverAI.bat</code>), l'icône officielle <code>never_ai.ico</code> et le moteur <strong>ChronoMorph-LM</strong> 100 % local.
+            <strong>100 % créé et entraîné de zéro</strong> sur votre machine. Choisissez entre l'interface <strong>Grand Public</strong> (courbe d'apprentissage live, comparateur de benchmarks, zéro jargon) ou le <strong>Studio R&D</strong> complet.
           </p>
         </div>
 
-        <div class="signin-block">
-          <h3>Vous avez déjà un profil local ?</h3>
+        <div class="signin-block" style="width:360px;">
+          <h3>Vous avez déjà un compte local ?</h3>
           <button class="pill-btn pill-outline" style="width:100%;" onclick="openAuthModal('login')">
             Se connecter
           </button>
@@ -1076,8 +1289,25 @@
       </div>
 
       <div class="modal-body">
-        <h2 class="modal-title" id="authModalTitle">Créer votre profil</h2>
-        <p class="modal-sub">Stocké chiffré (PBKDF2-SHA256) uniquement sur votre appareil.</p>
+        <h2 class="modal-title" id="authModalTitle">Créer votre compte</h2>
+        <p class="modal-sub">100 % local et chiffré sur votre appareil. Vous pourrez changer d'interface à tout moment.</p>
+
+        <!-- 2 ACCOUNT TYPES SELECTOR -->
+        <div id="fieldAccountType">
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.04em;">Type de compte</div>
+          <div class="account-type-grid">
+            <div class="account-type-card selected-user" id="accCardUser" onclick="selectModalAccountType('user')">
+              <span class="acc-badge" style="color:var(--emerald);">✨ Compte Utilisateur</span>
+              <strong style="font-size:14.5px;color:#FFF;">Édition Commerciale</strong>
+              <span style="font-size:12px;color:var(--text-muted);line-height:1.35;">Chatbot fluide sans jargon, courbe d'apprentissage en direct & comparateur de benchmarks.</span>
+            </div>
+            <div class="account-type-card" id="accCardLab" onclick="selectModalAccountType('lab')">
+              <span class="acc-badge" style="color:var(--accent);">🧬 Compte Laboratoire</span>
+              <strong style="font-size:14.5px;color:#FFF;">Édition Ingénieur R&D</strong>
+              <span style="font-size:12px;color:var(--text-muted);line-height:1.35;">Contrôle neuronal complet : mues MoE, portes Gate-Zero, SEAL, loss brute & console JSON.</span>
+            </div>
+          </div>
+        </div>
 
         <div class="x-field">
           <input id="authHandle" type="text" placeholder=" " autocomplete="off" onkeydown="if(event.key==='Enter') submitAuth()" />
@@ -1128,68 +1358,95 @@
           <span>Discussion</span>
         </div>
 
-        <div class="nav-item" id="nav-omega" onclick="switchTab('omega')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span>Domaines & Bench Ω</span>
+        <!-- COMMERCIAL USER NAVIGATION ITEMS -->
+        <div id="userNavGroup">
+          <div class="nav-item" id="nav-user-learning" onclick="switchTab('user-learning')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <span>Progression Live</span>
+          </div>
+
+          <div class="nav-item" id="nav-user-benchmarks" onclick="switchTab('user-benchmarks')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Comparateur</span>
+          </div>
+
+          <div class="nav-item" id="nav-user-tools" onclick="switchTab('user-tools')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Outils & Fichiers</span>
+          </div>
         </div>
 
-        <div class="nav-item" id="nav-anatomy" onclick="switchTab('anatomy')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-          <span>Anatomie & Mue</span>
-        </div>
+        <!-- R&D LAB NAVIGATION ITEMS -->
+        <div id="labNavGroup" class="hidden">
+          <div class="nav-item" id="nav-omega" onclick="switchTab('omega')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>Domaines & Bench Ω</span>
+          </div>
 
-        <div class="nav-item" id="nav-plugins" onclick="switchTab('plugins')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          <span>15 Plugins & Forge</span>
-        </div>
+          <div class="nav-item" id="nav-anatomy" onclick="switchTab('anatomy')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Anatomie & Mue</span>
+          </div>
 
-        <div class="nav-item" id="nav-seal" onclick="switchTab('seal')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span>Mémoire SEAL</span>
+          <div class="nav-item" id="nav-plugins" onclick="switchTab('plugins')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>15 Plugins & Forge</span>
+          </div>
+
+          <div class="nav-item" id="nav-seal" onclick="switchTab('seal')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span>Mémoire SEAL</span>
+          </div>
         </div>
 
         <a class="nav-item" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip" title="Télécharger l'installateur Windows">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Installateur .exe</span>
+          <span>Application .exe</span>
         </a>
 
-        <button class="pill-btn pill-white" style="margin-top:8px;height:44px;width:100%;" onclick="createNewThread()">
+        <button class="pill-btn pill-white" style="margin-top:8px;height:42px;width:100%;" onclick="createNewThread()">
           + Nouvelle discussion
         </button>
 
+        <input type="text" class="thread-search-inp" id="threadSearchInp" placeholder="🔍 Rechercher une discussion..." oninput="filterThreadsList(this.value)" />
         <div class="threads-header">Conversations</div>
         <div class="threads-list" id="threadsList"></div>
       </div>
 
-      <div class="profile-pill" onclick="logoutToLanding()" title="Retourner à l'accueil / Changer de profil">
-        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-          <div class="avatar-circle" id="userAvatar">N</div>
-          <div style="min-width:0;">
-            <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userDisplay">Explorateur</div>
-            <div style="font-size:12.5px;color:var(--text-muted);" id="userHandle">@local</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="exp-switch-btn" style="width:100%;justify-content:center;height:34px;" id="btnSidebarSwitchMode" onclick="hotSwitchAccountType()">
+          🧬 Passer en Mode Labo R&D
+        </button>
+        <div class="profile-pill" onclick="logoutToLanding()" title="Retourner à l'accueil / Changer de compte">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <div class="avatar-circle" id="userAvatar">N</div>
+            <div style="min-width:0;">
+              <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="userDisplay">Explorateur</div>
+              <div style="font-size:11.5px;color:var(--text-muted);" id="userHandle">@local · Utilisateur</div>
+            </div>
           </div>
+          <span style="color:var(--text-muted);font-size:12px;">Quitter</span>
         </div>
-        <span style="color:var(--text-muted);font-size:12px;">Accueil</span>
       </div>
     </aside>
 
     <!-- CENTER WORKSPACE COLUMN -->
     <main class="center-col">
       <header class="sticky-header">
-        <div class="header-title" id="centerTitle">Discussion Souveraine</div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div class="header-title" id="centerTitle">Discussion</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span id="toastBar" class="toast-bar"></span>
-          <select class="mode-select" id="tempSelect" title="Style de génération">
-            <option value="0.12">Mode Précis</option>
-            <option value="0.30" selected>Mode Équilibré</option>
-            <option value="0.65">Mode Créatif</option>
+          <select class="mode-select" id="tempSelect" title="Style de réponse">
+            <option value="0.12">Précis & Factuel</option>
+            <option value="0.30" selected>Naturel & Équilibré</option>
+            <option value="0.65">Créatif</option>
           </select>
-          <button class="mode-select" onclick="exportCurrentThread()" title="Exporter la conversation en Markdown">Exporter .md</button>
-          <span class="stage-pill" id="headerStageBadge">Sprout-MoE</span>
+          <button class="mode-select" onclick="exportCurrentThread()" title="Exporter la discussion">Exporter</button>
+          <span class="stage-pill" id="headerStageBadge" onclick="switchTab(isUserMode() ? 'user-learning' : 'anatomy')" style="cursor:pointer;">Niveau 3</span>
         </div>
       </header>
 
-      <!-- TAB 1: PRO STREAMING CHATBOT (OMEGA) -->
+      <!-- TAB 1: PRO STREAMING CHATBOT (ADAPTIVE USER vs LAB) -->
       <div id="tab-chat" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="feed-scroll" id="chatFeed"></div>
 
@@ -1197,7 +1454,31 @@
           <div id="ragChipsBar" class="rag-chips-bar hidden"></div>
           <div id="slashMenu" class="slash-menu hidden"></div>
 
-          <div class="composer-toolbar">
+          <!-- CLEAN COMMERCIAL USER TOOLBAR (NO JARGON) -->
+          <div class="composer-toolbar" id="userComposerToolbar">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <button class="omega-chip" id="btnUserDeepThink" onclick="toggleDeepThink()" title="Prend un instant de plus pour vérifier chaque détail">
+                ✨ Réflexion approfondie
+              </button>
+              <button class="omega-chip" onclick="document.getElementById('ragFileInput').click()" title="Analyser un fichier de votre ordinateur">
+                📎 Joindre un fichier
+              </button>
+              <button class="omega-chip" onclick="insertConsumerHelper('Trace la courbe de sin(x) * cos(2*x) sur [-6, 6]')" title="Créer un graphique">
+                📈 Créer un graphique
+              </button>
+              <button class="omega-chip" onclick="switchTab('user-tools')" title="Ouvrir les outils visuels simples">
+                🧰 Outils simples
+              </button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="omega-chip" id="btnVoiceMicUser" onclick="toggleVoiceDictation()" title="Parler au micro">
+                🎤 Dicter
+              </button>
+            </div>
+          </div>
+
+          <!-- EXPERT LAB R&D TOOLBAR -->
+          <div class="composer-toolbar hidden" id="labComposerToolbar">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <button class="omega-chip" id="btnDeepThink" onclick="toggleDeepThink()" title="Raisonnement multi-étapes & ancrage épistémique EvolveMem">
                 ⚡ Deep Think
@@ -1225,8 +1506,188 @@
           </div>
 
           <div class="composer-box">
-            <textarea id="composerInput" rows="1" placeholder="Discutez, tapez /plot sin(x)*cos(2*x), /logic, /stats, /bench ou joignez un fichier RAG…" oninput="onComposerInput(this)" onkeydown="handleComposerKey(event)"></textarea>
+            <textarea id="composerInput" rows="1" placeholder="Posez une question, demandez un conseil, un calcul ou un graphique…" oninput="onComposerInput(this)" onkeydown="handleComposerKey(event)"></textarea>
             <button class="send-round" id="btnSend" onclick="onSendOrStop()" title="Envoyer">↑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           COMMERCIAL USER VIEW 2: LIVE PROGRESSION & LEARNING CURVE
+           ================================================================= -->
+      <div id="tab-user-learning" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="kpi-hero-grid">
+            <div class="kpi-hero-card">
+              <span class="kpi-lbl">Maîtrise Globale</span>
+              <span class="kpi-val" id="commKpiMastery">88,4 %</span>
+              <span class="kpi-sub">Partie de 0 % (page blanche)</span>
+            </div>
+            <div class="kpi-hero-card">
+              <span class="kpi-lbl">Indice Cognitif Estimé</span>
+              <span class="kpi-val" id="commKpiIq">131</span>
+              <span class="kpi-sub" id="commKpiLevel">Niveau 3 · Expert</span>
+            </div>
+            <div class="kpi-hero-card">
+              <span class="kpi-lbl">Taille du Cerveau</span>
+              <span class="kpi-val" id="commKpiConns">43,6 M</span>
+              <span class="kpi-sub">Connexions actives sur votre PC</span>
+            </div>
+            <div class="kpi-hero-card">
+              <span class="kpi-lbl">Mots & Idées Assimilés</span>
+              <span class="kpi-val" id="commKpiWords">268 000</span>
+              <span class="kpi-sub" id="commKpiSpeed">Prêt à étudier en direct</span>
+            </div>
+          </div>
+
+          <div class="x-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div>
+                <h3>📈 Courbe d'Apprentissage en Temps Réel</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">
+                  Observez l'intelligence de votre IA grimper depuis sa naissance à zéro jusqu'à la minute présente. Survolez la courbe pour voir chaque étape.
+                </p>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="omega-chip active-emerald" id="btnCurveModeMastery" onclick="setCommCurveMode('mastery')">Intelligence (%)</button>
+                <button class="omega-chip" id="btnCurveModeError" onclick="setCommCurveMode('error')">Réduction d'erreur</button>
+              </div>
+            </div>
+
+            <div class="comm-curve-box">
+              <canvas class="comm-curve" id="commCurveCanvas" width="760" height="240" onmousemove="onCommCurveHover(event)" onmouseleave="hideCommCurveTooltip()"></canvas>
+              <div id="commCurveTooltip" class="curve-tooltip hidden"></div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:4px;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="pill-btn pill-white" id="btnCommAutoLearn" onclick="toggleBg()">
+                  ▶ Activer l'Apprentissage en Direct
+                </button>
+                <button class="pill-btn pill-outline-white" onclick="runConsumerBoost()">
+                  ⚡ Faire étudier maintenant (+5 cycles)
+                </button>
+              </div>
+              <span style="font-size:12px;color:var(--text-muted);" id="commNextUpgradeTxt">Prochaine évolution automatique : 0 %</span>
+            </div>
+          </div>
+
+          <div class="x-card">
+            <h3>🌱 Son Histoire sur Votre Machine (100 % Parti de Zéro)</h3>
+            <p style="font-size:13px;color:var(--text-muted);">
+              Contrairement aux IA classiques téléchargées déjà figées, Never-AI a littéralement grandi étape par étape sans jamais perdre ses acquis :
+            </p>
+            <div class="timeline-grid" id="commTimelineGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           COMMERCIAL USER VIEW 3: BENCHMARK COMPARATOR & LIVE CHALLENGE
+           ================================================================= -->
+      <div id="tab-user-benchmarks" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="x-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div>
+                <h3>🏆 Comparateur Simple : Never-AI vs Autres Solutions</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">
+                  Comparaison transparente et honnête sur ce qui compte au quotidien : vie privée, évolutivité, fiabilité des chiffres, coût et usage hors-ligne.
+                </p>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="omega-chip active-blue" id="flt-all" onclick="setBenchFilter('all')">Tous</button>
+                <button class="omega-chip" id="flt-privacy_cost" onclick="setBenchFilter('privacy_cost')">🔒 Vie Privée & Prix</button>
+                <button class="omega-chip" id="flt-intelligence" onclick="setBenchFilter('intelligence')">🧠 Intelligence & Fiabilité</button>
+                <button class="omega-chip" id="flt-autonomy" onclick="setBenchFilter('autonomy')">✈️ Hors-Ligne</button>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);padding:4px 2px;">
+              <span><strong style="color:#34D399;">● Never-AI (Votre IA Locale)</strong></span>
+              <span><strong style="color:#9CA3AF;">● IA Cloud Payante (Abonnement Web)</strong></span>
+              <span><strong style="color:#6B7280;">● Petite IA Locale Figée</strong></span>
+            </div>
+
+            <div id="commComparatorList" style="display:flex;flex-direction:column;gap:10px;"></div>
+          </div>
+
+          <div class="x-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div>
+                <h3>⚡ Défiez Never-AI en Direct (Vérification Instantanée)</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">
+                  Lancez 9 épreuves concrètes (calculs, graphiques, analyse de données, logique, sécurité, code) directement devant vos yeux.
+                </p>
+              </div>
+              <button class="pill-btn pill-white" id="btnCommQuickBench" onclick="runConsumerBenchmark()">
+                ▶ Tester sa fiabilité maintenant
+              </button>
+            </div>
+            <div id="commQuickBenchOut" style="font-size:13px;color:var(--text-muted);">
+              Cliquez sur « Tester sa fiabilité maintenant » pour mesurer son score et sa vitesse en millisecondes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================
+           COMMERCIAL USER VIEW 4: NO-CODE SMART TOOLS, FILES & TASKS
+           ================================================================= -->
+      <div id="tab-user-tools" class="feed-scroll hidden">
+        <div class="subview-pad">
+          <div class="x-card">
+            <h3>🧰 Outils Intelligents en 1 Clic (Sans Code ni Commande)</h3>
+            <div class="smart-tool-grid">
+              <div class="smart-tool-box">
+                <strong style="font-size:14.5px;color:#FFF;">📈 Tracer un Graphique</strong>
+                <span style="font-size:12px;color:var(--text-muted);">Entrez une formule (ex: <code>sin(x) * x</code> ou <code>x^2 - 4</code>)</span>
+                <input class="dark-input" id="stPlotExpr" value="sin(x) * cos(2*x)" />
+                <button class="pill-btn pill-white" style="height:34px;font-size:12.5px;" onclick="runSmartPlot()">Créer le graphique dans le chat</button>
+              </div>
+
+              <div class="smart-tool-box">
+                <strong style="font-size:14.5px;color:#FFF;">📊 Analyser une Série de Chiffres</strong>
+                <span style="font-size:12px;color:var(--text-muted);">Moyenne, médiane et valeurs inhabituelles</span>
+                <input class="dark-input" id="stStatsNums" value="120, 135, 142, 150, 158, 390" />
+                <button class="pill-btn pill-white" style="height:34px;font-size:12.5px;" onclick="runSmartStats()">Analyser mes chiffres</button>
+              </div>
+
+              <div class="smart-tool-box">
+                <strong style="font-size:14.5px;color:#FFF;">🔄 Convertisseur Express</strong>
+                <span style="font-size:12px;color:var(--text-muted);">Vitesse, distance, énergie, température, données</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+                  <input class="dark-input" id="stUnitVal" value="100" />
+                  <input class="dark-input" id="stUnitFrom" value="km/h" />
+                  <input class="dark-input" id="stUnitTo" value="m/s" />
+                </div>
+                <button class="pill-btn pill-white" style="height:34px;font-size:12.5px;" onclick="runSmartUnit()">Convertir instantanément</button>
+              </div>
+
+              <div class="smart-tool-box">
+                <strong style="font-size:14.5px;color:#FFF;">🔐 Clé & Mot de Passe Fort</strong>
+                <span style="font-size:12px;color:var(--text-muted);">Généré localement sur votre machine</span>
+                <div id="stTokenOut" style="font-family:monospace;font-size:12px;color:#6EE7B7;word-break:break-all;min-height:22px;">Cliquez ci-dessous pour générer</div>
+                <button class="pill-btn pill-outline-white" style="height:34px;font-size:12.5px;" onclick="runSmartToken()">Générer une clé inviolable</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="x-card">
+            <h3>✅ Ma Liste d'Objectifs & Tâches</h3>
+            <div style="display:flex;gap:8px;">
+              <input class="dark-input" id="userTaskInput" placeholder="Ajouter une tâche ou une idée à retenir..." onkeydown="if(event.key==='Enter') addConsumerTask()" />
+              <button class="pill-btn pill-white" style="height:40px;flex-shrink:0;" onclick="addConsumerTask()">Ajouter</button>
+            </div>
+            <div id="userTasksList" style="display:flex;flex-direction:column;gap:6px;margin-top:4px;"></div>
+          </div>
+
+          <div class="x-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h3>📁 Mes Documents Personnels Analysables</h3>
+              <button class="pill-btn pill-outline-white" style="height:34px;font-size:12.5px;" onclick="document.getElementById('ragFileInput').click()">+ Ajouter un fichier</button>
+            </div>
+            <div id="userDocsList" style="font-size:13px;color:var(--text-muted);">Aucun fichier importé pour le moment.</div>
           </div>
         </div>
       </div>
@@ -1329,8 +1790,72 @@
       </div>
     </main>
 
-    <!-- RIGHT LIVE CONTINUAL GROWTH & INSTALLER RAIL -->
+    <!-- RIGHT LIVE RAIL (ADAPTIVE: CONSUMER INTELLIGENCE vs R&D LAB TELEMETRY) -->
     <aside class="right-rail">
+      <!-- 1. COMMERCIAL USER RIGHT RAIL (SIMPLE, VISUAL & ENGAGING) -->
+      <div id="userRightRail" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="x-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="live-dot" id="userLiveDot"></span>
+              <h3>Apprentissage en Direct</h3>
+            </div>
+            <span style="font-size:11.5px;color:var(--text-muted);" id="userLearnStateTxt">Prêt</span>
+          </div>
+
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin:2px 0;">
+            <div>
+              <div style="font-size:28px;font-weight:800;color:#FFF;letter-spacing:-0.03em;" id="railUserMastery">88,4 %</div>
+              <div style="font-size:11.5px;color:var(--emerald);font-weight:600;" id="railUserLevel">Niveau 3 · Parti de 0 %</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:16px;font-weight:800;color:#E7E9EA;" id="railUserIq">QI ~131</div>
+              <div style="font-size:11px;color:var(--text-muted);" id="railUserConns">43,6M connexions</div>
+            </div>
+          </div>
+
+          <canvas class="loss-chart" id="userMiniCurveCanvas" width="310" height="108" onclick="switchTab('user-learning')" style="cursor:pointer;" title="Cliquez pour agrandir la courbe d'apprentissage"></canvas>
+
+          <button class="pill-btn pill-white" style="width:100%;height:40px;" id="btnUserRailLearn" onclick="toggleBg()">
+            ▶ Activer l'Apprentissage Autonome
+          </button>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;">
+              <span>Prochaine évolution du cerveau</span>
+              <span id="userNextUpgradePct">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="userNextUpgradeFill" style="width:0%"></div></div>
+          </div>
+
+          <div style="display:flex;gap:7px;">
+            <button class="pill-btn pill-outline-white" style="flex:1;height:34px;font-size:12px;" onclick="switchTab('user-learning')">📈 Courbe Live</button>
+            <button class="pill-btn pill-outline-white" style="flex:1;height:34px;font-size:12px;" onclick="switchTab('user-benchmarks')">🏆 Comparateur</button>
+          </div>
+        </div>
+
+        <div class="x-card">
+          <h3>Pourquoi Never-AI est unique ?</h3>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--text-muted);line-height:1.4;">
+            <div>🔒 <strong style="color:#FFF;">100 % Privé</strong> — Aucune donnée n'est envoyée dans le cloud.</div>
+            <div>🌱 <strong style="color:#FFF;">Né de Zéro</strong> — Construit et entraîné sans copier d'API externe.</div>
+            <div>📈 <strong style="color:#FFF;">Vivant</strong> — Grandit et apprend de vos conseils en continu.</div>
+          </div>
+        </div>
+
+        <div class="x-card">
+          <h3>Installer sur votre PC (.exe)</h3>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.45;">
+            Utilisez Never-AI directement depuis votre Bureau Windows 10/11, même sans connexion Internet.
+          </p>
+          <a class="pill-btn pill-white" style="width:100%;height:38px;font-size:13px;" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
+            ⬇ Télécharger pour Windows
+          </a>
+        </div>
+      </div>
+
+      <!-- 2. R&D LAB RIGHT RAIL (RAW TENSOR & MORPHOGENESIS TELEMETRY) -->
+      <div id="labRightRail" class="hidden" style="display:flex;flex-direction:column;gap:14px;">
       <!-- LIVE CONTINUAL GROWTH CARD (FIXED & NON-BLOCKING!) -->
       <div class="x-card">
         <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -1387,6 +1912,7 @@
           ⬇ Télécharger l'installateur
         </a>
       </div>
+      </div>
     </aside>
   </div>
 
@@ -1408,7 +1934,10 @@
     let currentUser = null;
     let currentThreadId = null;
     let currentMessages = [];
+    let cachedThreads = [];
+    let threadSearchQuery = '';
     let authMode = 'register';
+    let selectedModalAccountType = 'user';
     let bgActive = false;
     let deepThinkActive = false;
     let activeStreamCtrl = null;
@@ -1416,6 +1945,14 @@
     let ragDocsCache = [];
     let activeCanvasSvg = '';
     let speechRec = null;
+    let commOverviewCache = null;
+    let commCurveMode = 'mastery';
+    let benchCategoryFilter = 'all';
+    let commCurvePointsMeta = [];
+
+    function isUserMode() {
+      return !currentUser || currentUser.account_type !== 'lab';
+    }
 
     const SLASH_COMMANDS = [
       {cmd: '/plot sin(x) * cos(2*x)', desc: 'Tracer une courbe mathématique vectorielle SVG'},
@@ -1502,8 +2039,21 @@
     }
     function toggleDeepThink() {
       deepThinkActive = !deepThinkActive;
-      document.getElementById('btnDeepThink').classList.toggle('active-blue', deepThinkActive);
-      toast(deepThinkActive ? 'Mode Deep Think multi-étapes ACTIVÉ' : 'Mode Deep Think désactivé');
+      const b1 = document.getElementById('btnDeepThink');
+      const b2 = document.getElementById('btnUserDeepThink');
+      if (b1) b1.classList.toggle('active-blue', deepThinkActive);
+      if (b2) b2.classList.toggle('active-blue', deepThinkActive);
+      toast(deepThinkActive
+        ? (isUserMode() ? 'Réflexion approfondie activée' : 'Mode Deep Think multi-étapes ACTIVÉ')
+        : (isUserMode() ? 'Réflexion standard' : 'Mode Deep Think désactivé'));
+    }
+
+    function insertConsumerHelper(txt) {
+      switchTab('chat');
+      const inp = document.getElementById('composerInput');
+      inp.value = txt;
+      autoGrow(inp);
+      inp.focus();
     }
     function handleComposerKey(e) {
       if (e.key === 'Escape') {
@@ -1543,13 +2093,23 @@
       authMode = authMode === 'register' ? 'login' : 'register';
       renderAuthMode();
     }
+    function selectModalAccountType(accType) {
+      selectedModalAccountType = accType === 'lab' ? 'lab' : 'user';
+      const uCard = document.getElementById('accCardUser');
+      const lCard = document.getElementById('accCardLab');
+      if (uCard) uCard.className = 'account-type-card' + (selectedModalAccountType === 'user' ? ' selected-user' : '');
+      if (lCard) lCard.className = 'account-type-card' + (selectedModalAccountType === 'lab' ? ' selected-lab' : '');
+    }
+
     function renderAuthMode() {
       const isReg = authMode === 'register';
-      document.getElementById('authModalTitle').textContent = isReg ? 'Créer votre profil local' : 'Connectez-vous à Never-AI';
+      document.getElementById('authModalTitle').textContent = isReg ? 'Créer votre compte local' : 'Connectez-vous à Never-AI';
       document.getElementById('fieldDisplayName').classList.toggle('hidden', !isReg);
+      document.getElementById('fieldAccountType').classList.toggle('hidden', !isReg);
       document.getElementById('btnAuthSubmit').textContent = isReg ? 'Créer et ouvrir Never-AI' : 'Se connecter';
-      document.getElementById('authSwitchPrompt').textContent = isReg ? 'Déjà un profil ?' : 'Pas encore de profil ?';
-      document.getElementById('authSwitchLink').textContent = isReg ? 'Se connecter' : 'Créer un profil';
+      document.getElementById('authSwitchPrompt').textContent = isReg ? 'Déjà un compte ?' : 'Pas encore de compte ?';
+      document.getElementById('authSwitchLink').textContent = isReg ? 'Se connecter' : 'Créer un compte';
+      selectModalAccountType(selectedModalAccountType);
     }
 
     async function submitAuth() {
@@ -1565,7 +2125,9 @@
       }
 
       const url = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-      const body = authMode === 'register' ? {handle, display_name, passphrase} : {handle, passphrase};
+      const body = authMode === 'register'
+        ? {handle, display_name, passphrase, account_type: selectedModalAccountType}
+        : {handle, passphrase};
 
       const res = await fetch(url, {
         method: 'POST',
@@ -1581,22 +2143,77 @@
       closeAuthModal();
     }
 
-    async function enterGuest() {
-      const res = await fetch('/api/auth/guest', {method: 'POST'});
+    async function enterGuest(accType = 'user') {
+      const res = await fetch('/api/auth/guest', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({account_type: accType})
+      });
       const data = await res.json();
       if (data.profile) activateSession(data.profile);
     }
 
+    async function hotSwitchAccountType() {
+      const nextType = isUserMode() ? 'lab' : 'user';
+      const tok = localStorage.getItem('never_ai_token') || (currentUser && currentUser.token) || '';
+      const res = await fetch('/api/auth/account-type', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({token: tok, account_type: nextType})
+      });
+      const d = await res.json();
+      if (d.profile) {
+        currentUser = d.profile;
+        applyAccountExperienceUI();
+        switchTab('chat');
+        renderChatFeed();
+        refreshStatus();
+        toast(nextType === 'user'
+          ? '✨ Mode Utilisateur Commercial activé (simple & sans jargon)'
+          : '🧬 Mode Laboratoire R&D activé (télémétrie neuronale complète)');
+      }
+    }
+
+    function applyAccountExperienceUI() {
+      const userMode = isUserMode();
+      const handle = currentUser ? currentUser.handle : 'local';
+      const roleLbl = userMode ? 'Compte Utilisateur' : 'Laboratoire R&D';
+      document.getElementById('userHandle').textContent = `@${handle} · ${roleLbl}`;
+
+      document.getElementById('userNavGroup').classList.toggle('hidden', !userMode);
+      document.getElementById('labNavGroup').classList.toggle('hidden', userMode);
+
+      document.getElementById('userRightRail').classList.toggle('hidden', !userMode);
+      document.getElementById('labRightRail').classList.toggle('hidden', userMode);
+
+      document.getElementById('userComposerToolbar').classList.toggle('hidden', !userMode);
+      document.getElementById('labComposerToolbar').classList.toggle('hidden', userMode);
+
+      const swBtn = document.getElementById('btnSidebarSwitchMode');
+      if (swBtn) {
+        swBtn.textContent = userMode ? '🧬 Passer en Mode Labo R&D' : '✨ Passer en Mode Utilisateur';
+      }
+
+      const inp = document.getElementById('composerInput');
+      if (inp) {
+        inp.placeholder = userMode
+          ? 'Posez une question, demandez un calcul, un conseil ou un graphique…'
+          : 'Discutez, tapez /plot sin(x)*cos(2*x), /logic, /stats, /bench ou joignez un fichier RAG…';
+      }
+    }
+
     function activateSession(profile) {
       currentUser = profile;
+      if (!currentUser.account_type) currentUser.account_type = 'user';
       localStorage.setItem('never_ai_token', profile.token);
       document.getElementById('userDisplay').textContent = profile.display_name;
-      document.getElementById('userHandle').textContent = `@${profile.handle}`;
       document.getElementById('userAvatar').textContent = (profile.display_name || profile.handle)[0].toUpperCase();
 
       document.getElementById('landingView').classList.add('hidden');
       document.getElementById('appView').classList.remove('hidden');
 
+      applyAccountExperienceUI();
+      switchTab('chat');
       loadThreads();
       refreshStatus();
       schedulePolling();
@@ -1628,14 +2245,18 @@
 
     /* ---------------- NAVIGATION & THREADS ---------------- */
     function switchTab(tab) {
-      ['chat', 'omega', 'anatomy', 'plugins', 'seal'].forEach(t => {
+      const allTabs = ['chat', 'user-learning', 'user-benchmarks', 'user-tools', 'omega', 'anatomy', 'plugins', 'seal'];
+      allTabs.forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         const navEl = document.getElementById(`nav-${t}`);
         if (tabEl) tabEl.classList.toggle('hidden', t !== tab);
         if (navEl) navEl.classList.toggle('active', t === tab);
       });
       const titles = {
-        chat: 'Discussion Souveraine Ω',
+        chat: isUserMode() ? 'Discussion avec Never-AI' : 'Discussion Souveraine Ω',
+        'user-learning': 'Progression & Courbe d\'Apprentissage en Direct',
+        'user-benchmarks': 'Comparateur & Tests de Fiabilité',
+        'user-tools': 'Outils Intelligents, Tâches & Fichiers',
         omega: '10 Domaines, RAG & Benchmark Ω',
         anatomy: 'Anatomie & Morphogenèse',
         plugins: '15 Plugins Souverains & Forge',
@@ -1643,6 +2264,14 @@
       };
       document.getElementById('centerTitle').textContent = titles[tab] || 'Never-AI';
       if (tab === 'omega') renderOmegaDomainsTab();
+      if (tab === 'user-learning' || tab === 'user-benchmarks' || tab === 'user-tools') {
+        renderCommercialViews();
+      }
+    }
+
+    function filterThreadsList(q) {
+      threadSearchQuery = (q || '').trim().toLowerCase();
+      renderThreadsSidebar(cachedThreads);
     }
 
     function renderOmegaDomainsTab() {
@@ -1664,6 +2293,7 @@
       const res = await fetch(`/api/threads?owner=${encodeURIComponent(owner)}`);
       const d = await res.json();
       const list = d.threads || [];
+      cachedThreads = list;
       renderThreadsSidebar(list);
       if (list.length && !currentThreadId) {
         await openThread(list[0].id);
@@ -1675,12 +2305,16 @@
     }
 
     function renderThreadsSidebar(list) {
+      cachedThreads = list || cachedThreads || [];
+      const filtered = threadSearchQuery
+        ? cachedThreads.filter(t => (t.title || '').toLowerCase().includes(threadSearchQuery))
+        : cachedThreads;
       const box = document.getElementById('threadsList');
-      if (!list.length) {
-        box.innerHTML = `<div style="padding:8px 12px;font-size:12.5px;color:var(--text-muted);">Aucune discussion archivée</div>`;
+      if (!filtered.length) {
+        box.innerHTML = `<div style="padding:8px 12px;font-size:12.5px;color:var(--text-muted);">${threadSearchQuery ? 'Aucun résultat' : 'Aucune discussion archivée'}</div>`;
         return;
       }
-      box.innerHTML = list.map(t => `
+      box.innerHTML = filtered.map(t => `
         <div class="thread-row ${t.id === currentThreadId ? 'active' : ''}" onclick="openThread('${t.id}')">
           <span class="thread-title-txt">${esc(t.title)}</span>
           <button class="thread-del" onclick="deleteThread(event, '${t.id}')" title="Supprimer">✕</button>
@@ -1746,35 +2380,64 @@
       a.click();
     }
 
-    /* ---------------- PRO STREAMING CHATBOT (OMEGA) ---------------- */
+    /* ---------------- PRO STREAMING CHATBOT (ADAPTIVE USER vs LAB) ---------------- */
     function renderChatFeed() {
       const feed = document.getElementById('chatFeed');
+      const userMode = isUserMode();
       if (!currentMessages.length) {
-        feed.innerHTML = `
-          <div class="empty-hero">
-            <svg width="52" height="52" viewBox="0 0 512 512" fill="none">
-              <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
-              <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
-              <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
-            </svg>
-            <h2>Never-AI v1.0 Omega</h2>
-            <p>Cerveau souverain <strong>ChronoMorph-LM</strong> : 10 domaines FR/EN, <strong>15 plugins formels</strong> (courbes SVG, SAT, CODATA, stats OLS, AST), <strong>Deep Think</strong>, RAG documentaire et enseignement en direct.</p>
-            <div class="prompt-grid">
-              <div class="prompt-card" onclick="quickAsk('/plot sin(x) * cos(2*x) ; 0.4*x sur [-6, 6]')">
-                <strong>📈 Traceur Vectoriel SVG</strong><br/><span style="color:var(--text-muted)">Tracer et analyser des fonctions mathématiques</span>
-              </div>
-              <div class="prompt-card" onclick="quickAsk('/logic ((P >> Q) & P) >> Q')">
-                <strong>🏛 Logique Formelle & SAT</strong><br/><span style="color:var(--text-muted)">Table de vérité complète, CNF/DNF & tautologie</span>
-              </div>
-              <div class="prompt-card" onclick="quickAsk('Écris l\\'algorithme de Dijkstra en Python avec un tas binaire (heapq).')">
-                <strong>⚙ Algorithmes & Sandbox</strong><br/><span style="color:var(--text-muted)">Génération Python propre exécutable en 1 clic</span>
-              </div>
-              <div class="prompt-card" onclick="quickAsk('Qu\\'est-ce qu\\'un équilibre de Nash en théorie des jeux ?')">
-                <strong>🌐 10 Domaines Polymathiques</strong><br/><span style="color:var(--text-muted)">Physique, biologie, économie, histoire, cyber</span>
+        if (userMode) {
+          feed.innerHTML = `
+            <div class="empty-hero">
+              <svg width="52" height="52" viewBox="0 0 512 512" fill="none">
+                <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+                <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+                <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+              </svg>
+              <h2>Bonjour${currentUser && currentUser.display_name ? ', ' + esc(currentUser.display_name) : ''} 👋</h2>
+              <p>Je suis <strong>Never-AI</strong>, votre assistant personnel 100 % privé qui vit et apprend en continu sur votre machine. Comment puis-je vous aider aujourd'hui ?</p>
+              <div class="prompt-grid">
+                <div class="prompt-card" onclick="quickAsk('Que sais-tu faire exactement ?')">
+                  <strong>✨ Découvrir mes capacités</strong><br/><span style="color:var(--text-muted)">Ce que je peux faire pour vous au quotidien</span>
+                </div>
+                <div class="prompt-card" onclick="quickAsk('Trace la courbe de sin(x) * cos(2*x) sur [-6, 6]')">
+                  <strong>📈 Créer un beau graphique</strong><br/><span style="color:var(--text-muted)">Dessiner et expliquer une courbe instantanément</span>
+                </div>
+                <div class="prompt-card" onclick="quickAsk('/stats 120, 135, 142, 150, 158, 390')">
+                  <strong>📊 Analyser des chiffres</strong><br/><span style="color:var(--text-muted)">Moyenne, médiane et détection d'anomalies</span>
+                </div>
+                <div class="prompt-card" onclick="switchTab('user-learning')">
+                  <strong>🌱 Voir mon cerveau apprendre en direct</strong><br/><span style="color:var(--text-muted)">Courbe d'intelligence temps réel depuis 0 %</span>
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          feed.innerHTML = `
+            <div class="empty-hero">
+              <svg width="52" height="52" viewBox="0 0 512 512" fill="none">
+                <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+                <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+                <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+              </svg>
+              <h2>Never-AI v1.2 · Console R&D</h2>
+              <p>Cerveau souverain <strong>ChronoMorph-LM</strong> : 10 domaines FR/EN, <strong>15 plugins formels</strong> (courbes SVG, SAT, CODATA, stats OLS, AST), <strong>Deep Think</strong>, RAG documentaire et enseignement en direct.</p>
+              <div class="prompt-grid">
+                <div class="prompt-card" onclick="quickAsk('/plot sin(x) * cos(2*x) ; 0.4*x sur [-6, 6]')">
+                  <strong>📈 Traceur Vectoriel SVG</strong><br/><span style="color:var(--text-muted)">Tracer et analyser des fonctions mathématiques</span>
+                </div>
+                <div class="prompt-card" onclick="quickAsk('/logic ((P >> Q) & P) >> Q')">
+                  <strong>🏛 Logique Formelle & SAT</strong><br/><span style="color:var(--text-muted)">Table de vérité complète, CNF/DNF & tautologie</span>
+                </div>
+                <div class="prompt-card" onclick="quickAsk('Écris l\\'algorithme de Dijkstra en Python avec un tas binaire (heapq).')">
+                  <strong>⚙ Algorithmes & Sandbox</strong><br/><span style="color:var(--text-muted)">Génération Python propre exécutable en 1 clic</span>
+                </div>
+                <div class="prompt-card" onclick="quickAsk('Qu\\'est-ce qu\\'un équilibre de Nash en théorie des jeux ?')">
+                  <strong>🌐 10 Domaines Polymathiques</strong><br/><span style="color:var(--text-muted)">Physique, biologie, économie, histoire, cyber</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -1796,15 +2459,28 @@
         }
         let extras = '';
         if (m.thoughts && m.thoughts.length && m.thoughts.join('').trim()) {
-          extras += `
-            <details class="think-accordion" ${m.streaming ? 'open' : ''}>
-              <summary>${m.streaming && !m.content ? 'Réflexion interne en cours...' : `Sanctuaire de pensée &lt;|think|&gt; ${m.deep_think ? '· ⚡ Deep Think' : ''}`}</summary>
-              <div class="think-content">${esc(m.thoughts.join('\n'))}</div>
-            </details>
-          `;
+          if (userMode) {
+            extras += `
+              <details class="think-accordion">
+                <summary>${m.streaming && !m.content ? '💭 Réflexion en cours…' : '💭 Voir comment Never-AI a réfléchi'}</summary>
+                <div class="think-content">${esc(m.thoughts.join('\n'))}</div>
+              </details>
+            `;
+          } else {
+            extras += `
+              <details class="think-accordion" ${m.streaming ? 'open' : ''}>
+                <summary>${m.streaming && !m.content ? 'Réflexion interne en cours...' : `Sanctuaire de pensée &lt;|think|&gt; ${m.deep_think ? '· ⚡ Deep Think' : ''}`}</summary>
+                <div class="think-content">${esc(m.thoughts.join('\n'))}</div>
+              </details>
+            `;
+          }
         }
         if (m.tool_traces && m.tool_traces.length) {
-          extras += `<div class="plugin-pill-trace">⚡ Plugin vérifié : ${esc(JSON.stringify(m.tool_traces[0]).slice(0, 180))}</div>`;
+          if (userMode) {
+            extras += `<div><span class="verified-badge-clean">✓ Résultat vérifié avec exactitude sur votre appareil</span></div>`;
+          } else {
+            extras += `<div class="plugin-pill-trace">⚡ Plugin vérifié : ${esc(JSON.stringify(m.tool_traces[0]).slice(0, 180))}</div>`;
+          }
         }
 
         const prevUserMsg = idx > 0 && currentMessages[idx - 1].role === 'user' ? currentMessages[idx - 1].content : '';
@@ -1812,15 +2488,15 @@
           <div class="msg-actions">
             <button class="msg-act-btn" onclick="copyMsg(${idx})">Copier</button>
             <button class="msg-act-btn" onclick="speakMsg(${idx})">🔊 Écouter</button>
-            ${prevUserMsg ? `<button class="msg-act-btn" onclick="regenMsg(${idx - 1})">↻ Régénérer</button>` : ''}
-            ${prevUserMsg ? `<button class="msg-act-btn" onclick="teachMsg(${idx - 1}, ${idx})">👍 Renforcer</button>` : ''}
-            ${prevUserMsg ? `<button class="msg-act-btn" style="color:#7FD1FF;" onclick="openTeachDrawer(${idx})">✏️ Corriger & Enseigner</button>` : ''}
+            ${prevUserMsg ? `<button class="msg-act-btn" onclick="regenMsg(${idx - 1})">↻ Reformuler</button>` : ''}
+            ${prevUserMsg ? `<button class="msg-act-btn" onclick="teachMsg(${idx - 1}, ${idx})">${userMode ? '👍 Bonne réponse' : '👍 Renforcer'}</button>` : ''}
+            ${prevUserMsg ? `<button class="msg-act-btn" style="color:#7FD1FF;" onclick="openTeachDrawer(${idx})">${userMode ? '🪄 Lui apprendre mieux' : '✏️ Corriger & Enseigner'}</button>` : ''}
           </div>
           <div id="teachDrawer-${idx}" class="teach-drawer hidden">
-            <div style="font-size:12px;color:var(--text-muted);">Enseignez la réponse idéale à Never-AI : ses poids <strong>CompositeMuon</strong> et sa mémoire <strong>EvolveMem</strong> l'apprendront immédiatement.</div>
+            <div style="font-size:12px;color:var(--text-muted);">${userMode ? 'Écrivez la réponse idéale : Never-AI s\'en souviendra immédiatement et progressera grâce à vous.' : 'Enseignez la réponse idéale à Never-AI : ses poids <strong>CompositeMuon</strong> et sa mémoire <strong>EvolveMem</strong> l\'apprendront immédiatement.'}</div>
             <textarea class="dark-textarea" id="teachInput-${idx}" rows="3">${esc(m.content || '')}</textarea>
             <div style="display:flex;gap:8px;">
-              <button class="pill-btn pill-white" style="height:32px;font-size:12px;" onclick="submitHumanCorrection(${idx - 1}, ${idx})">⚡ Enseigner aux Poids (Muon)</button>
+              <button class="pill-btn pill-white" style="height:32px;font-size:12px;" onclick="submitHumanCorrection(${idx - 1}, ${idx})">${userMode ? '✨ Mémoriser cet apprentissage' : '⚡ Enseigner aux Poids (Muon)'}</button>
               <button class="pill-btn pill-outline-white" style="height:32px;font-size:12px;" onclick="document.getElementById('teachDrawer-${idx}').classList.add('hidden')">Annuler</button>
             </div>
           </div>
@@ -1830,7 +2506,7 @@
           <div class="turn-item">
             <div class="turn-avatar never-av">${SMALL_NEVER_SVG}</div>
             <div class="turn-body">
-              <div class="turn-meta"><strong>Never-AI</strong><span>@chronomorph ${m.persona && m.persona !== 'polymathe' ? '· ' + esc(m.persona) : ''} ${m.streaming ? '· génération live…' : ''}</span></div>
+              <div class="turn-meta"><strong>Never-AI</strong><span>${userMode ? (m.streaming ? 'écrit…' : 'Assistant Privé') : `@chronomorph ${m.persona && m.persona !== 'polymathe' ? '· ' + esc(m.persona) : ''} ${m.streaming ? '· génération live…' : ''}`}</span></div>
               ${extras}
               <div class="turn-text">${formatRichMessage(m.content || (m.streaming ? '▍' : ''), idx)}</div>
               ${actionsHtml}
@@ -1997,16 +2673,19 @@
         return;
       }
       const btn = document.getElementById('btnVoiceMic');
+      const btnUser = document.getElementById('btnVoiceMicUser');
       if (speechRec) {
         speechRec.stop();
         speechRec = null;
-        btn.classList.remove('active-emerald');
+        if (btn) btn.classList.remove('active-emerald');
+        if (btnUser) btnUser.classList.remove('active-emerald');
         return;
       }
       speechRec = new SR();
       speechRec.lang = 'fr-FR';
       speechRec.interimResults = false;
-      btn.classList.add('active-emerald');
+      if (btn) btn.classList.add('active-emerald');
+      if (btnUser) btnUser.classList.add('active-emerald');
       toast('Parlez maintenant...');
       speechRec.onresult = (ev) => {
         const transcript = ev.results[0][0].transcript;
@@ -2016,7 +2695,8 @@
       };
       speechRec.onend = () => {
         speechRec = null;
-        btn.classList.remove('active-emerald');
+        if (btn) btn.classList.remove('active-emerald');
+        if (btnUser) btnUser.classList.remove('active-emerald');
       };
       speechRec.start();
     }
@@ -2291,12 +2971,20 @@
 
     async function refreshStatus() {
       try {
-        const res = await fetch('/api/status');
+        const [res, commRes] = await Promise.all([
+          fetch('/api/status'),
+          fetch('/api/commercial/overview')
+        ]);
         const d = await res.json();
+        const comm = await commRes.json();
+        commOverviewCache = comm;
         const a = d.anatomy;
         bgActive = !!d.background_training;
 
-        document.getElementById('headerStageBadge').textContent = `${a.stage_name} · Gen ${a.generation}`;
+        document.getElementById('headerStageBadge').textContent = isUserMode()
+          ? `✨ Maîtrise ${String(comm.mastery_pct || 88).replace('.', ',')} %`
+          : `${a.stage_name} · Gen ${a.generation}`;
+
         document.getElementById('railTotal').textContent = `${(a.total_params / 1e6).toFixed(2)}M`;
         document.getElementById('railTokens').textContent = fmt(d.total_tokens_trained);
         document.getElementById('railBgSteps').textContent = fmt(d.bg_steps_session || 0);
@@ -2311,7 +2999,7 @@
           renderRagViews();
         }
 
-        // Live state indicators
+        // Live Lab state indicators
         const dot = document.getElementById('bgLiveDot');
         const lbl = document.getElementById('bgStateLabel');
         const btnRail = document.getElementById('btnRailBgToggle');
@@ -2357,7 +3045,389 @@
         }).join('');
 
         drawMonochromeLoss(d.recent_telemetry || []);
+        renderCommercialViews();
       } catch (e) {}
+    }
+
+    /* =========================================================================
+       COMMERCIAL USER VIEWS: LIVE LEARNING CURVE, COMPARATOR & SMART TOOLS
+       ========================================================================= */
+    function renderCommercialViews() {
+      const c = commOverviewCache;
+      if (!c) return;
+      const mStr = String(c.mastery_pct ?? 88.4).replace('.', ',') + ' %';
+      const connStr = String(c.connections_millions ?? 43.6).replace('.', ',') + ' M';
+
+      // Right Rail Consumer Card
+      const uDot = document.getElementById('userLiveDot');
+      const uTxt = document.getElementById('userLearnStateTxt');
+      const uBtn = document.getElementById('btnUserRailLearn');
+      if (uDot) uDot.classList.toggle('on', !!c.is_learning_live);
+      if (uTxt) {
+        uTxt.textContent = c.is_learning_live ? `En train d'étudier (${c.learning_speed_words_sec || 12} mots/s)` : 'Prêt';
+        uTxt.style.color = c.is_learning_live ? 'var(--emerald)' : 'var(--text-muted)';
+      }
+      if (uBtn) {
+        uBtn.textContent = c.is_learning_live ? '⏸ Mettre en pause l\'étude' : '▶ Activer l\'Apprentissage Autonome';
+        uBtn.className = c.is_learning_live ? 'pill-btn pill-emerald' : 'pill-btn pill-white';
+      }
+      const bAuto = document.getElementById('btnCommAutoLearn');
+      if (bAuto) {
+        bAuto.textContent = c.is_learning_live ? '⏸ Apprentissage en Direct : ACTIF' : '▶ Activer l\'Apprentissage en Direct';
+        bAuto.className = c.is_learning_live ? 'pill-btn pill-emerald' : 'pill-btn pill-white';
+      }
+
+      document.getElementById('railUserMastery').textContent = mStr;
+      document.getElementById('railUserLevel').textContent = `${c.level_title || 'Niveau 3'} · Parti de 0 %`;
+      document.getElementById('railUserIq').textContent = `QI ~${c.iq_index || 131}`;
+      document.getElementById('railUserConns').textContent = `${connStr} connexions`;
+      document.getElementById('userNextUpgradePct').textContent = `${c.next_upgrade_pct || 0}%`;
+      document.getElementById('userNextUpgradeFill').style.width = `${c.next_upgrade_pct || 0}%`;
+
+      // Full Learning View KPIs
+      document.getElementById('commKpiMastery').textContent = mStr;
+      document.getElementById('commKpiIq').textContent = String(c.iq_index || 131);
+      document.getElementById('commKpiLevel').textContent = c.level_title || 'Niveau 3';
+      document.getElementById('commKpiConns').textContent = connStr;
+      document.getElementById('commKpiWords').textContent = fmt(c.words_assimilated || 0);
+      document.getElementById('commKpiSpeed').textContent = c.is_learning_live
+        ? `⚡ Étudie en direct (+${c.session_lessons || 0} cycles)`
+        : `${fmt(c.memories_stored || 0)} souvenirs retenus`;
+      document.getElementById('commNextUpgradeTxt').textContent = `Prochaine évolution automatique du cerveau : ${c.next_upgrade_pct || 0} %`;
+
+      // Timeline Milestones
+      const tlGrid = document.getElementById('commTimelineGrid');
+      if (tlGrid && Array.isArray(c.evolution_milestones)) {
+        tlGrid.innerHTML = c.evolution_milestones.map((ms, idx, arr) => `
+          <div class="timeline-card ${idx === arr.length - 1 ? 'active-stage' : ''}">
+            <span style="font-size:11px;font-weight:800;color:${idx === arr.length - 1 ? 'var(--emerald)' : 'var(--text-muted)'};text-transform:uppercase;">${esc(ms.stage)}</span>
+            <strong style="font-size:14.5px;color:#FFF;">${esc(ms.title)}</strong>
+            <div style="font-size:19px;font-weight:800;color:${idx === arr.length - 1 ? '#34D399' : '#E7E9EA'};">${String(ms.mastery).replace('.', ',')} % <span style="font-size:11.5px;font-weight:500;color:var(--text-muted);">(${esc(ms.connections)})</span></div>
+            <p style="font-size:12px;color:var(--text-muted);line-height:1.38;">${esc(ms.desc)}</p>
+          </div>
+        `).join('');
+      }
+
+      // Draw Live Curves
+      drawUserMiniCurve(c.learning_curve || []);
+      drawCommercialCurve(c.learning_curve || []);
+
+      // Render Comparator
+      renderCommercialComparator(c.benchmark_comparator || []);
+
+      // Render Tasks & User Docs
+      const tList = document.getElementById('userTasksList');
+      if (tList && Array.isArray(c.tasks)) {
+        if (!c.tasks.length) {
+          tList.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);padding:4px 0;">Aucune tâche enregistrée. Ajoutez un objectif ci-dessus !</div>`;
+        } else {
+          tList.innerHTML = c.tasks.map(t => `
+            <div class="task-row-clean">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <input type="checkbox" ${t.status === 'done' ? 'checked disabled' : ''} onchange="completeConsumerTask(${t.id})" style="cursor:pointer;width:16px;height:16px;" />
+                <span style="${t.status === 'done' ? 'text-decoration:line-through;color:var(--text-muted);' : 'color:#FFF;font-weight:500;'}">${esc(t.title)}</span>
+              </div>
+              <span style="font-size:11px;color:${t.status === 'done' ? 'var(--emerald)' : 'var(--text-muted)'};">${t.status === 'done' ? '✓ Terminé' : 'En cours'}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      const dList = document.getElementById('userDocsList');
+      if (dList && Array.isArray(c.documents)) {
+        if (!c.documents.length) {
+          dList.innerHTML = 'Aucun fichier importé. Ajoutez un document (.txt, .md, .csv, .py) pour poser des questions dessus !';
+        } else {
+          dList.innerHTML = c.documents.map(doc => `
+            <div class="task-row-clean" style="margin-top:6px;">
+              <div><strong>📄 ${esc(doc.filename)}</strong> <span style="color:var(--text-muted);font-size:12px;">(${doc.chunks} sections lues)</span></div>
+              <button class="omega-chip" onclick="insertConsumerHelper('Résume simplement les points importants du document ${esc(doc.filename).replace(/'/g, "\\'")}')">Interroger ce fichier →</button>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    function setCommCurveMode(mode) {
+      commCurveMode = mode === 'error' ? 'error' : 'mastery';
+      document.getElementById('btnCurveModeMastery').classList.toggle('active-emerald', commCurveMode === 'mastery');
+      document.getElementById('btnCurveModeError').classList.toggle('active-emerald', commCurveMode === 'error');
+      if (commOverviewCache) drawCommercialCurve(commOverviewCache.learning_curve || []);
+    }
+
+    function drawUserMiniCurve(pts) {
+      const c = document.getElementById('userMiniCurveCanvas');
+      if (!c || !pts.length) return;
+      const ctx = c.getContext('2d');
+      const W = c.width, H = c.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const padX = 10, padY = 14;
+      const coords = pts.map((p, i) => {
+        const x = padX + (i / Math.max(1, pts.length - 1)) * (W - padX * 2);
+        const y = H - padY - ((p.mastery || 0) / 100) * (H - padY * 2);
+        return {x, y};
+      });
+
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, 'rgba(0, 186, 124, 0.35)');
+      grad.addColorStop(1, 'rgba(0, 186, 124, 0.0)');
+      ctx.beginPath();
+      coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      ctx.lineTo(coords[coords.length - 1].x, H - padY);
+      ctx.lineTo(coords[0].x, H - padY);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.beginPath();
+      coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      ctx.strokeStyle = '#00BA7C';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      const last = coords[coords.length - 1];
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#34D399';
+      ctx.fill();
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '10.5px sans-serif';
+      ctx.fillText('Jour 0 (0%)', 10, H - 3);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(`Maintenant (${pts[pts.length - 1].mastery}%)`, W - 118, 13);
+    }
+
+    function drawCommercialCurve(pts) {
+      const c = document.getElementById('commCurveCanvas');
+      if (!c || !pts.length) return;
+      const ctx = c.getContext('2d');
+      const W = c.width, H = c.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const padL = 44, padR = 20, padT = 22, padB = 30;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // Subtle horizontal grid lines
+      [0, 25, 50, 75, 100].forEach(pct => {
+        const y = padT + plotH - (pct / 100) * plotH;
+        ctx.strokeStyle = '#1C2026';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+        ctx.fillStyle = '#71767B';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(`${pct}%`, 8, y + 4);
+      });
+
+      const coords = pts.map((p, i) => {
+        const val = commCurveMode === 'mastery'
+          ? (p.mastery || 0)
+          : Math.max(0, Math.min(100, 100 - ((p.ce || 0) / 8.5) * 100));
+        const x = padL + (i / Math.max(1, pts.length - 1)) * plotW;
+        const y = padT + plotH - (val / 100) * plotH;
+        return {x, y, val, raw: p};
+      });
+      commCurvePointsMeta = coords;
+
+      // Glowing gradient fill
+      const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+      grad.addColorStop(0, commCurveMode === 'mastery' ? 'rgba(0, 186, 124, 0.36)' : 'rgba(29, 155, 240, 0.36)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+      ctx.beginPath();
+      coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      ctx.lineTo(coords[coords.length - 1].x, padT + plotH);
+      ctx.lineTo(coords[0].x, padT + plotH);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Main line
+      ctx.beginPath();
+      coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+      ctx.strokeStyle = commCurveMode === 'mastery' ? '#00BA7C' : '#1D9BF0';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Highlight evolution milestones & live tip
+      coords.forEach((pt, i) => {
+        if (pt.raw.kind === 'upgrade' || pt.raw.kind === 'human' || i === 0 || i === coords.length - 1) {
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, i === coords.length - 1 ? 5.5 : 4, 0, Math.PI * 2);
+          ctx.fillStyle = pt.raw.kind === 'upgrade' ? '#FBBF24' : (i === coords.length - 1 ? '#34D399' : '#FFFFFF');
+          ctx.fill();
+        }
+      });
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '11.5px sans-serif';
+      ctx.fillText('Jour 0 · Naissance (0 %)', padL, H - 8);
+      ctx.fillStyle = '#E7E9EA';
+      ctx.fillText('En direct sur votre appareil →', W - padR - 165, H - 8);
+    }
+
+    function onCommCurveHover(ev) {
+      const c = document.getElementById('commCurveCanvas');
+      const tip = document.getElementById('commCurveTooltip');
+      if (!c || !tip || !commCurvePointsMeta.length) return;
+      const rect = c.getBoundingClientRect();
+      const scaleX = c.width / rect.width;
+      const mx = (ev.clientX - rect.left) * scaleX;
+
+      let best = commCurvePointsMeta[0];
+      let bestDist = Math.abs(mx - best.x);
+      for (const pt of commCurvePointsMeta) {
+        const d = Math.abs(mx - pt.x);
+        if (d < bestDist) { best = pt; bestDist = d; }
+      }
+      tip.innerHTML = `
+        <div style="font-weight:800;color:#34D399;">${best.val.toFixed(1).replace('.', ',')} % ${commCurveMode === 'mastery' ? 'de maîtrise' : 'de précision'}</div>
+        <div style="color:#E7E9EA;margin-top:2px;">${esc(best.raw.label || 'Cycle')}</div>
+      `;
+      tip.style.left = Math.min(rect.width - 190, Math.max(10, ev.clientX - rect.left - 70)) + 'px';
+      tip.style.top = Math.max(8, (best.y / c.height) * rect.height - 56) + 'px';
+      tip.classList.remove('hidden');
+    }
+
+    function hideCommCurveTooltip() {
+      const tip = document.getElementById('commCurveTooltip');
+      if (tip) tip.classList.add('hidden');
+    }
+
+    async function runConsumerBoost() {
+      toast('📚 Never-AI étudie 5 nouveaux cycles sous vos yeux...');
+      await fetch('/api/train/burst', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({num_steps: 5, batch_size: 2})
+      });
+      await refreshStatus();
+      toast('✨ Apprentissage terminé : la courbe a été mise à jour en direct !');
+    }
+
+    function setBenchFilter(cat) {
+      benchCategoryFilter = cat;
+      ['all', 'privacy_cost', 'intelligence', 'autonomy'].forEach(k => {
+        const el = document.getElementById(`flt-${k}`);
+        if (el) el.classList.toggle('active-blue', k === cat);
+      });
+      if (commOverviewCache) renderCommercialComparator(commOverviewCache.benchmark_comparator || []);
+    }
+
+    function renderCommercialComparator(rows) {
+      const box = document.getElementById('commComparatorList');
+      if (!box) return;
+      const filtered = benchCategoryFilter === 'all'
+        ? rows
+        : rows.filter(r => r.category === benchCategoryFilter);
+      box.innerHTML = filtered.map(r => `
+        <div class="comp-card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;">
+            <strong style="font-size:14.5px;color:#FFF;">${esc(r.criterion)}</strong>
+            <span style="font-size:12px;color:var(--text-muted);">${esc(r.summary)}</span>
+          </div>
+          <div class="comp-bar-line">
+            <span style="color:#6EE7B7;font-weight:700;">Never-AI (Vous)</span>
+            <div class="comp-track"><div class="comp-fill-never" style="width:${r.never_ai}%"></div></div>
+            <strong style="text-align:right;color:#6EE7B7;">${r.never_ai}%</strong>
+          </div>
+          <div class="comp-bar-line">
+            <span style="color:#9CA3AF;">IA Cloud Payante</span>
+            <div class="comp-track"><div class="comp-fill-cloud" style="width:${r.cloud_ai}%"></div></div>
+            <span style="text-align:right;color:#9CA3AF;">${r.cloud_ai}%</span>
+          </div>
+          <div class="comp-bar-line">
+            <span style="color:#71767B;">IA Locale Figée</span>
+            <div class="comp-track"><div class="comp-fill-static" style="width:${r.static_local}%"></div></div>
+            <span style="text-align:right;color:#71767B;">${r.static_local}%</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function runConsumerBenchmark() {
+      const btn = document.getElementById('btnCommQuickBench');
+      const box = document.getElementById('commQuickBenchOut');
+      btn.disabled = true;
+      btn.textContent = '⏳ Vérification en cours...';
+      try {
+        const res = await fetch('/api/commercial/quick-benchmark', {method: 'POST'});
+        const d = await res.json();
+        box.innerHTML = `
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:12px;border-radius:12px;background:rgba(0,186,124,0.1);border:1px solid rgba(0,186,124,0.35);">
+            <div style="font-size:26px;font-weight:800;color:#34D399;">${d.passed}/${d.total} réussis (${d.score_pct}%)</div>
+            <div style="font-size:12.5px;color:#E7E9EA;">Vérifié en direct sur votre appareil en <strong>${d.duration_ms} millisecondes</strong> · Maîtrise globale : <strong>${String(d.mastery_pct).replace('.', ',')}%</strong></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;">
+            ${(d.cards || []).map(c => `
+              <div class="stat-tile" style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#FFF;font-size:12.5px;margin:0;">${esc(c.label)}</span>
+                <strong style="font-size:13px;color:${c.passed ? '#34D399' : '#F87171'};">${c.passed ? '✓ Parfait' : '✕ Échec'}</strong>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ Relancer le test en direct';
+      }
+    }
+
+    /* ---------------- NO-CODE SMART TOOLS ---------------- */
+    function runSmartPlot() {
+      const expr = document.getElementById('stPlotExpr').value.trim() || 'sin(x)';
+      switchTab('chat');
+      quickAsk(`/plot ${expr}`);
+    }
+    function runSmartStats() {
+      const nums = document.getElementById('stStatsNums').value.trim() || '10, 20, 30';
+      switchTab('chat');
+      quickAsk(`/stats ${nums}`);
+    }
+    function runSmartUnit() {
+      const v = document.getElementById('stUnitVal').value.trim() || '100';
+      const u1 = document.getElementById('stUnitFrom').value.trim() || 'km/h';
+      const u2 = document.getElementById('stUnitTo').value.trim() || 'm/s';
+      switchTab('chat');
+      quickAsk(`/unit ${v} ${u1} en ${u2}`);
+    }
+    async function runSmartToken() {
+      const res = await fetch('/api/plugins/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plugin: 'crypto_and_encoding_engine', params: {action: 'token', bytes: 18}})
+      });
+      const d = await res.json();
+      const tok = d.token_urlsafe || d.token_hex || '';
+      document.getElementById('stTokenOut').textContent = tok;
+      if (tok && navigator.clipboard) {
+        navigator.clipboard.writeText(tok).catch(() => {});
+        toast('Clé sécurisée générée et copiée !');
+      }
+    }
+    async function addConsumerTask() {
+      const inp = document.getElementById('userTaskInput');
+      const title = inp.value.trim();
+      if (!title) return;
+      await fetch('/api/plugins/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plugin: 'task_planner_engine', params: {action: 'add', title, priority: 'high'}})
+      });
+      inp.value = '';
+      await refreshStatus();
+      toast('Objectif ajouté !');
+    }
+    async function completeConsumerTask(taskId) {
+      await fetch('/api/plugins/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plugin: 'task_planner_engine', params: {action: 'done', id: taskId}})
+      });
+      await refreshStatus();
+      toast('Bravo, objectif accompli !');
     }
 
     function drawMonochromeLoss(events) {

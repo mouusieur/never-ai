@@ -12,6 +12,9 @@
   3. *Jalon (Morphogenèse)* : Curriculum adaptatif multi-stades bilingue (FR/EN + Code + Math + Raisonnement).
 - **Souveraineté Cognitive, 10 Domaines & 15 Plugins Formels (`v1.0 Omega`) :** Sanctuaire de pensée libre explicite (`<|think|>...<|/think|>`) et mode multi-étapes **`Deep Think`**, 10 domaines polymathiques FR/EN, RAG documentaire local, enseignement humain interactif (`CompositeMuon` en direct), routeur **`ToolRAG`**, **15 plugins souverains** (SymPy, traceur de courbes SVG `plot_svg_engine`, statistiques & régression OLS, constantes CODATA & unités, audit sécurité/complexité AST Python, cryptographie & entropie, logique propositionnelle SAT, sandbox Python, planificateur de tâches, suite de benchmark live) et moteur **`SkillForge`** d'auto-création d'outils vérifiés.
 - **Topologie Hybride Local + Cloud :** Entraînement continu vectorisé `AVX-512` (`fp32`) en local couplé à une synchronisation des checkpoints `safetensors` vers **Google Drive Vault** et worker **Burst GPU Cloud**.
+- **Architecture Double-Expérience (`v1.2 Dual-Horizon`) :** Choix à l'inscription, en mode invité ou à chaud en 1 clic entre :
+  1. **Compte Utilisateur Commercial (`account_type="user"`)** — Chatbot fluide zéro jargon, **courbe d'apprentissage interactive en temps réel** (de `0 %` à la maîtrise actuelle), **comparateur de benchmarks visuel** (*Never-AI* vs *IA Cloud* vs *IA Locale Figée*), vérification live en millisecondes et studio d'outils visuels sans commande.
+  2. **Compte Laboratoire R&D (`account_type="lab"`)** — Console d'ingénierie complète exposant les mues morphogénétiques MoE, portes `Gate-Zero`, loss brute `Muon/WSM`, consolidation `SEAL` et exécuteur JSON des 15 plugins.
 
 ## Application Desktop Windows (`.exe`) & Direction Artistique « Monolith Noir »
 

@@ -54,11 +54,21 @@ class AuthRegisterRequest(BaseModel):
     handle: str = Field(..., min_length=2, max_length=32)
     display_name: str = Field(default="", max_length=50)
     passphrase: str = Field(default="", max_length=128)
+    account_type: str = Field(default="user")
 
 
 class AuthLoginRequest(BaseModel):
     handle: str = Field(..., min_length=2, max_length=32)
     passphrase: str = Field(default="", max_length=128)
+
+
+class AuthGuestRequest(BaseModel):
+    account_type: str = Field(default="user")
+
+
+class AccountTypeSwitchRequest(BaseModel):
+    token: str = Field(..., min_length=4)
+    account_type: str = Field(..., pattern="^(user|lab)$")
 
 
 class ThreadCreateRequest(BaseModel):
@@ -156,12 +166,13 @@ def api_auth_register(req: AuthRegisterRequest) -> dict[str, Any]:
             handle=req.handle,
             display_name=req.display_name,
             passphrase=req.passphrase,
+            account_type=req.account_type,
         )
         get_engine().memory.store(
             key=f"user_profile_{profile['handle']}",
-            content=f"Utilisateur souverain @{profile['handle']} ({profile['display_name']}) sur Never-AI Desktop.",
+            content=f"Utilisateur souverain @{profile['handle']} ({profile['display_name']}, mode={profile['account_type']}) sur Never-AI Desktop.",
             category="episodic",
-            tags=["user", profile["handle"]],
+            tags=["user", profile["handle"], profile["account_type"]],
         )
         return {"ok": True, "profile": profile}
     except ValueError as exc:
@@ -178,9 +189,19 @@ def api_auth_login(req: AuthLoginRequest) -> dict[str, Any]:
 
 
 @app.post("/api/auth/guest")
-def api_auth_guest() -> dict[str, Any]:
-    profile = get_engine().identities.guest_session()
+def api_auth_guest(req: AuthGuestRequest | None = None) -> dict[str, Any]:
+    acc = req.account_type if req is not None else "user"
+    profile = get_engine().identities.guest_session(account_type=acc)
     return {"ok": True, "profile": profile}
+
+
+@app.post("/api/auth/account-type")
+def api_auth_set_account_type(req: AccountTypeSwitchRequest) -> dict[str, Any]:
+    try:
+        profile = get_engine().identities.set_account_type(req.token, req.account_type)
+        return {"ok": True, "profile": profile}
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
 @app.get("/api/auth/me")
@@ -312,6 +333,16 @@ def api_rag_delete(filename: str) -> dict[str, Any]:
 @app.post("/api/benchmark")
 def api_benchmark() -> dict[str, Any]:
     return get_engine().run_full_benchmark()
+
+
+@app.get("/api/commercial/overview")
+def api_commercial_overview() -> dict[str, Any]:
+    return get_engine().commercial_overview()
+
+
+@app.post("/api/commercial/quick-benchmark")
+def api_commercial_quick_benchmark() -> dict[str, Any]:
+    return get_engine().run_commercial_quick_benchmark()
 
 
 @app.post("/api/chat/teach")

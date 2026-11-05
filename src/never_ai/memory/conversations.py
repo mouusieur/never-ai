@@ -54,18 +54,31 @@ class LocalIdentityVault:
         )
         return dk.hex()
 
-    def register(self, handle: str, display_name: str, passphrase: str = "") -> dict[str, Any]:
+    @staticmethod
+    def _normalize_account_type(account_type: str | None) -> str:
+        val = (account_type or "user").strip().lower()
+        return "lab" if val in ("lab", "rd", "expert", "developer", "dev") else "user"
+
+    def register(
+        self,
+        handle: str,
+        display_name: str,
+        passphrase: str = "",
+        account_type: str = "user",
+    ) -> dict[str, Any]:
         norm = self._normalize_handle(handle)
         if len(norm) < 2:
             raise ValueError("L'identifiant doit contenir au moins 2 caractères.")
         if norm in self.users:
             raise ValueError(f"Le profil @{norm} existe déjà sur cette machine.")
 
+        acc_type = self._normalize_account_type(account_type)
         salt = secrets.token_hex(16)
         pw_hash = self._hash_passphrase(passphrase, salt) if passphrase else ""
         profile = {
             "handle": norm,
             "display_name": display_name.strip() or f"@{norm}",
+            "account_type": acc_type,
             "salt": salt,
             "pw_hash": pw_hash,
             "created_at": round(time.time(), 2),
@@ -85,23 +98,45 @@ class LocalIdentityVault:
             candidate = self._hash_passphrase(passphrase, profile["salt"])
             if not secrets.compare_digest(candidate, profile["pw_hash"]):
                 raise ValueError("Clé locale incorrecte.")
+        if "account_type" not in profile:
+            profile["account_type"] = "user"
         token = secrets.token_urlsafe(24)
         self.sessions[token] = norm
         self._save()
         return self._public_profile(profile, token)
 
-    def guest_session(self) -> dict[str, Any]:
+    def guest_session(self, account_type: str = "user") -> dict[str, Any]:
+        acc_type = self._normalize_account_type(account_type)
         norm = "local"
         if norm not in self.users:
             self.users[norm] = {
                 "handle": norm,
-                "display_name": "Explorateur Local",
+                "display_name": "Compte Utilisateur" if acc_type == "user" else "Ingénieur Labo",
+                "account_type": acc_type,
                 "salt": secrets.token_hex(16),
                 "pw_hash": "",
                 "created_at": round(time.time(), 2),
             }
+        else:
+            self.users[norm]["account_type"] = acc_type
+            self.users[norm]["display_name"] = (
+                "Explorateur Never-AI" if acc_type == "user" else "Architecte Labo R&D"
+            )
         token = secrets.token_urlsafe(24)
         self.sessions[token] = norm
+        self._save()
+        return self._public_profile(self.users[norm], token)
+
+    def set_account_type(self, token: str, account_type: str) -> dict[str, Any]:
+        norm = self.sessions.get(token)
+        if not norm or norm not in self.users:
+            raise ValueError("Session invalide ou expirée.")
+        acc_type = self._normalize_account_type(account_type)
+        self.users[norm]["account_type"] = acc_type
+        if norm == "local":
+            self.users[norm]["display_name"] = (
+                "Explorateur Never-AI" if acc_type == "user" else "Architecte Labo R&D"
+            )
         self._save()
         return self._public_profile(self.users[norm], token)
 
@@ -115,9 +150,12 @@ class LocalIdentityVault:
 
     @staticmethod
     def _public_profile(profile: dict[str, Any], token: str) -> dict[str, Any]:
+        acc_type = profile.get("account_type", "user")
         return {
             "handle": profile["handle"],
             "display_name": profile["display_name"],
+            "account_type": acc_type,
+            "account_label": "Édition Commerciale" if acc_type == "user" else "Laboratoire R&D",
             "created_at": profile["created_at"],
             "token": token,
         }
