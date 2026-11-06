@@ -10,7 +10,7 @@ from typing import Any, AsyncIterator, Iterator
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from never_ai.desktop.installer_builder import build_windows_installer_zip
@@ -25,8 +25,8 @@ _BRAND_DIR = _REPO_ROOT / "assets" / "brand"
 _ENGINE: NeverAIEngine | None = None
 _OTA: OTAUpdater | None = None
 GITHUB_RELEASE_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest"
-GITHUB_EXE_DIRECT_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest/download/NeverAI-Setup.exe"
-GITHUB_ZIP_DIRECT_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest/download/NeverAI-Installer-Windows-x64.zip"
+GITHUB_EXE_DIRECT_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest/download/NeverAI-Setup-x64.exe"
+GITHUB_ZIP_DIRECT_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest/download/NeverAI-Portable-Windows-x64.zip"
 
 
 def get_ota() -> OTAUpdater:

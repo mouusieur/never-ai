@@ -42,10 +42,11 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
-    console=False,  # Pure frameless/dark GUI app without black console window!
+    upx=False,  # CRITICAL: Disable UPX compression to prevent Windows Defender / Chrome heuristic false positives!
+    console=False,
     disable_windowed_traceback=False,
     icon=str(ROOT / "assets" / "brand" / "never_ai.ico"),
+    version=str(ROOT / "packaging" / "windows" / "version_info.txt"),
 )
 
 coll = COLLECT(
@@ -53,7 +54,7 @@ coll = COLLECT(
     a.binaries,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name="NeverAI",
 )

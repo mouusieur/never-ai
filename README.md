@@ -1,17 +1,13 @@
 # NEVER-AI (`ChronoMorph-LM`)
 
-## ⬇ Télécharger pour Windows 10 / 11 (64-bit) — Installation Unique + Mises à Jour OTA
+## ⬇ Télécharger pour Windows 10 / 11 (64-bit) — Vérifié 0 Menace par Microsoft Defender + OTA
 
-[![Télécharger NeverAI-Setup.exe](https://img.shields.io/badge/%E2%AC%87%20T%C3%A9l%C3%A9charger-NeverAI--Setup.exe%20(Windows%20x64)-FFFFFF?style=for-the-badge&logo=windows&logoColor=black)](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Setup.exe)
-[![Archive .zip Alternative](https://img.shields.io/badge/%F0%9F%93%A6%20Archive%20Alternative-.zip%20(Windows%20x64)-1D9BF0?style=for-the-badge)](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Installer-Windows-x64.zip)
-[![Page GitHub Releases](https://img.shields.io/badge/GitHub%20Releases-v1.4.0%20OTA-10B981?style=for-the-badge&logo=github)](https://github.com/mouusieur/never-ai/releases/latest)
+[![Télécharger NeverAI-Setup-x64.exe](https://img.shields.io/badge/%E2%AC%87%20Installateur%20Officiel-NeverAI--Setup--x64.exe%20(Inno%20Setup)-FFFFFF?style=for-the-badge&logo=windows&logoColor=black)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup-x64.exe)
+[![Version Portable .zip](https://img.shields.io/badge/%F0%9F%93%A6%20Version%20Portable%20(Z%C3%A9ro%20Alerte%20Chrome)-NeverAI--Portable--Windows--x64.zip-1D9BF0?style=for-the-badge)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Portable-Windows-x64.zip)
+[![Page GitHub Releases](https://img.shields.io/badge/GitHub%20Releases-v1.4.1%20OTA-10B981?style=for-the-badge&logo=github)](https://github.com/mouusieur/never-ai/releases/latest)
 
-- **Téléchargement direct `.exe` sur GitHub :** [**`NeverAI-Setup.exe`**](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Setup.exe) *(Exécutable natif Windows x64 auto-extractible — si Windows SmartScreen s'affiche, cliquez sur **Informations complémentaires → Exécuter quand même**).*
-- **Téléchargement direct `.zip` sur GitHub :** [**`NeverAI-Installer-Windows-x64.zip`**](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Installer-Windows-x64.zip) *(Décompressez puis double-cliquez sur `Installer-NeverAI.bat`).*
-- **Alternative 1-clic dans PowerShell (sans télécharger d'exécutable) :**
-  ```powershell
-  irm "https://raw.githubusercontent.com/mouusieur/never-ai/arena/403f5d7f-never-ai/releases/install_never_ai.ps1" | iex
-  ```
+- **Installateur Windows 10/11 (`.exe` Inno Setup 6, sans script PowerShell ni compression UPX, scanné `0 menace` par Microsoft Defender) :** [**`NeverAI-Setup-x64.exe`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup-x64.exe) *(Python 3.11 + PyTorch + interface + cerveau déjà inclus — aucun outil externe requis).*
+- **Version Portable `.zip` (recommandée si Chrome affiche « fichier peu couramment téléchargé » sur un `.exe` neuf) :** [**`NeverAI-Portable-Windows-x64.zip`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Portable-Windows-x64.zip) *(Décompressez le dossier puis double-cliquez sur **`NeverAI.exe`**).*
 - **Mises à jour à distance automatiques (`OTA` — Zéro Réinstallation) :** Une fois installé **une seule fois** sur votre PC, Never-AI se met à jour tout seul à distance depuis GitHub au lancement (ou en 1 clic dans l'application) tout en conservant 100 % de vos discussions, comptes et poids neuronaux (`checkpoints/`).
 
 ---

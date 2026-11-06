@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ctypes
+import importlib.abc
+import importlib.machinery
 import os
 from pathlib import Path
 import shutil
@@ -14,6 +16,26 @@ import time
 import urllib.request
 
 import uvicorn
+
+
+class _OTASourceFirstFinder(importlib.abc.MetaPathFinder):
+    """Ensure OTA-updated `never_ai.*` modules in `never_ai_data/src` override frozen PyInstaller bytecode."""
+
+    def __init__(self, ota_src_dir: Path) -> None:
+        self.ota_src_dir = ota_src_dir
+
+    def find_spec(self, fullname: str, path: object = None, target: object = None):  # type: ignore[override]
+        if fullname != "never_ai" and not fullname.startswith("never_ai."):
+            return None
+        if not (self.ota_src_dir / "never_ai").is_dir():
+            return None
+        if "." not in fullname:
+            return importlib.machinery.PathFinder.find_spec(fullname, [str(self.ota_src_dir)], target)
+        rel_parent = Path(*fullname.split(".")[:-1])
+        search_dir = self.ota_src_dir / rel_parent
+        if search_dir.is_dir():
+            return importlib.machinery.PathFinder.find_spec(fullname, [str(search_dir)], target)
+        return None
 
 
 def _find_free_port() -> int:
@@ -97,24 +119,29 @@ def main() -> None:
     data_dir = _resolve_user_data_dir()
     os.chdir(data_dir)
 
-    # Ensure updated source tree in data_dir/src takes priority on sys.path for OTA updates!
+    # Register OTA source-first finder BEFORE PyInstaller's FrozenImporter so remote updates apply without reinstalling!
     local_src = data_dir / "src"
-    if local_src.exists() and str(local_src) not in sys.path:
+    if str(local_src) not in sys.path:
         sys.path.insert(0, str(local_src))
+    sys.meta_path.insert(0, _OTASourceFirstFinder(local_src))
 
     # Automatic Zero-Reinstall Over-The-Air (OTA) Remote Update Check on Boot!
+    ota_instance = None
     try:
         from never_ai.updater.ota import OTAUpdater
 
-        ota = OTAUpdater(app_root=data_dir)
-        if ota.state.get("auto_update_on_boot", True) and not (data_dir / ".git").exists():
-            ota.apply_remote_update(force=False)
+        ota_instance = OTAUpdater(app_root=data_dir)
+        if ota_instance.state.get("auto_update_on_boot", True) and not (data_dir / ".git").exists():
+            ota_instance.apply_remote_update(force=False)
     except Exception:  # noqa: BLE001
         pass
 
-    # Pre-initialize engine in data_dir
+    # Pre-initialize engine & OTA controller in data_dir
     import never_ai.server.app as server_app
     from never_ai.engine import NeverAIEngine
+
+    if ota_instance is not None:
+        server_app._OTA = ota_instance
 
     server_app._ENGINE = NeverAIEngine(
         vault_dir=data_dir / "checkpoints",
