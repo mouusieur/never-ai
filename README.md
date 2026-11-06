@@ -1,5 +1,20 @@
 # NEVER-AI (`ChronoMorph-LM`)
 
+## ⬇ Télécharger pour Windows 10 / 11 (64-bit) — Installation Unique + Mises à Jour OTA
+
+[![Télécharger NeverAI-Setup.exe](https://img.shields.io/badge/%E2%AC%87%20T%C3%A9l%C3%A9charger-NeverAI--Setup.exe%20(Windows%20x64)-FFFFFF?style=for-the-badge&logo=windows&logoColor=black)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup.exe)
+[![Archive .zip Alternative](https://img.shields.io/badge/%F0%9F%93%A6%20Archive%20Alternative-.zip%20(Windows%20x64)-1D9BF0?style=for-the-badge)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Installer-Windows-x64.zip)
+[![Page GitHub Releases](https://img.shields.io/badge/GitHub%20Releases-v1.4.0%20OTA-10B981?style=for-the-badge&logo=github)](https://github.com/mouusieur/never-ai/releases/latest)
+
+- **Téléchargement direct `.exe` (GitHub Releases) :** [**`NeverAI-Setup.exe`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup.exe) *(Exécutable natif Windows x64 auto-extractible — si Windows SmartScreen s'affiche, cliquez sur **Informations complémentaires → Exécuter quand même**).*
+- **Alternative 1-clic dans PowerShell (sans télécharger d'exécutable) :**
+  ```powershell
+  irm "https://raw.githubusercontent.com/mouusieur/never-ai/arena/403f5d7f-never-ai/releases/install_never_ai.ps1" | iex
+  ```
+- **Mises à jour à distance automatiques (`OTA` — Zéro Réinstallation) :** Une fois installé **une seule fois** sur votre PC, Never-AI se met à jour tout seul à distance depuis GitHub au lancement (ou en 1 clic dans l'application) tout en conservant 100 % de vos discussions, comptes et poids neuronaux (`checkpoints/`).
+
+---
+
 **`never-ai`** est un projet d'ingénierie et de recherche visant à construire, entraîner de zéro et faire grandir continuellement un **Modèle de Langage Morphogénétique Souverain (`ChronoMorph-LM`)** couplé à un écosystème modulaire de **Plugins** et d'auto-apprentissage.
 
 ## Caractéristiques Architecturales Clés

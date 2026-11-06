@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import json
 from pathlib import Path
+import sys
 from typing import Any, AsyncIterator, Iterator
 
 from fastapi import FastAPI, HTTPException, Query
@@ -19,10 +20,13 @@ from never_ai.updater.ota import DEFAULT_GITHUB_REPO, OTAUpdater
 
 
 _STATIC_DIR = Path(__file__).parent / "static"
-_REPO_ROOT = Path(__file__).resolve().parents[3]
+_REPO_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[3]))
 _BRAND_DIR = _REPO_ROOT / "assets" / "brand"
 _ENGINE: NeverAIEngine | None = None
 _OTA: OTAUpdater | None = None
+GITHUB_RELEASE_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest"
+GITHUB_EXE_DIRECT_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest/download/NeverAI-Setup.exe"
+GITHUB_ZIP_DIRECT_URL = f"https://github.com/{DEFAULT_GITHUB_REPO}/releases/latest/download/NeverAI-Installer-Windows-x64.zip"
 
 
 def get_ota() -> OTAUpdater:
@@ -150,7 +154,8 @@ class PluginInvokeRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> HTMLResponse:
-    html_path = _STATIC_DIR / "index.html"
+    ota_html = Path.cwd() / "src" / "never_ai" / "server" / "static" / "index.html"
+    html_path = ota_html if ota_html.exists() else (_STATIC_DIR / "index.html")
     return HTMLResponse(html_path.read_text(encoding="utf-8"))
 
 

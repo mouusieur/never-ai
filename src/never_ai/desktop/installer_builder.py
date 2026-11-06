@@ -123,10 +123,21 @@ $btnInstall.Add_Click({
     try {
         $Target = $txtDir.Text.Trim()
         Log-Step "[1/5] Verification de Python 3.11+..."
-        $pyCmd = Get-Command python -ErrorAction SilentlyContinue
-        if (-not $pyCmd) {
+        $sysPy = $null
+        foreach ($cand in @("python", "py", "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe", "$env:LOCALAPPDATA\Programs\Python\Python311\python.exe")) {
+            try {
+                $verOut = & $cand -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+                if ($LASTEXITCODE -eq 0 -and $verOut -match "^3\.(1[1-9]|[2-9]\d)") {
+                    $sysPy = $cand
+                    break
+                }
+            } catch {}
+        }
+        if (-not $sysPy) {
             Log-Step "Installation automatique de Python 3.11 via winget..."
             Start-Process -FilePath "winget" -ArgumentList "install -e --id Python.Python.3.11 --accept-package-agreements --accept-source-agreements" -Wait -NoNewWindow
+            $sysPy = "$env:LOCALAPPDATA\Programs\Python\Python311\python.exe"
+            if (-not (Test-Path $sysPy)) { $sysPy = "python" }
         }
 
         Log-Step "[2/5] Copie des fichiers sources et icone dans $Target..."
@@ -136,7 +147,7 @@ $btnInstall.Add_Click({
         Log-Step "[3/5] Creation de l'environnement virtuel isole (.venv)..."
         $venvPath = Join-Path $Target ".venv"
         if (-not (Test-Path $venvPath)) {
-            & python -m venv $venvPath
+            & $sysPy -m venv $venvPath
         }
         $pipExe = Join-Path $venvPath "Scripts\pip.exe"
         $pywExe = Join-Path $venvPath "Scripts\pythonw.exe"
