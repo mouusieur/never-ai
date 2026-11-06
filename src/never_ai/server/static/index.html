@@ -1171,6 +1171,38 @@
       font-weight: 600;
       margin-bottom: 6px;
     }
+    .web-sources-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .web-source-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 280px;
+      padding: 5px 10px;
+      border-radius: 10px;
+      background: rgba(29, 155, 240, 0.10);
+      border: 1px solid rgba(29, 155, 240, 0.35);
+      color: #93C5FD;
+      font-size: 11.5px;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.14s ease;
+    }
+    .web-source-chip:hover {
+      background: rgba(29, 155, 240, 0.22);
+      border-color: var(--accent);
+      color: #FFFFFF;
+    }
+    .style-select-grok {
+      border-color: rgba(249, 115, 22, 0.55) !important;
+      color: #FDBA74 !important;
+    }
     .thread-search-inp {
       width: 100%;
       background: #0A0C0F;
@@ -1434,15 +1466,20 @@
     <main class="center-col">
       <header class="sticky-header">
         <div class="header-title" id="centerTitle">Discussion</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
           <span id="toastBar" class="toast-bar"></span>
-          <select class="mode-select" id="tempSelect" title="Style de réponse">
-            <option value="0.12">Précis & Factuel</option>
-            <option value="0.30" selected>Naturel & Équilibré</option>
-            <option value="0.65">Créatif</option>
+          <select class="mode-select" id="styleModeSelect" onchange="onStyleModeChange()" title="Personnalité conversationnelle (Normal, Amical ou Cash sans filtre style Grok)">
+            <option value="normal" selected>💬 Ton Normal</option>
+            <option value="amical">🤝 Ton Amical</option>
+            <option value="grok">🔥 Cash (Style Grok)</option>
+          </select>
+          <select class="mode-select" id="tempSelect" title="Créativité">
+            <option value="0.15">Précis</option>
+            <option value="0.35" selected>Naturel</option>
+            <option value="0.70">Spontané</option>
           </select>
           <button class="mode-select" onclick="exportCurrentThread()" title="Exporter la discussion">Exporter</button>
-          <span class="stage-pill" id="headerStageBadge" onclick="switchTab(isUserMode() ? 'user-learning' : 'anatomy')" style="cursor:pointer;">Niveau 3</span>
+          <span class="stage-pill" id="headerStageBadge" onclick="switchTab(isUserMode() ? 'user-learning' : 'anatomy')" style="cursor:pointer;">En direct</span>
         </div>
       </header>
 
@@ -1457,17 +1494,20 @@
           <!-- CLEAN COMMERCIAL USER TOOLBAR (NO JARGON) -->
           <div class="composer-toolbar" id="userComposerToolbar">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <button class="omega-chip" id="btnUserDeepThink" onclick="toggleDeepThink()" title="Prend un instant de plus pour vérifier chaque détail">
-                ✨ Réflexion approfondie
+              <button class="omega-chip" id="btnUserWebSearch" onclick="toggleWebSearch()" title="Chercher des informations en direct sur Internet">
+                🌐 Recherche Web
+              </button>
+              <button class="omega-chip" id="btnUserDeepThink" onclick="toggleDeepThink()" title="Prend un instant de plus pour réfléchir en profondeur">
+                ✨ Réflexion +
               </button>
               <button class="omega-chip" onclick="document.getElementById('ragFileInput').click()" title="Analyser un fichier de votre ordinateur">
-                📎 Joindre un fichier
+                📎 Fichier
               </button>
               <button class="omega-chip" onclick="insertConsumerHelper('Trace la courbe de sin(x) * cos(2*x) sur [-6, 6]')" title="Créer un graphique">
-                📈 Créer un graphique
+                📈 Graphique
               </button>
               <button class="omega-chip" onclick="switchTab('user-tools')" title="Ouvrir les outils visuels simples">
-                🧰 Outils simples
+                🧰 Outils
               </button>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
@@ -1480,6 +1520,9 @@
           <!-- EXPERT LAB R&D TOOLBAR -->
           <div class="composer-toolbar hidden" id="labComposerToolbar">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <button class="omega-chip" id="btnLabWebSearch" onclick="toggleWebSearch()" title="Activer web_search_engine en direct">
+                🌐 Web Live
+              </button>
               <button class="omega-chip" id="btnDeepThink" onclick="toggleDeepThink()" title="Raisonnement multi-étapes & ancrage épistémique EvolveMem">
                 ⚡ Deep Think
               </button>
@@ -1495,7 +1538,7 @@
                 📎 Document RAG
               </button>
               <button class="omega-chip" onclick="toggleSlashPalette()" title="Ouvrir la palette de commandes (Ctrl+K)">
-                / Outils (15)
+                / Outils (16)
               </button>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
@@ -1543,20 +1586,30 @@
           <div class="x-card">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
               <div>
-                <h3>📈 Courbe d'Apprentissage en Temps Réel</h3>
-                <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">
-                  Observez l'intelligence de votre IA grimper depuis sa naissance à zéro jusqu'à la minute présente. Survolez la courbe pour voir chaque étape.
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <h3>📈 Progression en Direct (Fenêtre Courte Temps Réel)</h3>
+                  <span id="liveClockTicker" style="font-family:monospace;font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(0,186,124,0.14);color:#34D399;border:1px solid rgba(0,186,124,0.35);">⏱ LIVE</span>
+                </div>
+                <p style="font-size:13px;color:var(--text-muted);margin-top:3px;">
+                  Échelle horaire réelle (<code>HH:MM:SS</code>) zoomée sur les <strong>15 derniers cycles réels</strong> (entraînement, discussions, recherches web) : chaque seconde d'apprentissage se voit immédiatement.
                 </p>
               </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="omega-chip active-emerald" id="btnCurveModeMastery" onclick="setCommCurveMode('mastery')">Intelligence (%)</button>
-                <button class="omega-chip" id="btnCurveModeError" onclick="setCommCurveMode('error')">Réduction d'erreur</button>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="omega-chip active-emerald" id="btnCurveModeLiveShort" onclick="setCommCurveMode('live_short')">⚡ Temps Réel (15 pas)</button>
+                <button class="omega-chip" id="btnCurveModeRawLoss" onclick="setCommCurveMode('raw_loss')">📉 Erreur Réelle Brute</button>
+                <button class="omega-chip" id="btnCurveModeHistory" onclick="setCommCurveMode('history')">📜 Depuis Jour 0</button>
               </div>
             </div>
 
             <div class="comm-curve-box">
               <canvas class="comm-curve" id="commCurveCanvas" width="760" height="240" onmousemove="onCommCurveHover(event)" onmouseleave="hideCommCurveTooltip()"></canvas>
               <div id="commCurveTooltip" class="curve-tooltip hidden"></div>
+            </div>
+
+            <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--text-muted);padding:2px 4px;">
+              <span><strong style="color:#00BA7C;">━━ Tendance réelle (3 pas)</strong></span>
+              <span><strong style="color:#60A5FA;">┄┄ Mesure brute instantanée</strong></span>
+              <span>● <span style="color:#38BDF8;">Discussion / Web</span> · <span style="color:#FBBF24;">Conseil humain</span> · <span style="color:#34D399;">Cycle auto</span></span>
             </div>
 
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:4px;">
@@ -1750,6 +1803,7 @@
           <div class="x-card">
             <h3>Exécuteur Direct du Système Nerveux (15 Plugins Souverains)</h3>
             <select class="dark-select" id="plugName" onchange="syncPluginPreset()">
+              <option value="web_search_engine">web_search_engine — Recherche Internet Multi-Sources Live (DuckDuckGo, Wikipédia, GitHub, NPM)</option>
               <option value="plot_svg_engine">plot_svg_engine — Traceur de courbes mathématiques vectorielles SVG</option>
               <option value="math_engine">math_engine — Calcul formel & exact (SymPy)</option>
               <option value="stats_and_data_engine">stats_and_data_engine — Statistiques descriptives, corrélation & régression OLS</option>
@@ -1940,13 +1994,15 @@
     let selectedModalAccountType = 'user';
     let bgActive = false;
     let deepThinkActive = false;
+    let webSearchActive = false;
     let activeStreamCtrl = null;
     let pollTimer = null;
+    let liveClockInterval = null;
     let ragDocsCache = [];
     let activeCanvasSvg = '';
     let speechRec = null;
     let commOverviewCache = null;
-    let commCurveMode = 'mastery';
+    let commCurveMode = 'live_short';
     let benchCategoryFilter = 'all';
     let commCurvePointsMeta = [];
 
@@ -1955,6 +2011,7 @@
     }
 
     const SLASH_COMMANDS = [
+      {cmd: '/web intelligence artificielle open source', desc: 'Recherche Internet en direct (DuckDuckGo, Wikipédia, GitHub, NPM)'},
       {cmd: '/plot sin(x) * cos(2*x)', desc: 'Tracer une courbe mathématique vectorielle SVG'},
       {cmd: '/logic ((P >> Q) & P) >> Q', desc: 'Table de vérité formelle, CNF/DNF & satisfaisabilité SAT'},
       {cmd: '/stats 12, 15, 18, 22, 24, 95', desc: 'Moyenne, médiane, écart-type, IQR & outliers de Tukey'},
@@ -2046,6 +2103,30 @@
       toast(deepThinkActive
         ? (isUserMode() ? 'Réflexion approfondie activée' : 'Mode Deep Think multi-étapes ACTIVÉ')
         : (isUserMode() ? 'Réflexion standard' : 'Mode Deep Think désactivé'));
+    }
+
+    function toggleWebSearch() {
+      webSearchActive = !webSearchActive;
+      const b1 = document.getElementById('btnUserWebSearch');
+      const b2 = document.getElementById('btnLabWebSearch');
+      if (b1) b1.classList.toggle('active-blue', webSearchActive);
+      if (b2) b2.classList.toggle('active-blue', webSearchActive);
+      toast(webSearchActive
+        ? '🌐 Recherche Internet en direct ACTIVÉE pour vos messages'
+        : '🌐 Recherche Internet automatique uniquement');
+    }
+
+    function onStyleModeChange() {
+      const sel = document.getElementById('styleModeSelect');
+      const val = sel ? sel.value : 'normal';
+      if (sel) sel.classList.toggle('style-select-grok', val === 'grok');
+      const labels = {
+        normal: '💬 Ton Normal & Naturel activé',
+        amical: '🤝 Ton Amical & Proche activé',
+        grok: '🔥 Mode Cash / Style Grok activé (franc-parler total, zéro langue de bois)'
+      };
+      toast(labels[val] || labels.normal);
+      if (!currentMessages.length) renderChatFeed();
     }
 
     function insertConsumerHelper(txt) {
@@ -2240,7 +2321,15 @@
       if (pollTimer) clearInterval(pollTimer);
       pollTimer = setInterval(() => {
         if (currentUser) refreshStatus();
-      }, 1400);
+      }, 1100);
+      if (liveClockInterval) clearInterval(liveClockInterval);
+      liveClockInterval = setInterval(() => {
+        const el = document.getElementById('liveClockTicker');
+        if (el) {
+          const nowStr = new Date().toLocaleTimeString('fr-FR', {hour12: false});
+          el.textContent = `⏱ Temps réel : ${nowStr}`;
+        }
+      }, 1000);
     }
 
     /* ---------------- NAVIGATION & THREADS ---------------- */
@@ -2394,19 +2483,19 @@
                 <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
               </svg>
               <h2>Bonjour${currentUser && currentUser.display_name ? ', ' + esc(currentUser.display_name) : ''} 👋</h2>
-              <p>Je suis <strong>Never-AI</strong>, votre assistant personnel 100 % privé qui vit et apprend en continu sur votre machine. Comment puis-je vous aider aujourd'hui ?</p>
+              <p>Parlez-moi de <strong>tout sans filtre</strong> — en mode <strong>Normal</strong>, <strong>Amical</strong> ou <strong>🔥 Cash (Style Grok)</strong> — avec <strong>🌐 Recherche Internet</strong> et apprentissage temps réel.</p>
               <div class="prompt-grid">
-                <div class="prompt-card" onclick="quickAsk('Que sais-tu faire exactement ?')">
-                  <strong>✨ Découvrir mes capacités</strong><br/><span style="color:var(--text-muted)">Ce que je peux faire pour vous au quotidien</span>
+                <div class="prompt-card" onclick="document.getElementById('styleModeSelect').value='grok';onStyleModeChange();quickAsk('Vas-y clash-moi gentiment, fais-moi un petit roast !')">
+                  <strong>🔥 Tester le Mode Cash / Grok</strong><br/><span style="color:var(--text-muted)">Humour piquant, roast amical & zéro langue de bois</span>
                 </div>
-                <div class="prompt-card" onclick="quickAsk('Trace la courbe de sin(x) * cos(2*x) sur [-6, 6]')">
-                  <strong>📈 Créer un beau graphique</strong><br/><span style="color:var(--text-muted)">Dessiner et expliquer une courbe instantanément</span>
+                <div class="prompt-card" onclick="quickAsk('/web local llm ai agent')">
+                  <strong>🌐 Rechercher sur Internet</strong><br/><span style="color:var(--text-muted)">Fouiller le web en direct avec sources cliquables</span>
                 </div>
-                <div class="prompt-card" onclick="quickAsk('/stats 120, 135, 142, 150, 158, 390')">
-                  <strong>📊 Analyser des chiffres</strong><br/><span style="color:var(--text-muted)">Moyenne, médiane et détection d'anomalies</span>
+                <div class="prompt-card" onclick="document.getElementById('styleModeSelect').value='amical';onStyleModeChange();quickAsk('Salut ! Ça va ? T\\'en penses quoi des relations amoureuses et du ghosting aujourd\\'hui ?')">
+                  <strong>🤝 Parler de tout (Vie, Débats, Humour)</strong><br/><span style="color:var(--text-muted)">Discussion spontanée comme avec un vrai ami</span>
                 </div>
                 <div class="prompt-card" onclick="switchTab('user-learning')">
-                  <strong>🌱 Voir mon cerveau apprendre en direct</strong><br/><span style="color:var(--text-muted)">Courbe d'intelligence temps réel depuis 0 %</span>
+                  <strong>⚡ Courbe Courte Temps Réel (HH:MM:SS)</strong><br/><span style="color:var(--text-muted)">Voir l'évolution en direct sur les 15 derniers pas</span>
                 </div>
               </div>
             </div>
@@ -2475,9 +2564,17 @@
             `;
           }
         }
+        if (m.web_sources && m.web_sources.length) {
+          extras += `<div class="web-sources-strip">` + m.web_sources.map(s => `
+            <a class="web-source-chip" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.title)}">
+              🌐 ${esc(s.title)}
+            </a>
+          `).join('') + `</div>`;
+        }
         if (m.tool_traces && m.tool_traces.length) {
           if (userMode) {
-            extras += `<div><span class="verified-badge-clean">✓ Résultat vérifié avec exactitude sur votre appareil</span></div>`;
+            const isWeb = JSON.stringify(m.tool_traces[0]).includes('web_search_engine');
+            extras += `<div><span class="verified-badge-clean">${isWeb ? '🌐 Recherche Internet effectuée en direct' : '✓ Résultat vérifié avec exactitude sur votre appareil'}</span></div>`;
           } else {
             extras += `<div class="plugin-pill-trace">⚡ Plugin vérifié : ${esc(JSON.stringify(m.tool_traces[0]).slice(0, 180))}</div>`;
           }
@@ -2595,6 +2692,7 @@
 
     function formatInline(txt) {
       let safe = esc(txt);
+      safe = safe.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:#60A5FA;text-decoration:underline;font-weight:600;">$1 ↗</a>');
       safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       safe = safe.replace(/`([^`\n]+)`/g, '<code>$1</code>');
       return safe;
@@ -2861,8 +2959,9 @@
       inp.style.height = 'auto';
 
       const owner = currentUser ? currentUser.handle : 'local';
-      const temperature = parseFloat(document.getElementById('tempSelect').value || '0.3');
+      const temperature = parseFloat(document.getElementById('tempSelect').value || '0.35');
       const persona = document.getElementById('personaSelect').value || 'polymathe';
+      const style_mode = document.getElementById('styleModeSelect').value || 'normal';
 
       if (!currentThreadId) {
         const tr = await fetch('/api/threads', {
@@ -2874,7 +2973,7 @@
       }
 
       currentMessages.push({role: 'user', content: text});
-      const botMsg = {role: 'never', content: '', thoughts: [''], tool_traces: [], persona, deep_think: deepThinkActive, streaming: true};
+      const botMsg = {role: 'never', content: '', thoughts: [''], tool_traces: [], web_sources: [], persona, style_mode, deep_think: deepThinkActive, streaming: true};
       currentMessages.push(botMsg);
       renderChatFeed();
 
@@ -2889,12 +2988,14 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             message: text,
-            max_new_tokens: 165,
+            max_new_tokens: 175,
             temperature,
             thread_id: currentThreadId,
             owner,
             deep_think: deepThinkActive,
-            persona
+            persona,
+            style_mode,
+            web_search: webSearchActive
           }),
           signal: activeStreamCtrl.signal
         });
@@ -2919,6 +3020,9 @@
             } else if (ev.type === 'tool_call') {
               botMsg.tool_traces.push(ev.trace);
               renderChatFeed();
+            } else if (ev.type === 'web_sources') {
+              botMsg.web_sources = ev.sources || [];
+              renderChatFeed();
             } else if (ev.type === 'answer_delta') {
               botMsg.content += ev.text;
               renderChatFeed();
@@ -2929,6 +3033,7 @@
               botMsg.content = ev.result.visible_answer || botMsg.content;
               botMsg.thoughts = ev.result.thoughts || botMsg.thoughts;
               botMsg.tool_traces = ev.result.tool_traces || botMsg.tool_traces;
+              botMsg.web_sources = ev.result.web_sources || botMsg.web_sources || [];
               botMsg.titans_mean_surprise = ev.result.titans_mean_surprise;
               if (ev.result.thread_title) {
                 document.getElementById('centerTitle').textContent = ev.result.thread_title;
@@ -2948,6 +3053,7 @@
         renderChatFeed();
         loadThreads();
         refreshStatus();
+        setTimeout(() => { if (currentUser) refreshStatus(); }, 1800);
         inp.focus();
       }
     }
@@ -3108,9 +3214,10 @@
         `).join('');
       }
 
-      // Draw Live Curves
-      drawUserMiniCurve(c.learning_curve || []);
-      drawCommercialCurve(c.learning_curve || []);
+      // Draw Live Short-Window Real-Time Curves
+      const shortPts = c.live_realtime_curve || [];
+      drawUserMiniCurve(shortPts);
+      drawCommercialCurve(commCurveMode === 'history' ? (c.learning_curve || []) : shortPts);
 
       // Render Comparator
       renderCommercialComparator(c.benchmark_comparator || []);
@@ -3149,10 +3256,20 @@
     }
 
     function setCommCurveMode(mode) {
-      commCurveMode = mode === 'error' ? 'error' : 'mastery';
-      document.getElementById('btnCurveModeMastery').classList.toggle('active-emerald', commCurveMode === 'mastery');
-      document.getElementById('btnCurveModeError').classList.toggle('active-emerald', commCurveMode === 'error');
-      if (commOverviewCache) drawCommercialCurve(commOverviewCache.learning_curve || []);
+      commCurveMode = ['live_short', 'raw_loss', 'history'].includes(mode) ? mode : 'live_short';
+      const b1 = document.getElementById('btnCurveModeLiveShort');
+      const b2 = document.getElementById('btnCurveModeRawLoss');
+      const b3 = document.getElementById('btnCurveModeHistory');
+      if (b1) b1.classList.toggle('active-emerald', commCurveMode === 'live_short');
+      if (b2) b2.classList.toggle('active-blue', commCurveMode === 'raw_loss');
+      if (b3) b3.classList.toggle('active-emerald', commCurveMode === 'history');
+      if (commOverviewCache) {
+        drawCommercialCurve(
+          commCurveMode === 'history'
+            ? (commOverviewCache.learning_curve || [])
+            : (commOverviewCache.live_realtime_curve || [])
+        );
+      }
     }
 
     function drawUserMiniCurve(pts) {
@@ -3162,20 +3279,28 @@
       const W = c.width, H = c.height;
       ctx.clearRect(0, 0, W, H);
 
-      const padX = 10, padY = 14;
-      const coords = pts.map((p, i) => {
-        const x = padX + (i / Math.max(1, pts.length - 1)) * (W - padX * 2);
-        const y = H - padY - ((p.mastery || 0) / 100) * (H - padY * 2);
-        return {x, y};
+      // Short 12-point real-time zoomed window!
+      const win = pts.slice(-12);
+      const vals = win.map(p => p.real_score ?? p.mastery ?? 80);
+      const minV = Math.max(0, Math.min(...vals) - 2.5);
+      const maxV = Math.min(100, Math.max(...vals) + 2.5);
+      const span = Math.max(1.5, maxV - minV);
+
+      const padX = 10, padT = 18, padB = 18;
+      const coords = win.map((p, i) => {
+        const v = p.real_score ?? p.mastery ?? 80;
+        const x = padX + (i / Math.max(1, win.length - 1)) * (W - padX * 2);
+        const y = H - padB - ((v - minV) / span) * (H - padT - padB);
+        return {x, y, raw: p};
       });
 
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(0, 186, 124, 0.35)');
+      const grad = ctx.createLinearGradient(0, padT, 0, H - padB);
+      grad.addColorStop(0, 'rgba(0, 186, 124, 0.36)');
       grad.addColorStop(1, 'rgba(0, 186, 124, 0.0)');
       ctx.beginPath();
       coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
-      ctx.lineTo(coords[coords.length - 1].x, H - padY);
-      ctx.lineTo(coords[0].x, H - padY);
+      ctx.lineTo(coords[coords.length - 1].x, H - padB);
+      ctx.lineTo(coords[0].x, H - padB);
       ctx.closePath();
       ctx.fillStyle = grad;
       ctx.fill();
@@ -3186,17 +3311,22 @@
       ctx.lineWidth = 2.4;
       ctx.stroke();
 
-      const last = coords[coords.length - 1];
-      ctx.beginPath();
-      ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#34D399';
-      ctx.fill();
+      coords.forEach((pt, i) => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, i === coords.length - 1 ? 4.2 : 2.3, 0, Math.PI * 2);
+        const src = pt.raw.source || '';
+        ctx.fillStyle = src.includes('web') || src.includes('discussion') ? '#38BDF8' : (i === coords.length - 1 ? '#34D399' : '#A7F3D0');
+        ctx.fill();
+      });
 
       ctx.fillStyle = '#9CA3AF';
+      ctx.font = '10px monospace';
+      ctx.fillText(win[0].clock || 'début', 10, H - 4);
+      ctx.fillStyle = '#34D399';
+      ctx.fillText(`LIVE ${win[win.length - 1].clock || ''}`, W - 94, H - 4);
+      ctx.fillStyle = '#E7E9EA';
       ctx.font = '10.5px sans-serif';
-      ctx.fillText('Jour 0 (0%)', 10, H - 3);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(`Maintenant (${pts[pts.length - 1].mastery}%)`, W - 118, 13);
+      ctx.fillText(`Fenêtre courte (${win.length} derniers pas)`, 10, 12);
     }
 
     function drawCommercialCurve(pts) {
@@ -3206,36 +3336,94 @@
       const W = c.width, H = c.height;
       ctx.clearRect(0, 0, W, H);
 
-      const padL = 44, padR = 20, padT = 22, padB = 30;
+      const padL = 52, padR = 22, padT = 22, padB = 34;
       const plotW = W - padL - padR;
       const plotH = H - padT - padB;
 
-      // Subtle horizontal grid lines
-      [0, 25, 50, 75, 100].forEach(pct => {
-        const y = padT + plotH - (pct / 100) * plotH;
+      if (commCurveMode === 'history') {
+        [0, 25, 50, 75, 100].forEach(pct => {
+          const y = padT + plotH - (pct / 100) * plotH;
+          ctx.strokeStyle = '#1C2026';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+          ctx.fillStyle = '#71767B';
+          ctx.font = '11px sans-serif';
+          ctx.fillText(`${pct}%`, 8, y + 4);
+        });
+        const coords = pts.map((p, i) => {
+          const val = p.mastery ?? p.real_score ?? 0;
+          const x = padL + (i / Math.max(1, pts.length - 1)) * plotW;
+          const y = padT + plotH - (val / 100) * plotH;
+          return {x, y, val, raw: p, mode: 'history'};
+        });
+        commCurvePointsMeta = coords;
+        ctx.beginPath();
+        coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.strokeStyle = '#00BA7C';
+        ctx.lineWidth = 2.8;
+        ctx.stroke();
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Jour 0 · Naissance (0 %)', padL, H - 10);
+        ctx.fillText('Maintenant →', W - padR - 85, H - 10);
+        return;
+      }
+
+      // SHORT REAL-TIME WINDOW (15 real ticks, tight auto-zoomed Y scale + HH:MM:SS X scale!)
+      const win = pts.slice(-15);
+      const isLoss = commCurveMode === 'raw_loss';
+      const mainVals = win.map(p => isLoss ? (p.raw_ce ?? 0.2) : (p.real_score ?? 85));
+      const instVals = win.map(p => isLoss ? (p.raw_ce ?? 0.2) : (p.instant_score ?? p.real_score ?? 85));
+      const allVals = mainVals.concat(instVals);
+
+      let minY, maxY;
+      if (isLoss) {
+        minY = Math.max(0, Math.min(...allVals) - 0.08);
+        maxY = Math.max(minY + 0.15, Math.max(...allVals) + 0.08);
+      } else {
+        minY = Math.max(0, Math.min(...allVals) - 2.2);
+        maxY = Math.min(100, Math.max(minY + 3.0, Math.max(...allVals) + 2.2));
+      }
+      const spanY = Math.max(0.05, maxY - minY);
+
+      // 4 auto-scaled Y grid lines
+      for (let g = 0; g <= 4; g++) {
+        const v = minY + (g / 4) * spanY;
+        const y = padT + plotH - (g / 4) * plotH;
         ctx.strokeStyle = '#1C2026';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
-        ctx.fillStyle = '#71767B';
-        ctx.font = '11px sans-serif';
-        ctx.fillText(`${pct}%`, 8, y + 4);
-      });
+        ctx.fillStyle = '#8B949E';
+        ctx.font = '11px monospace';
+        ctx.fillText(isLoss ? v.toFixed(2) : `${v.toFixed(1)}%`, 6, y + 4);
+      }
 
-      const coords = pts.map((p, i) => {
-        const val = commCurveMode === 'mastery'
-          ? (p.mastery || 0)
-          : Math.max(0, Math.min(100, 100 - ((p.ce || 0) / 8.5) * 100));
-        const x = padL + (i / Math.max(1, pts.length - 1)) * plotW;
-        const y = padT + plotH - (val / 100) * plotH;
-        return {x, y, val, raw: p};
+      const coords = win.map((p, i) => {
+        const val = isLoss ? (p.raw_ce ?? 0) : (p.real_score ?? 85);
+        const instV = isLoss ? (p.raw_ce ?? 0) : (p.instant_score ?? val);
+        const x = padL + (i / Math.max(1, win.length - 1)) * plotW;
+        const y = padT + plotH - ((val - minY) / spanY) * plotH;
+        const yInst = padT + plotH - ((instV - minY) / spanY) * plotH;
+        return {x, y, yInst, val, instV, raw: p, mode: commCurveMode};
       });
       commCurvePointsMeta = coords;
 
-      // Glowing gradient fill
-      const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
-      grad.addColorStop(0, commCurveMode === 'mastery' ? 'rgba(0, 186, 124, 0.36)' : 'rgba(29, 155, 240, 0.36)');
-      grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+      // 1. Dashed Instantaneous Raw Line (100% un-smoothed single-step reality!)
+      if (!isLoss) {
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.yInst) : ctx.lineTo(pt.x, pt.yInst));
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.65)';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.restore();
+      }
 
+      // 2. Glowing Area Fill under Real Trend
+      const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+      grad.addColorStop(0, isLoss ? 'rgba(29, 155, 240, 0.30)' : 'rgba(0, 186, 124, 0.34)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
       ctx.beginPath();
       coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
       ctx.lineTo(coords[coords.length - 1].x, padT + plotH);
@@ -3244,28 +3432,33 @@
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Main line
+      // 3. Solid Real Trend Line
       ctx.beginPath();
       coords.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
-      ctx.strokeStyle = commCurveMode === 'mastery' ? '#00BA7C' : '#1D9BF0';
+      ctx.strokeStyle = isLoss ? '#1D9BF0' : '#00BA7C';
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Highlight evolution milestones & live tip
+      // 4. Every Point Visible + Real Wall-Clock Timestamps (HH:MM:SS) on X-Axis!
+      const labelStep = Math.max(1, Math.ceil(coords.length / 5));
       coords.forEach((pt, i) => {
-        if (pt.raw.kind === 'upgrade' || pt.raw.kind === 'human' || i === 0 || i === coords.length - 1) {
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, i === coords.length - 1 ? 5.5 : 4, 0, Math.PI * 2);
-          ctx.fillStyle = pt.raw.kind === 'upgrade' ? '#FBBF24' : (i === coords.length - 1 ? '#34D399' : '#FFFFFF');
-          ctx.fill();
+        const src = pt.raw.source || '';
+        const isLast = i === coords.length - 1;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, isLast ? 5.8 : 4.0, 0, Math.PI * 2);
+        ctx.fillStyle = src.includes('humain')
+          ? '#FBBF24'
+          : (src.includes('discussion') || src.includes('web') ? '#38BDF8' : (isLast ? '#34D399' : '#E7E9EA'));
+        ctx.fill();
+
+        if (i % labelStep === 0 || isLast) {
+          ctx.fillStyle = isLast ? '#34D399' : '#9CA3AF';
+          ctx.font = isLast ? 'bold 11px monospace' : '10.5px monospace';
+          const txt = isLast ? `LIVE ${pt.raw.clock || ''}` : (pt.raw.clock || `#${pt.raw.step}`);
+          const xTxt = Math.min(W - padR - 68, Math.max(padL - 8, pt.x - 24));
+          ctx.fillText(txt, xTxt, H - 10);
         }
       });
-
-      ctx.fillStyle = '#9CA3AF';
-      ctx.font = '11.5px sans-serif';
-      ctx.fillText('Jour 0 · Naissance (0 %)', padL, H - 8);
-      ctx.fillStyle = '#E7E9EA';
-      ctx.fillText('En direct sur votre appareil →', W - padR - 165, H - 8);
     }
 
     function onCommCurveHover(ev) {
@@ -3282,12 +3475,23 @@
         const d = Math.abs(mx - pt.x);
         if (d < bestDist) { best = pt; bestDist = d; }
       }
-      tip.innerHTML = `
-        <div style="font-weight:800;color:#34D399;">${best.val.toFixed(1).replace('.', ',')} % ${commCurveMode === 'mastery' ? 'de maîtrise' : 'de précision'}</div>
-        <div style="color:#E7E9EA;margin-top:2px;">${esc(best.raw.label || 'Cycle')}</div>
-      `;
-      tip.style.left = Math.min(rect.width - 190, Math.max(10, ev.clientX - rect.left - 70)) + 'px';
-      tip.style.top = Math.max(8, (best.y / c.height) * rect.height - 56) + 'px';
+      if (best.mode === 'history') {
+        tip.innerHTML = `
+          <div style="font-weight:800;color:#34D399;">${best.val.toFixed(1).replace('.', ',')} %</div>
+          <div style="color:#E7E9EA;margin-top:2px;">${esc(best.raw.label || 'Étape')}</div>
+        `;
+      } else {
+        const nowSec = (commOverviewCache && commOverviewCache.server_now) || (Date.now() / 1000);
+        const ago = Math.max(0, Math.round(nowSec - (best.raw.timestamp || nowSec)));
+        const agoTxt = ago <= 2 ? 'à l\'instant' : `il y a ${ago}s`;
+        tip.innerHTML = `
+          <div style="font-weight:800;color:#34D399;">⏱ ${esc(best.raw.clock || '')} (${agoTxt}) · Pas #${best.raw.step ?? ''}</div>
+          <div style="color:#FFF;margin-top:3px;">Confiance réelle (3 pas) : <strong>${(best.raw.real_score ?? best.val).toFixed(2)}%</strong> · Brut : ${(best.raw.instant_score ?? best.val).toFixed(2)}%</div>
+          <div style="color:#9CA3AF;font-size:11px;margin-top:2px;">Perte réelle CE : ${best.raw.raw_ce ?? '-'} · Perplexité : ${best.raw.real_ppl ?? '-'} · Source : <strong>${esc(best.raw.source || 'cycle')}</strong></div>
+        `;
+      }
+      tip.style.left = Math.min(rect.width - 270, Math.max(10, ev.clientX - rect.left - 110)) + 'px';
+      tip.style.top = Math.max(8, (best.y / c.height) * rect.height - 72) + 'px';
       tip.classList.remove('hidden');
     }
 
@@ -3499,6 +3703,7 @@
     function syncPluginPreset() {
       const p = document.getElementById('plugName').value;
       const presets = {
+        web_search_engine: '{"query": "local llm agent", "max_results": 5}',
         plot_svg_engine: '{"expressions": ["sin(x)", "cos(x)*0.7"], "x_min": -6.28, "x_max": 6.28, "title": "Ondes Harmoniques"}',
         math_engine: '{"expr": "solve(x**2 - 7*x + 12, x)"}',
         stats_and_data_engine: '{"action": "describe", "data": [12, 15, 18, 22, 24, 95]}',

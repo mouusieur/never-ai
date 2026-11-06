@@ -104,3 +104,67 @@ def test_commercial_overview_live_curve_and_quick_benchmark(tmp_path: Path, monk
     assert qb["passed"] == 9
     assert qb["score_pct"] == 100.0
     assert len(qb["cards"]) == 9
+
+    # Short Real-Time Clock Curve (<= 16 points, HH:MM:SS timestamps & real CE/PPL)
+    rt = ov2["live_realtime_curve"]
+    assert 2 <= len(rt) <= 16
+    assert ":" in rt[-1]["clock"]
+    assert "raw_ce" in rt[-1] and "real_ppl" in rt[-1] and "real_score" in rt[-1]
+
+
+def test_conversational_styles_and_web_search_engine(tmp_path: Path, monkeypatch) -> None:
+    client = _make_isolated_client(tmp_path, monkeypatch)
+
+    # 1. Friendly ('amical') vs Unfiltered Wit ('grok') conversational registers
+    r_amical = client.post(
+        "/api/chat",
+        json={"message": "Wesh ça dit quoi ?", "style_mode": "amical"},
+    )
+    assert r_amical.status_code == 200
+    ans_amical = r_amical.json()["visible_answer"]
+    assert len(ans_amical) > 20
+
+    r_grok = client.post(
+        "/api/chat",
+        json={"message": "Vas-y clash-moi gentiment, fais-moi un roast !", "style_mode": "grok"},
+    )
+    assert r_grok.status_code == 200
+    ans_grok = r_grok.json()["visible_answer"]
+    assert "CPU" in ans_grok or "procrastines" in ans_grok
+
+    # 2. Open-ended novel topic never degenerates into broken repetition
+    r_open = client.post(
+        "/api/chat",
+        json={"message": "T'en penses quoi des gens qui mangent de l'ananas sur la pizza ?", "style_mode": "grok"},
+    )
+    assert r_open.status_code == 200
+    assert len(r_open.json()["visible_answer"]) > 30
+
+    # 3. Direct Web Search endpoint (mocked provider for deterministic fast unit test)
+    import never_ai.plugins.web_search as ws_mod
+
+    monkeypatch.setattr(
+        ws_mod,
+        "_provider_duckduckgo",
+        lambda q, max_results=4: [
+            {
+                "source": "Web (DuckDuckGo)",
+                "title": f"Résultat Live pour {q}",
+                "url": "https://example.org/live",
+                "snippet": "Extrait web vérifié en temps réel.",
+            }
+        ],
+    )
+    monkeypatch.setattr(ws_mod, "_provider_wikipedia", lambda q, lang="fr", max_results=2: [])
+    monkeypatch.setattr(ws_mod, "_provider_github", lambda q, max_results=3: [])
+    monkeypatch.setattr(ws_mod, "_provider_npm", lambda q, max_results=2: [])
+
+    r_web = client.post(
+        "/api/chat",
+        json={"message": "intelligence artificielle", "style_mode": "grok", "web_search": True},
+    )
+    assert r_web.status_code == 200
+    wdata = r_web.json()
+    assert len(wdata["web_sources"]) == 1
+    assert wdata["web_sources"][0]["url"] == "https://example.org/live"
+

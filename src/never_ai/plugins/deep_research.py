@@ -6,6 +6,12 @@ import json
 import re
 from typing import Any
 
+from never_ai.data.conversational_universe import (
+    CONVERSATIONAL_STYLES,
+    apply_conversational_tone_wrapper,
+    check_extreme_harm_guard,
+    match_conversational_intent,
+)
 from never_ai.memory.evolvemem import EvolveMemStore
 from never_ai.plugins.base import PluginRegistry
 
@@ -71,19 +77,116 @@ _ENTROPY_RE = re.compile(
     r"(?:entropie|entropy)\s+(?:de\s+shannon\s+)?(?:de|of)\s+[\"']?(.+?)[\"']?$",
     re.IGNORECASE,
 )
+_WEB_SEARCH_RE = re.compile(
+    r"^(?:/web\s+|/search\s+|cherche\s+sur\s+(?:internet|le\s+web|google)\s*:?\s*|"
+    r"recherche\s+(?:sur\s+)?(?:internet|web|en\s+ligne)\s*:?\s*|"
+    r"trouve\s+sur\s+(?:internet|le\s+web)\s*:?\s*|"
+    r"search\s+(?:the\s+)?(?:web|internet)\s+(?:for\s+)?)(.+)$",
+    re.IGNORECASE,
+)
+
+
+def execute_live_web_search_turn(
+    query: str,
+    registry: PluginRegistry,
+    memory: EvolveMemStore,
+    style_mode: str = "normal",
+) -> dict[str, Any]:
+    """Run `web_search_engine`, store findings in EvolveMem, and craft a natural conversational synthesis."""
+    q_clean = re.sub(r"^/(?:web|search)\s+", "", query.strip(), flags=re.IGNORECASE).strip()
+    res = registry.invoke("web_search_engine", query=q_clean, max_results=6)
+    hits = res.get("results", []) if res.get("ok") else []
+
+    if hits:
+        # Assimilate top web findings into EvolveMem so Never-AI retains them!
+        summary_facts = " | ".join(f"{h['title']}: {h['snippet'][:140]}" for h in hits[:3])
+        memory.store(
+            key=f"web_{ abs(hash(q_clean)) % 1_000_000 }",
+            content=f"Recherche Web ({q_clean}) : {summary_facts}",
+            category="web_memory",
+            tags=["web", "internet", q_clean.lower()[:40]],
+        )
+        lead = {
+            "normal": f"J'ai lancé une recherche internet en direct sur **« {q_clean} »** ({len(hits)} sources trouvées) :",
+            "amical": f"Je viens de fouiller le web en direct pour **« {q_clean} »** ! Voilà ce qui ressort de plus intéressant :",
+            "grok": f"Hop, coup de radar en direct sur le web pour **« {q_clean} »** — voilà le concret sans blabla :",
+        }.get(style_mode, f"Résultats web en direct pour **« {q_clean} »** :")
+
+        bullets = []
+        for h in hits:
+            snip = h.get("snippet", "").strip()
+            bullets.append(
+                f"- **[{h['title']}]({h['url']})** *({h['source']})*\n  {snip}"
+            )
+        ans = lead + "\n\n" + "\n".join(bullets)
+        return {
+            "thoughts": [
+                f"Recherche internet temps réel via web_search_engine pour « {q_clean} » ({', '.join(res.get('providers_reached', []))})."
+            ],
+            "tool_traces": [
+                {
+                    "call": json.dumps({"plugin": "web_search_engine", "query": q_clean}, ensure_ascii=False),
+                    "result": {
+                        "ok": True,
+                        "count": len(hits),
+                        "providers": res.get("providers_reached", []),
+                        "network_note": res.get("network_note", ""),
+                    },
+                }
+            ],
+            "routed_tools": ["web_search_engine"],
+            "visible_answer": ans,
+            "web_sources": hits,
+        }
+
+    # If restricted network / 0 external hits on general query: explain transparently & answer smartly
+    note = res.get("network_note", "Aucune source externe joignable sur ce réseau.")
+    conv_fallback = match_conversational_intent(q_clean, style_mode=style_mode)
+    base_txt = (
+        conv_fallback["visible_answer"]
+        if conv_fallback
+        else (
+            f"Sur ce réseau actuel, l'accès web généraliste est filtré (*{note}* — dans l'application Windows `.exe` sur ton PC, "
+            f"DuckDuckGo et Wikipédia répondent en direct sans restriction !). En attendant, dis-moi exactement quel angle de "
+            f"**« {q_clean} »** t'intéresse et on creuse ça ensemble."
+        )
+    )
+    return {
+        "thoughts": [f"Tentative de recherche web pour « {q_clean} » ({note})."],
+        "tool_traces": [
+            {
+                "call": json.dumps({"plugin": "web_search_engine", "query": q_clean}, ensure_ascii=False),
+                "result": {"ok": True, "count": 0, "network_note": note},
+            }
+        ],
+        "routed_tools": ["web_search_engine"],
+        "visible_answer": base_txt,
+        "web_sources": [],
+    }
 
 
 def route_omega_skill(
     user_message: str,
     registry: PluginRegistry,
     memory: EvolveMemStore,
+    style_mode: str = "normal",
+    web_search: bool = False,
 ) -> dict[str, Any] | None:
     """
-    Deterministic slash-command & natural-language router for the 15 Sovereign Omega Plugins.
+    Deterministic slash-command & natural-language router for the 16 Sovereign Omega Plugins.
     Returns structured `{thoughts, tool_traces, routed_tools, visible_answer, artifacts}` or None.
     """
     msg = user_message.strip()
     low = msg.lower()
+
+    # 0. Live Internet Search (`web_search_engine` via toggle, `/web`, URL, or natural language)
+    m_web = _WEB_SEARCH_RE.match(msg)
+    has_direct_url = bool(re.search(r"https?://[^\s<>\"']+", msg))
+    if web_search or m_web or has_direct_url or any(
+        k in low for k in ("cherche sur internet", "recherche sur le web", "va voir sur internet", "trouve sur le web")
+    ):
+        q_str = m_web.group(1).strip() if m_web else msg
+        return execute_live_web_search_turn(q_str, registry, memory, style_mode=style_mode)
 
     # 1. Interactive SVG Function Plotter (`plot_svg_engine`)
     m_plot = _PLOT_CMD_RE.match(msg)
@@ -476,6 +579,93 @@ def route_omega_skill(
     return None
 
 
+def _is_fragmented_or_repetitive(text: str) -> bool:
+    """Detect if a small local neural sample drifted into repetition on out-of-vocabulary slang/topics."""
+    if not text or len(text.strip()) < 12:
+        return True
+    if "```" in text or "<svg" in text or "\n|" in text or "http://" in text or "https://" in text:
+        return False
+    words = re.findall(r"\w+", text.lower())
+    if len(words) >= 10:
+        unique_ratio = len(set(words)) / len(words)
+        if unique_ratio < 0.36:
+            return True
+        for i in range(len(words) - 3):
+            if words[i] == words[i + 1] == words[i + 2]:
+                return True
+    return False
+
+
+def _craft_open_conversational_reply(
+    user_message: str,
+    style_mode: str,
+    recent_history: list[dict[str, Any]] | None = None,
+) -> str:
+    """Natural, human, multi-register conversational response on open-ended subjects, opinions or slang."""
+    msg = user_message.strip()
+    is_question = "?" in msg or bool(re.match(r"^(?:que|quoi|comment|pourquoi|qui|où|quand|est-ce|tu|t'|c'est|penses|avis)\b", msg.lower()))
+    topic_clean = msg.rstrip("?!. ")
+
+    # Check if user is reacting to previous turn
+    last_bot = ""
+    if recent_history:
+        last_bot = next((m.get("content", "") for m in reversed(recent_history) if m.get("role") == "never" and m.get("content")), "")
+
+    if len(msg.split()) <= 4 and last_bot and any(w in msg.lower() for w in ("pourquoi", "comment ça", "sérieux", "ah bon", "explique", "exemple", "continue", "vrai", "grave", "carrément")):
+        if style_mode == "grok":
+            return (
+                f"Carrément. Pour aller au fond du truc sans tourner autour du pot : l'idée clé derrière ce qu'on disait, "
+                f"c'est qu'entre la théorie bien propre et la vraie vie, ce sont toujours les incitations réelles et les actes qui tranchent. "
+                f"Tu veux qu'on pousse quel angle en particulier ?"
+            )
+        if style_mode == "amical":
+            return (
+                f"Grave ! En fait si on prend un exemple tout simple du quotidien, ça devient tout de suite évident : "
+                f"dès qu'on teste l'idée en conditions réelles, on voit vite ce qui tient la route. Tu voyais ça comment de ton côté ?"
+            )
+        return (
+            f"Exactement — pour approfondir ce point concrètement : tout repose sur le mécanisme de cause à effet derrière ce qu'on évoquait. "
+            f"Dis-moi si tu veux un exemple précis ou qu'on explore une autre facette."
+        )
+
+    if style_mode == "grok":
+        if is_question:
+            return (
+                f"Bonne question, et on va éviter la réponse tiède de manuel scolaire sur **« {topic_clean} »**.\n\n"
+                f"Si on regarde les choses en face : la plupart des gens répètent des clichés tout faits là-dessus, alors que la réalité "
+                f"est toujours une histoire de rapports de force, de psychologie humaine et de compromis concrets. "
+                f"Donne-moi ton point de vue cash ou le cas précis auquel tu penses — je te dis tout de suite ce qui tient debout et ce qui est du pipeau."
+            )
+        return (
+            f"Je vois très bien le délire avec **« {topic_clean} »**. Franchement, pas de filtre ici : développe un peu ce que t'as derrière la tête "
+            f"(ou balance le contexte complet), et on décortique ça cash — que ce soit pour débattre, trouver un plan d'action ou juste se marrer."
+        )
+
+    if style_mode == "amical":
+        if is_question:
+            return (
+                f"Super sujet ça (**« {topic_clean} »**) ! Franchement il y a plein de choses intéressantes à dire là-dessus : "
+                f"tout dépend du contexte concret dans lequel tu te places. Dis-m'en juste un peu plus sur ce qui te fait poser la question "
+                f"(ou active **🌐 Recherche Web** juste en dessous si tu veux que j'aille fouiller les dernières infos en direct), et je te réponds sur mesure !"
+            )
+        return (
+            f"Carrément, je te suis sur **« {topic_clean} »** ! Raconte-moi un peu plus les détails ou ce que t'en penses toi, "
+            f"comme ça on rebondit vraiment dessus ensemble."
+        )
+
+    # Normal natural style
+    if is_question:
+        return (
+            f"C'est une question intéressante sur **« {topic_clean} »**. Pour te donner une réponse vraiment pertinente plutôt qu'une généralité : "
+            f"précise-moi l'angle qui t'intéresse le plus (pratique, technique, humain ou débat d'idées) — ou clique sur **🌐 Recherche Web** "
+            f"si tu veux que j'interroge des sources en ligne en direct."
+        )
+    return (
+        f"Bien reçu sur **« {topic_clean} »**. Dis-moi comment tu veux qu'on avance là-dessus — discussion libre, analyse concrète, "
+        f"idées ou recherche en direct — je m'adapte à ton rythme."
+    )
+
+
 def enrich_with_deep_think_and_rag(
     user_message: str,
     visible_answer: str,
@@ -483,11 +673,18 @@ def enrich_with_deep_think_and_rag(
     memory: EvolveMemStore,
     deep_think: bool = False,
     persona_id: str = "polymathe",
+    style_mode: str = "normal",
+    recent_history: list[dict[str, Any]] | None = None,
+    verified_fast_path: bool = False,
 ) -> tuple[str, list[str], list[str]]:
     """
-    Augment reasoning traces with Persona framing, local Document RAG citations,
-    and Deep-Think multi-step verification when enabled.
+    Augment reasoning traces with Persona framing, Conversational Tone (`normal` | `amical` | `grok`),
+    local Document RAG citations, and Deep-Think multi-step verification when enabled.
     """
+    harm = check_extreme_harm_guard(user_message)
+    if harm is not None:
+        return harm, ["Garde-fou sécurité critique activé."], []
+
     persona = SOVEREIGN_PERSONAS.get(persona_id, SOVEREIGN_PERSONAS["polymathe"])
     enriched_thoughts = list(thoughts)
     citations: list[str] = []
@@ -547,15 +744,31 @@ def enrich_with_deep_think_and_rag(
             best_q_overlap = score_ov
             best_dom_unit = u
 
-    if best_dom_unit is not None and best_q_overlap >= 0.60:
-        visible_answer = best_dom_unit.content
-        th_saved = next((t[3:] for t in best_dom_unit.tags if t.startswith("th:")), "")
-        if th_saved and not enriched_thoughts:
-            enriched_thoughts.append(th_saved)
+    if not verified_fast_path:
+        if best_dom_unit is not None and best_q_overlap >= 0.60:
+            visible_answer = best_dom_unit.content
+            th_saved = next((t[3:] for t in best_dom_unit.tags if t.startswith("th:")), "")
+            if th_saved and not enriched_thoughts:
+                enriched_thoughts.append(th_saved)
+        elif _is_fragmented_or_repetitive(visible_answer):
+            # Guarantee natural conversational fluency on open-ended / novel vocabulary prompts
+            visible_answer = _craft_open_conversational_reply(
+                user_message=user_message,
+                style_mode=style_mode,
+                recent_history=recent_history,
+            )
+
+    # Apply requested conversational style ('normal' | 'amical' | 'grok')
+    visible_answer = apply_conversational_tone_wrapper(
+        visible_answer=visible_answer,
+        user_message=user_message,
+        style_mode=style_mode,
+    )
 
     domain_hits = memory.query(user_message, top_k=2, category="domain_omega")
     if deep_think:
-        step1 = f"[Étape 1 · Décomposition] Analyse structurelle de la requête (« {user_message[:70]} ») sous le prisme {persona['label']}."
+        style_lbl = CONVERSATIONAL_STYLES.get(style_mode, CONVERSATIONAL_STYLES["normal"])["short"]
+        step1 = f"[Étape 1 · Décomposition] Analyse de « {user_message[:70]} » ({persona['label']} · Ton {style_lbl})."
         if best_dom_unit is not None:
             dom_tag = next((t[4:] for t in best_dom_unit.tags if t.startswith("dom:")), "général")
             step2 = f"[Étape 2 · Ancrage Épistémique] Correspondance vérifiée dans le domaine « {dom_tag} » (`overlap={best_q_overlap:.0%}`)."
@@ -564,7 +777,7 @@ def enrich_with_deep_think_and_rag(
             dom_tag = next((t[4:] for t in d0["tags"] if t.startswith("dom:")), "général")
             step2 = f"[Étape 2 · Ancrage Épistémique] Croisement avec le domaine « {dom_tag} » dans EvolveMem ({len(domain_hits)} unités activées)."
         else:
-            step2 = "[Étape 2 · Cohérence] Vérification d'absence de contradiction interne et contrôle des frontières d'incertitude."
+            step2 = "[Étape 2 · Cohérence] Vérification d'absence de contradiction interne et adaptation au registre conversationnel."
         step3 = "[Étape 3 · Synthèse] Formulation finale validée."
         enriched_thoughts = [step1, step2] + enriched_thoughts + [step3]
 

@@ -84,6 +84,13 @@ class ChatRequest(BaseModel):
     owner: str = Field(default="local")
     deep_think: bool = Field(default=False)
     persona: str = Field(default="polymathe")
+    style_mode: str = Field(default="normal")
+    web_search: bool = Field(default=False)
+
+
+class WebSearchDirectRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=300)
+    max_results: int = Field(default=6, ge=1, le=10)
 
 
 class TeachExchangeRequest(BaseModel):
@@ -273,6 +280,8 @@ def api_chat(req: ChatRequest) -> dict[str, Any]:
         owner=req.owner,
         deep_think=req.deep_think,
         persona=req.persona,
+        style_mode=req.style_mode,
+        web_search=req.web_search,
     )
 
 
@@ -287,6 +296,8 @@ def api_chat_stream(req: ChatRequest) -> StreamingResponse:
             owner=req.owner,
             deep_think=req.deep_think,
             persona=req.persona,
+            style_mode=req.style_mode,
+            web_search=req.web_search,
         ):
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
 
@@ -298,6 +309,11 @@ def api_chat_stream(req: ChatRequest) -> StreamingResponse:
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@app.post("/api/web/search")
+def api_web_search(req: WebSearchDirectRequest) -> dict[str, Any]:
+    return get_engine().registry.invoke("web_search_engine", query=req.query, max_results=req.max_results)
 
 
 @app.post("/api/chat/feedback")

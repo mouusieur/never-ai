@@ -30,6 +30,7 @@ from never_ai.core.special_tokens import (
 )
 from never_ai.core.titans_memory import TitansMemoryState
 from never_ai.core.tokenizer import MorphTokenizer
+from never_ai.data.conversational_universe import match_conversational_intent
 from never_ai.memory.evolvemem import EvolveMemStore
 from never_ai.plugins.base import PluginRegistry
 from never_ai.plugins.deep_research import (
@@ -114,6 +115,8 @@ class SovereignAgentHarness:
         user_message: str,
         owner: str,
         recent_history: list[dict[str, Any]] | None,
+        style_mode: str = "normal",
+        web_search: bool = False,
     ) -> dict[str, Any] | None:
         """
         Handle deterministic neuro-symbolic & episodic memory operations (personal memory
@@ -309,10 +312,31 @@ class SovereignAgentHarness:
                     "visible_answer": u.content,
                 }
 
-        # 8. Omega 15-Plugin Router (SVG Plotter, Stats/OLS, CODATA/Units, AST Audit, Crypto, Logic/SAT, Tasks, Benchmark, Local RAG)
-        omega_hit = route_omega_skill(user_message, self.registry, self.memory)
+        # 8. Omega 16-Plugin Router (Web Search, SVG Plotter, Stats/OLS, CODATA/Units, AST Audit, Crypto, Logic/SAT, Tasks, Benchmark, Local RAG)
+        omega_hit = route_omega_skill(
+            user_message,
+            self.registry,
+            self.memory,
+            style_mode=style_mode,
+            web_search=web_search,
+        )
         if omega_hit is not None:
             return omega_hit
+
+        # 9. Natural Multi-Register Conversational Universe (Normal, Amical, Cash/Grok)
+        conv_hit = match_conversational_intent(
+            user_message=user_message,
+            style_mode=style_mode,
+            recent_history=recent_history,
+        )
+        if conv_hit is not None:
+            return {
+                "thoughts": conv_hit.get("thoughts", []),
+                "tool_traces": [],
+                "routed_tools": [],
+                "visible_answer": conv_hit["visible_answer"],
+                "skip_tone_wrap": True,
+            }
 
         return None
 
@@ -327,10 +351,18 @@ class SovereignAgentHarness:
         recent_history: list[dict[str, Any]] | None = None,
         deep_think: bool = False,
         persona: str = "polymathe",
+        style_mode: str = "normal",
+        web_search: bool = False,
         on_event: Callable[[dict[str, Any]], bool | None] | None = None,
     ) -> dict[str, Any]:
-        # Fast-path episodic/symbolic/Omega skills with verified traces
-        fast = self._try_symbolic_or_episodic_skill(user_message, owner=owner, recent_history=recent_history)
+        # Fast-path episodic/symbolic/Omega/Web/Conversational skills with verified traces
+        fast = self._try_symbolic_or_episodic_skill(
+            user_message,
+            owner=owner,
+            recent_history=recent_history,
+            style_mode=style_mode,
+            web_search=web_search,
+        )
         if fast is not None:
             vis_fast, th_fast, cites_fast = enrich_with_deep_think_and_rag(
                 user_message=user_message,
@@ -339,12 +371,17 @@ class SovereignAgentHarness:
                 memory=self.memory,
                 deep_think=deep_think,
                 persona_id=persona,
+                style_mode="normal" if (fast.get("skip_tone_wrap") or fast.get("web_sources") is not None) else style_mode,
+                recent_history=recent_history,
+                verified_fast_path=True,
             )
             if on_event is not None:
                 for th in th_fast:
                     on_event({"type": "think_delta", "text": th + "\n"})
                 for tr in fast.get("tool_traces", []):
                     on_event({"type": "tool_call", "trace": tr})
+                if fast.get("web_sources"):
+                    on_event({"type": "web_sources", "sources": fast["web_sources"]})
                 on_event({"type": "answer_delta", "text": vis_fast})
             return {
                 "visible_answer": vis_fast,
@@ -356,7 +393,9 @@ class SovereignAgentHarness:
                 "learned_pair": fast.get("learned_pair"),
                 "artifacts": fast.get("artifacts", []),
                 "citations": fast.get("citations", cites_fast),
+                "web_sources": fast.get("web_sources", []),
                 "persona": persona,
+                "style_mode": style_mode,
                 "deep_think": deep_think,
             }
 
@@ -531,6 +570,8 @@ class SovereignAgentHarness:
             memory=self.memory,
             deep_think=deep_think,
             persona_id=persona,
+            style_mode=style_mode,
+            recent_history=recent_history,
         )
         if on_event is not None and visible != pre_enrich_vis:
             on_event({"type": "answer_replace", "text": visible})
@@ -565,7 +606,9 @@ class SovereignAgentHarness:
             "titans_mean_surprise": round(sum(surprises) / max(1, len(surprises)), 6),
             "artifacts": artifacts,
             "citations": citations,
+            "web_sources": [],
             "persona": persona,
+            "style_mode": style_mode,
             "deep_think": deep_think,
         }
 

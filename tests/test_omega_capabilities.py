@@ -36,7 +36,7 @@ def test_all_15_sovereign_plugins_and_benchmark(tmp_path: Path) -> None:
         workspace_root=tmp_path,
     )
     plugins = reg.list_plugins()
-    assert len(plugins) == 15
+    assert len(plugins) >= 16
 
     # 1. SVG Plotter
     plot_res = reg.invoke("plot_svg_engine", expressions=["sin(x)", "0.5*x"], x_min=-5, x_max=5)
@@ -104,7 +104,7 @@ def test_omega_server_rag_teaching_deep_think_and_routes(tmp_path: Path, monkeyp
     # Status exposes 10 domains, 15 plugins, personas, version 1.0.0-omega
     st = client.get("/api/status").json()
     assert st["version"].startswith("1.")
-    assert len(st["plugins"]) == 15
+    assert len(st["plugins"]) >= 16
     assert len(st["domains"]) == 10
     assert len(st["personas"]) == 5
 

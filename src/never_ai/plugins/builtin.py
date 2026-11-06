@@ -410,6 +410,7 @@ def build_default_plugin_registry(
         TaskPlannerPlugin,
         UnitAndPhysicsEnginePlugin,
     )
+    from never_ai.plugins.web_search import WebSearchEnginePlugin
 
     reg = PluginRegistry()
     # Core 7 Sovereign Plugins
@@ -420,7 +421,7 @@ def build_default_plugin_registry(
     reg.register(KnowledgeIngestorPlugin(mem_store))
     reg.register(IntrospectionProbePlugin(anatomy_provider))
     reg.register(SkillForgePlugin(reg))
-    # Omega 8 Scientific, Data, Logic, Security & Productivity Plugins
+    # Omega 9 Scientific, Data, Logic, Security, Productivity & Live Web Search Plugins (16 Total)
     reg.register(PlotSVGEnginePlugin())
     reg.register(StatsAndDataEnginePlugin())
     reg.register(UnitAndPhysicsEnginePlugin())
@@ -428,5 +429,6 @@ def build_default_plugin_registry(
     reg.register(CryptoAndEncodingPlugin())
     reg.register(LogicAndTruthTablePlugin())
     reg.register(TaskPlannerPlugin(mem_store.storage_path.parent / "tasks.json"))
+    reg.register(WebSearchEnginePlugin())
     reg.register(LiveBenchmarkSuitePlugin(lambda: reg))
     return reg

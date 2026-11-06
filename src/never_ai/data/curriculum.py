@@ -29,6 +29,7 @@ from never_ai.core.special_tokens import (
     USER_TOKEN,
 )
 from never_ai.core.tokenizer import MorphTokenizer
+from never_ai.data.conversational_universe import CONVERSATIONAL_UNIVERSE
 from never_ai.data.omega_domains import OMEGA_DOMAIN_KNOWLEDGE
 
 
@@ -267,6 +268,10 @@ def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tu
     ]
     for item in OMEGA_DOMAIN_KNOWLEDGE:
         reasoning_pairs.append((item["q"], item["thought"], item["a"]))
+    for c_item in CONVERSATIONAL_UNIVERSE:
+        reasoning_pairs.append((c_item["q"], c_item["thought"], c_item["normal"]))
+        reasoning_pairs.append((f"[Ton Amical] {c_item['q']}", c_item["thought"], c_item["amical"]))
+        reasoning_pairs.append((f"[Ton Cash] {c_item['q']}", c_item["thought"], c_item["grok"]))
 
     for _ in range(18 * scale_factor):
         for q, thought, ans in reasoning_pairs:
