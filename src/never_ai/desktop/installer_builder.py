@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import io
+import json
 from pathlib import Path
 import zipfile
+
+from never_ai.updater.ota import detect_git_head_info
 
 
 _INSTALLER_BAT = r"""@echo off
@@ -97,7 +100,7 @@ $txtLog.BackColor = [System.Drawing.Color]::FromArgb(12, 14, 18)
 $txtLog.ForeColor = [System.Drawing.Color]::FromArgb(110, 231, 183)
 $txtLog.BorderStyle = "FixedSingle"
 $txtLog.Font = New-Object System.Drawing.Font("Consolas", 8.5)
-$txtLog.Text = "Pret a installer NEVER-AI en local sur cet appareil.`r`n"
+$txtLog.Text = "Pret a installer NEVER-AI en local sur cet appareil.`r`nMises a jour a distance (OTA) incluses : vous n'aurez plus jamais a reinstaller !`r`n"
 $form.Controls.Add($txtLog)
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -246,6 +249,10 @@ def build_windows_installer_zip(repo_root: str | Path = ".") -> bytes:
         zf.writestr("Installer-NeverAI.bat", _INSTALLER_BAT.replace("\n", "\r\n"))
         zf.writestr("setup_wizard.ps1", _SETUP_WIZARD_PS1.replace("\n", "\r\n"))
         zf.writestr("LISEZ-MOI.txt", _README_FR.replace("\n", "\r\n"))
+
+        sha, br = detect_git_head_info(root)
+        ota_stamp = json.dumps({"commit": sha, "branch": br}, indent=2)
+        zf.writestr("never-ai-src/ota_manifest.json", ota_stamp)
 
         for fp in include_files:
             arcname = f"never-ai-src/{fp.relative_to(root).as_posix()}"

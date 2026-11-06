@@ -13,13 +13,23 @@ from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingRes
 from pydantic import BaseModel, Field
 
 from never_ai.desktop.installer_builder import build_windows_installer_zip
+from never_ai.desktop.pe_exe_builder import build_windows_setup_exe
 from never_ai.engine import NeverAIEngine
+from never_ai.updater.ota import DEFAULT_GITHUB_REPO, OTAUpdater
 
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _BRAND_DIR = _REPO_ROOT / "assets" / "brand"
 _ENGINE: NeverAIEngine | None = None
+_OTA: OTAUpdater | None = None
+
+
+def get_ota() -> OTAUpdater:
+    global _OTA
+    if _OTA is None:
+        _OTA = OTAUpdater(app_root=_REPO_ROOT)
+    return _OTA
 
 
 def get_engine() -> NeverAIEngine:
@@ -152,6 +162,24 @@ def favicon() -> FileResponse:
     raise HTTPException(status_code=404, detail="Icon not found")
 
 
+@app.api_route("/download/NeverAI-Setup.exe", methods=["GET", "HEAD"])
+@app.api_route("/api/download/exe", methods=["GET", "HEAD"])
+def api_download_setup_exe() -> Response:
+    """Build and stream the single-file Native Windows x64 GUI Executable (`NeverAI-Setup.exe`)."""
+    exe_bytes = build_windows_setup_exe(_REPO_ROOT)
+    return Response(
+        content=exe_bytes,
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": 'attachment; filename="NeverAI-Setup.exe"',
+            "Content-Length": str(len(exe_bytes)),
+            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length",
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@app.api_route("/download/NeverAI-Installer-Windows-x64.zip", methods=["GET", "HEAD"])
 @app.api_route("/api/download/installer", methods=["GET", "HEAD"])
 def api_download_installer() -> Response:
     """Build and stream the official Windows 10/11 Graphical Installer ZIP."""
@@ -161,9 +189,51 @@ def api_download_installer() -> Response:
         media_type="application/zip",
         headers={
             "Content-Disposition": 'attachment; filename="NeverAI-Installer-Windows-x64.zip"',
+            "Content-Length": str(len(zip_bytes)),
+            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length",
             "Cache-Control": "no-store",
         },
     )
+
+
+@app.get("/api/ota/bootstrap.ps1")
+def api_ota_bootstrap_ps1() -> Response:
+    """One-line PowerShell remote installer & OTA updater (`irm .../api/ota/bootstrap.ps1 | iex`)."""
+    ps_script = f"""# NEVER-AI — Installation & Mise a jour a distance automatique (Windows 10/11)
+$ErrorActionPreference = "Stop"
+$Target = Join-Path $env:LOCALAPPDATA "Programs\\NeverAI"
+Write-Host ">>> Telechargement de la derniere version de NEVER-AI depuis GitHub ({DEFAULT_GITHUB_REPO})..." -ForegroundColor Cyan
+$ZipUrl = "https://codeload.github.com/{DEFAULT_GITHUB_REPO}/zip/arena/403f5d7f-never-ai"
+$TmpZip = Join-Path $env:TEMP "never-ai-ota.zip"
+$TmpExt = Join-Path $env:TEMP "never-ai-ota-ext"
+Invoke-WebRequest -Uri $ZipUrl -OutFile $TmpZip -UseBasicParsing
+Remove-Item $TmpExt -Recurse -Force -ErrorAction SilentlyContinue
+Expand-Archive -Path $TmpZip -DestinationPath $TmpExt -Force
+$Sub = Get-ChildItem -Path $TmpExt -Directory | Select-Object -First 1
+New-Item -ItemType Directory -Force -Path $Target | Out-Null
+Copy-Item -Recurse -Force (Join-Path $Sub.FullName "src") $Target
+Copy-Item -Recurse -Force (Join-Path $Sub.FullName "assets") $Target
+Copy-Item -Force (Join-Path $Sub.FullName "pyproject.toml") $Target
+Copy-Item -Force (Join-Path $Sub.FullName "README.md") $Target
+$Venv = Join-Path $Target ".venv"
+if (-not (Test-Path $Venv)) {{
+    Write-Host ">>> Premiere installation : creation de l'environnement Python local..." -ForegroundColor Emerald
+    python -m venv $Venv
+    & (Join-Path $Venv "Scripts\\pip.exe") install --upgrade pip
+    & (Join-Path $Venv "Scripts\\pip.exe") install --index-url https://download.pytorch.org/whl/cpu torch
+    & (Join-Path $Venv "Scripts\\pip.exe") install -e $Target pywebview
+}}
+$Wsh = New-Object -ComObject WScript.Shell
+$Lnk = $Wsh.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "NEVER-AI.lnk"))
+$Lnk.TargetPath = (Join-Path $Venv "Scripts\\pythonw.exe")
+$Lnk.Arguments = "`"$(Join-Path $Target 'src\\never_ai\\desktop\\launcher.py')`""
+$Lnk.WorkingDirectory = $Target
+$Lnk.IconLocation = (Join-Path $Target "assets\\brand\\never_ai.ico")
+$Lnk.Save()
+Write-Host ">>> NEVER-AI est installe et configure avec mises a jour OTA automatiques ! Lancement..." -ForegroundColor Green
+Start-Process -FilePath $Lnk.TargetPath -ArgumentList $Lnk.Arguments -WorkingDirectory $Target
+"""
+    return Response(content=ps_script.replace("\n", "\r\n"), media_type="text/plain; charset=utf-8")
 
 
 @app.post("/api/auth/register")
@@ -412,6 +482,38 @@ def api_seal_consolidate(req: SEALRequest) -> dict[str, Any]:
         title=req.title,
         text=req.text,
         steps=req.steps,
+    )
+
+
+class OTAPreferencesRequest(BaseModel):
+    auto_update_on_boot: bool | None = None
+    branch: str | None = None
+
+
+@app.get("/api/ota/status")
+def api_ota_status() -> dict[str, Any]:
+    return get_ota().status()
+
+
+@app.post("/api/ota/check")
+def api_ota_check() -> dict[str, Any]:
+    return get_ota().check_for_updates()
+
+
+@app.post("/api/ota/apply")
+def api_ota_apply() -> dict[str, Any]:
+    res = get_ota().apply_remote_update(force=False)
+    if res.get("updated"):
+        eng = get_engine()
+        eng._refresh_status_cache()
+    return res
+
+
+@app.post("/api/ota/preferences")
+def api_ota_preferences(req: OTAPreferencesRequest) -> dict[str, Any]:
+    return get_ota().set_preferences(
+        auto_update_on_boot=req.auto_update_on_boot,
+        branch=req.branch,
     )
 
 

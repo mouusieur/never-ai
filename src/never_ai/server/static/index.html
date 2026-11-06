@@ -1274,10 +1274,10 @@
             Créer un compte personnalisé
           </button>
 
-          <div class="or-divider">application bureau windows</div>
+          <div class="or-divider">application bureau windows + maj ota</div>
 
-          <a class="pill-btn pill-outline-white" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
-            ⬇ Télécharger l'installateur Windows (.exe)
+          <a class="pill-btn pill-outline-white" href="/download/NeverAI-Setup.exe" target="_blank" rel="noopener" onclick="handleExeDownloadClick()">
+            ⬇ Télécharger NeverAI-Setup.exe (Windows 64-bit)
           </a>
 
           <p class="legal-note">
@@ -1295,11 +1295,11 @@
     </div>
 
     <footer class="landing-footer">
-      <a href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">⬇ Installateur Windows x64</a>
-      <span>ChronoMorph-LM v1.0 Omega</span>
-      <span>10 Domaines Polymathiques</span>
-      <span>15 Plugins Natifs + Courbes SVG</span>
-      <span>Deep Think & RAG Local</span>
+      <a href="/download/NeverAI-Setup.exe" target="_blank" rel="noopener" onclick="handleExeDownloadClick()">⬇ NeverAI-Setup.exe (Windows x64)</a>
+      <span>ChronoMorph-LM v1.4 OTA</span>
+      <span>Mises à jour à distance sans réinstaller</span>
+      <span>16 Plugins Natifs + Recherche Web</span>
+      <span>Modes Normal · Amical · Cash/Grok</span>
     </footer>
   </div>
 
@@ -1431,10 +1431,10 @@
           </div>
         </div>
 
-        <a class="nav-item" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip" title="Télécharger l'installateur Windows">
+        <div class="nav-item" onclick="openDownloadOtaModal()" title="Télécharger NeverAI-Setup.exe et gérer les mises à jour à distance (OTA)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Application .exe</span>
-        </a>
+          <span>App .exe & MAJ OTA</span>
+        </div>
 
         <button class="pill-btn pill-white" style="margin-top:8px;height:42px;width:100%;" onclick="createNewThread()">
           + Nouvelle discussion
@@ -1898,13 +1898,19 @@
         </div>
 
         <div class="x-card">
-          <h3>Installer sur votre PC (.exe)</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h3>Application PC (.exe) & OTA</h3>
+            <span id="otaBadgeUser" style="font-size:10.5px;padding:2px 8px;border-radius:999px;background:rgba(16,185,129,0.14);color:#34D399;border:1px solid rgba(16,185,129,0.35);">v1.4 OTA</span>
+          </div>
           <p style="font-size:12px;color:var(--text-muted);line-height:1.45;">
-            Utilisez Never-AI directement depuis votre Bureau Windows 10/11, même sans connexion Internet.
+            Installez <strong style="color:#FFF;">une seule fois</strong> sur Windows 10/11 : toutes les futures mises à jour arrivent automatiquement à distance sans jamais réinstaller.
           </p>
-          <a class="pill-btn pill-white" style="width:100%;height:38px;font-size:13px;" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
-            ⬇ Télécharger pour Windows
+          <a class="pill-btn pill-white" style="width:100%;height:38px;font-size:13px;" href="/download/NeverAI-Setup.exe" target="_blank" rel="noopener" onclick="handleExeDownloadClick()">
+            ⬇ Télécharger NeverAI-Setup.exe
           </a>
+          <button class="pill-btn pill-outline-white" style="width:100%;height:34px;font-size:12px;" onclick="openDownloadOtaModal()">
+            🔄 Mises à jour à distance (OTA)
+          </button>
         </div>
       </div>
 
@@ -1958,16 +1964,105 @@
       </div>
 
       <div class="x-card">
-        <h3>Installateur Windows (.exe)</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Setup Windows (.exe) & OTA</h3>
+          <span id="otaBadgeLab" style="font-size:10.5px;padding:2px 8px;border-radius:999px;background:rgba(16,185,129,0.14);color:#34D399;border:1px solid rgba(16,185,129,0.35);">v1.4 OTA</span>
+        </div>
         <p style="font-size:12px;color:var(--text-muted);line-height:1.45;">
-          Téléchargez l'assistant d'installation graphique noir Windows 10/11 avec raccourci Bureau et icône officielle.
+          Exécutable natif PE32+ x64 auto-extractible avec raccourci Bureau et <strong style="color:#FFF;">mises à jour OTA à distance zéro-réinstallation</strong>.
         </p>
-        <a class="pill-btn pill-white" style="width:100%;height:38px;font-size:13px;" href="/api/download/installer" download="NeverAI-Installer-Windows-x64.zip">
-          ⬇ Télécharger l'installateur
+        <a class="pill-btn pill-white" style="width:100%;height:38px;font-size:13px;" href="/download/NeverAI-Setup.exe" target="_blank" rel="noopener" onclick="handleExeDownloadClick()">
+          ⬇ Télécharger NeverAI-Setup.exe
         </a>
+        <button class="pill-btn pill-outline-white" style="width:100%;height:34px;font-size:12px;" onclick="openDownloadOtaModal()">
+          🔄 Centre OTA & Options de téléchargement
+        </button>
       </div>
       </div>
     </aside>
+  </div>
+
+  <!-- WINDOWS .EXE DOWNLOAD & ZERO-REINSTALL REMOTE OTA AUTO-UPDATE MODAL -->
+  <div id="downloadOtaModal" class="modal-backdrop hidden" onclick="if(event.target===this) closeDownloadOtaModal()">
+    <div class="auth-modal" style="max-width:650px;padding:22px 26px 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <h3 style="font-size:19px;font-weight:800;letter-spacing:-0.02em;">Application Windows (.exe) &amp; MAJ à Distance</h3>
+          <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">Installez Never-AI une seule fois — les futures versions se déploient à distance sans réinstallation.</div>
+        </div>
+        <button class="icon-circle" onclick="closeDownloadOtaModal()">✕</button>
+      </div>
+
+      <div id="dlStartedBanner" class="hidden" style="margin-bottom:14px;padding:10px 14px;border-radius:12px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.4);color:#6EE7B7;font-size:12.5px;line-height:1.45;">
+        ✅ <strong>Téléchargement de <code>NeverAI-Setup.exe</code> déclenché dans un nouvel onglet !</strong> Si votre navigateur filtre les fenêtres pop-up d'aperçu, utilisez le bouton direct ou copiez l'URL ci-dessous.
+      </div>
+
+      <!-- SECTION 1: NATIVE WINDOWS .EXE + FALLBACKS -->
+      <div style="background:#080A0D;border:1px solid var(--border);border-radius:14px;padding:15px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong style="font-size:14px;color:#FFF;">1. Première installation sur PC Windows 10 / 11 (x64)</strong>
+          <span style="font-size:11px;color:#93C5FD;background:rgba(29,155,240,0.14);padding:2px 8px;border-radius:999px;">Exécutable PE32+ Natif</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;margin-bottom:12px;">
+          Lance l'assistant graphique noir Never-AI, crée le raccourci sur votre Bureau et active automatiquement le canal de mise à jour à distance (OTA).
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;">
+          <a id="modalDirectExeLink" class="pill-btn pill-white" style="height:40px;font-size:13px;text-decoration:none;" href="/download/NeverAI-Setup.exe" target="_blank" rel="noopener">
+            ⬇ NeverAI-Setup.exe (.exe)
+          </a>
+          <a id="modalDirectZipLink" class="pill-btn pill-outline-white" style="height:40px;font-size:12.5px;text-decoration:none;" href="/download/NeverAI-Installer-Windows-x64.zip" target="_blank" rel="noopener">
+            📦 Archive alternative (.zip)
+          </a>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <input id="directExeUrlInp" readonly style="flex:1;background:#040507;border:1px solid var(--border);border-radius:9px;padding:7px 10px;color:#A1A1AA;font-family:var(--font-mono);font-size:11.5px;outline:none;" value="" />
+          <button class="pill-btn pill-outline-white" style="height:32px;font-size:11.5px;padding:0 12px;white-space:nowrap;" onclick="copyTextField('directExeUrlInp', this)">📋 Copier lien .exe</button>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="psBootstrapInp" readonly style="flex:1;background:#040507;border:1px solid var(--border);border-radius:9px;padding:7px 10px;color:#93C5FD;font-family:var(--font-mono);font-size:11.5px;outline:none;" value="" />
+          <button class="pill-btn pill-outline-white" style="height:32px;font-size:11.5px;padding:0 12px;white-space:nowrap;" onclick="copyTextField('psBootstrapInp', this)">⚡ Copier PowerShell</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">
+          Astuce Windows SmartScreen : si Windows affiche <em>« Windows a protégé votre PC »</em>, cliquez sur <strong>Informations complémentaires → Exécuter quand même</strong> (ou utilisez la commande PowerShell 1-clic ci-dessus).
+        </div>
+      </div>
+
+      <!-- SECTION 2: ZERO-REINSTALL REMOTE OTA AUTO-UPDATER -->
+      <div style="background:#080A0D;border:1px solid var(--border);border-radius:14px;padding:15px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong style="font-size:14px;color:#FFF;">2. Mises à jour à distance (OTA — Sans jamais réinstaller)</strong>
+          <span id="otaModalStatusPill" style="font-size:11px;color:#34D399;background:rgba(16,185,129,0.14);padding:2px 9px;border-radius:999px;">Synchronisé</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;margin-bottom:10px;">
+          Votre application interroge le dépôt distant et télécharge uniquement les nouveautés du code à chaud. <strong style="color:#E7E9EA;">Vos discussions, comptes, documents et poids neuronaux (<code>checkpoints/</code>) restent 100 % intacts.</strong>
+        </p>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:11px;">
+          <div class="stat-tile"><span>Version Locale</span><strong id="otaLocalVer">v1.4.0</strong></div>
+          <div class="stat-tile"><span>Commit Actif</span><strong id="otaLocalSha" style="font-family:var(--font-mono);">-</strong></div>
+          <div class="stat-tile"><span> Canal Distant</span><strong id="otaRemoteSha" style="font-family:var(--font-mono);">GitHub HTTPS</strong></div>
+        </div>
+
+        <label style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#E7E9EA;cursor:pointer;margin-bottom:12px;">
+          <input type="checkbox" id="chkOtaAutoBoot" checked onchange="toggleOtaAutoBoot(this.checked)" />
+          Vérifier et installer automatiquement les mises à jour à distance au démarrage de Never-AI
+        </label>
+
+        <div style="display:flex;gap:9px;">
+          <button id="btnOtaCheckNow" class="pill-btn pill-outline-white" style="flex:1;height:38px;font-size:12.5px;" onclick="checkOtaUpdatesNow()">
+            🔍 Vérifier les mises à jour
+          </button>
+          <button id="btnOtaApplyNow" class="pill-btn pill-accent" style="flex:1;height:38px;font-size:12.5px;" onclick="applyOtaUpdateNow()">
+            🔄 Mettre à jour à distance maintenant
+          </button>
+        </div>
+
+        <div id="otaActionFeedback" style="margin-top:10px;font-size:12px;color:var(--text-muted);min-height:18px;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ARTEFACT CANVAS MODAL (SVG PLOTS & CODE STUDIO) -->
@@ -3767,7 +3862,164 @@
       }
     }
 
+    function populateDownloadOtaUrls() {
+      const origin = window.location.origin;
+      const exeUrl = origin + '/download/NeverAI-Setup.exe';
+      const zipUrl = origin + '/download/NeverAI-Installer-Windows-x64.zip';
+      const psCmd = `irm "${origin}/api/ota/bootstrap.ps1" | iex`;
+      const exeInp = document.getElementById('directExeUrlInp');
+      const psInp = document.getElementById('psBootstrapInp');
+      const lnkExe = document.getElementById('modalDirectExeLink');
+      const lnkZip = document.getElementById('modalDirectZipLink');
+      if (exeInp) exeInp.value = exeUrl;
+      if (psInp) psInp.value = psCmd;
+      if (lnkExe) lnkExe.href = exeUrl;
+      if (lnkZip) lnkZip.href = zipUrl;
+    }
+
+    function handleExeDownloadClick() {
+      // Do NOT preventDefault on the <a target="_blank"> so the browser opens top-level download outside any sandboxed iframe!
+      populateDownloadOtaUrls();
+      const banner = document.getElementById('dlStartedBanner');
+      if (banner) banner.classList.remove('hidden');
+      document.getElementById('downloadOtaModal').classList.remove('hidden');
+      refreshOtaStatusSilent();
+    }
+
+    function openDownloadOtaModal() {
+      populateDownloadOtaUrls();
+      const banner = document.getElementById('dlStartedBanner');
+      if (banner) banner.classList.add('hidden');
+      document.getElementById('downloadOtaModal').classList.remove('hidden');
+      refreshOtaStatusSilent();
+    }
+
+    function closeDownloadOtaModal() {
+      document.getElementById('downloadOtaModal').classList.add('hidden');
+    }
+
+    async function copyTextField(inpId, btnEl) {
+      const el = document.getElementById(inpId);
+      if (!el) return;
+      const oldTxt = btnEl ? btnEl.textContent : '';
+      try {
+        await navigator.clipboard.writeText(el.value);
+      } catch (_) {
+        el.select();
+        document.execCommand('copy');
+      }
+      if (btnEl) {
+        btnEl.textContent = '✅ Copié !';
+        setTimeout(() => { btnEl.textContent = oldTxt; }, 1800);
+      }
+    }
+
+    function renderOtaStatus(st) {
+      if (!st) return;
+      const verEl = document.getElementById('otaLocalVer');
+      const shaEl = document.getElementById('otaLocalSha');
+      const remEl = document.getElementById('otaRemoteSha');
+      const chk = document.getElementById('chkOtaAutoBoot');
+      const pill = document.getElementById('otaModalStatusPill');
+      if (verEl) verEl.textContent = 'v' + (st.app_version || '1.4.0');
+      if (shaEl) shaEl.textContent = st.installed_short || 'local';
+      if (remEl) remEl.textContent = st.remote_short ? ('#' + st.remote_short) : (st.branch || 'GitHub');
+      if (chk && typeof st.auto_update_on_boot === 'boolean') chk.checked = st.auto_update_on_boot;
+      if (pill) {
+        if (st.update_available) {
+          pill.textContent = 'Nouvelle MAJ dispo !';
+          pill.style.color = '#FBBF24';
+          pill.style.background = 'rgba(245,158,11,0.16)';
+        } else {
+          pill.textContent = 'À jour (OTA actif)';
+          pill.style.color = '#34D399';
+          pill.style.background = 'rgba(16,185,129,0.14)';
+        }
+      }
+      ['otaBadgeUser', 'otaBadgeLab'].forEach((id) => {
+        const b = document.getElementById(id);
+        if (!b) return;
+        if (st.update_available) {
+          b.textContent = 'MAJ dispo !';
+          b.style.color = '#FBBF24';
+        } else {
+          b.textContent = 'v' + (st.app_version || '1.4') + ' OTA';
+          b.style.color = '#34D399';
+        }
+      });
+    }
+
+    async function refreshOtaStatusSilent() {
+      try {
+        const res = await fetch('/api/ota/status');
+        if (res.ok) renderOtaStatus(await res.json());
+      } catch (_) {}
+    }
+
+    async function toggleOtaAutoBoot(enabled) {
+      try {
+        const res = await fetch('/api/ota/preferences', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({auto_update_on_boot: !!enabled})
+        });
+        if (res.ok) renderOtaStatus(await res.json());
+      } catch (_) {}
+    }
+
+    async function checkOtaUpdatesNow() {
+      const btn = document.getElementById('btnOtaCheckNow');
+      const fb = document.getElementById('otaActionFeedback');
+      if (btn) btn.disabled = true;
+      if (fb) fb.textContent = 'Interrogation du serveur distant GitHub en cours...';
+      try {
+        const res = await fetch('/api/ota/check', {method: 'POST'});
+        const data = await res.json();
+        renderOtaStatus(data);
+        if (fb) {
+          if (!data.reachable) {
+            fb.textContent = '⚠️ Dépôt distant momentanément hors ligne (' + (data.error || 'réseau local') + ').';
+          } else if (data.update_available) {
+            fb.innerHTML = '✨ <strong style="color:#FBBF24;">Nouvelle version détectée (#' + data.remote_short + ')</strong> — ' + (data.remote_message || 'Prête à être installée à distance.');
+          } else {
+            fb.innerHTML = '✅ <strong style="color:#34D399;">Never-AI est déjà sur la toute dernière version</strong> (#' + (data.remote_short || data.installed_short) + ').';
+          }
+        }
+      } catch (e) {
+        if (fb) fb.textContent = 'Erreur de vérification OTA : ' + e.message;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function applyOtaUpdateNow() {
+      const btn = document.getElementById('btnOtaApplyNow');
+      const fb = document.getElementById('otaActionFeedback');
+      if (btn) btn.disabled = true;
+      if (fb) fb.textContent = 'Téléchargement et application à chaud de la mise à jour à distance (vos données sont préservées)...';
+      try {
+        const res = await fetch('/api/ota/apply', {method: 'POST'});
+        const data = await res.json();
+        await refreshOtaStatusSilent();
+        if (fb) {
+          if (data.updated) {
+            fb.innerHTML = '🚀 <strong style="color:#34D399;">' + (data.message || 'Mise à jour appliquée !') + '</strong> Rechargement de l\'interface dans 1.5 s...';
+            setTimeout(() => window.location.reload(), 1500);
+          } else if (data.ok) {
+            fb.innerHTML = '✅ <strong style="color:#34D399;">' + (data.message || 'Déjà à jour — aucune réinstallation requise.') + '</strong>';
+          } else {
+            fb.textContent = '⚠️ ' + (data.error || 'Mise à jour impossible pour le moment.');
+          }
+        }
+      } catch (e) {
+        if (fb) fb.textContent = 'Erreur lors de la mise à jour OTA : ' + e.message;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     restoreSessionOnBoot();
+    refreshOtaStatusSilent();
   </script>
 </body>
 </html>

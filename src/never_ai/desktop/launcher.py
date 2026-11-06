@@ -97,6 +97,21 @@ def main() -> None:
     data_dir = _resolve_user_data_dir()
     os.chdir(data_dir)
 
+    # Ensure updated source tree in data_dir/src takes priority on sys.path for OTA updates!
+    local_src = data_dir / "src"
+    if local_src.exists() and str(local_src) not in sys.path:
+        sys.path.insert(0, str(local_src))
+
+    # Automatic Zero-Reinstall Over-The-Air (OTA) Remote Update Check on Boot!
+    try:
+        from never_ai.updater.ota import OTAUpdater
+
+        ota = OTAUpdater(app_root=data_dir)
+        if ota.state.get("auto_update_on_boot", True) and not (data_dir / ".git").exists():
+            ota.apply_remote_update(force=False)
+    except Exception:  # noqa: BLE001
+        pass
+
     # Pre-initialize engine in data_dir
     import never_ai.server.app as server_app
     from never_ai.engine import NeverAIEngine

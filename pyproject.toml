@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "never-ai"
-version = "1.3.0"
-description = "ChronoMorph-LM: Hyper-Conversational (Normal/Amical/Grok), Live Web Search & Real-Time Pulse Desktop Studio"
+version = "1.4.0"
+description = "ChronoMorph-LM: Native Windows x64 Setup (.exe), Zero-Reinstall Remote OTA Auto-Updater, Multi-Register Chat & Live Web Search"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
