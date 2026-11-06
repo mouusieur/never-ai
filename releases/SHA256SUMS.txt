@@ -1,0 +1,2 @@
+47152bb41adb8399239cf8aec8094e481be7e3f23c60bed0ebc6f964d65f8aa5  NeverAI-Setup.exe
+411f53642fa8d312921ae24badab10ea51d41cdcb8c1cfe5ae8e08ba638a746c  NeverAI-Installer-Windows-x64.zip

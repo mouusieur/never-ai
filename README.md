@@ -2,11 +2,12 @@
 
 ## ⬇ Télécharger pour Windows 10 / 11 (64-bit) — Installation Unique + Mises à Jour OTA
 
-[![Télécharger NeverAI-Setup.exe](https://img.shields.io/badge/%E2%AC%87%20T%C3%A9l%C3%A9charger-NeverAI--Setup.exe%20(Windows%20x64)-FFFFFF?style=for-the-badge&logo=windows&logoColor=black)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup.exe)
-[![Archive .zip Alternative](https://img.shields.io/badge/%F0%9F%93%A6%20Archive%20Alternative-.zip%20(Windows%20x64)-1D9BF0?style=for-the-badge)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Installer-Windows-x64.zip)
+[![Télécharger NeverAI-Setup.exe](https://img.shields.io/badge/%E2%AC%87%20T%C3%A9l%C3%A9charger-NeverAI--Setup.exe%20(Windows%20x64)-FFFFFF?style=for-the-badge&logo=windows&logoColor=black)](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Setup.exe)
+[![Archive .zip Alternative](https://img.shields.io/badge/%F0%9F%93%A6%20Archive%20Alternative-.zip%20(Windows%20x64)-1D9BF0?style=for-the-badge)](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Installer-Windows-x64.zip)
 [![Page GitHub Releases](https://img.shields.io/badge/GitHub%20Releases-v1.4.0%20OTA-10B981?style=for-the-badge&logo=github)](https://github.com/mouusieur/never-ai/releases/latest)
 
-- **Téléchargement direct `.exe` (GitHub Releases) :** [**`NeverAI-Setup.exe`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup.exe) *(Exécutable natif Windows x64 auto-extractible — si Windows SmartScreen s'affiche, cliquez sur **Informations complémentaires → Exécuter quand même**).*
+- **Téléchargement direct `.exe` sur GitHub :** [**`NeverAI-Setup.exe`**](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Setup.exe) *(Exécutable natif Windows x64 auto-extractible — si Windows SmartScreen s'affiche, cliquez sur **Informations complémentaires → Exécuter quand même**).*
+- **Téléchargement direct `.zip` sur GitHub :** [**`NeverAI-Installer-Windows-x64.zip`**](https://github.com/mouusieur/never-ai/raw/arena/403f5d7f-never-ai/releases/NeverAI-Installer-Windows-x64.zip) *(Décompressez puis double-cliquez sur `Installer-NeverAI.bat`).*
 - **Alternative 1-clic dans PowerShell (sans télécharger d'exécutable) :**
   ```powershell
   irm "https://raw.githubusercontent.com/mouusieur/never-ai/arena/403f5d7f-never-ai/releases/install_never_ai.ps1" | iex

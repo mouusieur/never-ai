@@ -47,10 +47,10 @@ jobs:
             dist/NeverAI/
             NeverAI-Standalone-Windows-x64.zip
 
-      - name: Attach Standalone Portable Bundle to GitHub Release
+      - name: Attach Installers & Standalone Portable Bundle to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
-          gh release upload $tag NeverAI-Standalone-Windows-x64.zip --clobber
+          gh release upload $tag releases\NeverAI-Setup.exe releases\NeverAI-Installer-Windows-x64.zip NeverAI-Standalone-Windows-x64.zip --clobber
