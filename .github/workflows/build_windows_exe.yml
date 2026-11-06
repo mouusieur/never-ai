@@ -12,6 +12,7 @@ permissions:
 jobs:
   build-windows-exe:
     runs-on: windows-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,7 +31,7 @@ jobs:
       - name: Generate Brand Icon & Bootstrap Seed Brain
         run: |
           python scripts/generate_brand_assets.py
-          python -c "from never_ai.engine import NeverAIEngine; e = NeverAIEngine(); e.train_steps(num_steps=60, batch_size=8)"
+          python -c "import os, sys; from never_ai.engine import NeverAIEngine; e = NeverAIEngine(); e.train_steps(num_steps=16, batch_size=8); sys.stdout.flush(); os._exit(0)"
 
       - name: Compile Standalone NeverAI.exe via PyInstaller (No UPX + VersionInfo)
         run: |
