@@ -167,6 +167,77 @@ def favicon() -> FileResponse:
     raise HTTPException(status_code=404, detail="Icon not found")
 
 
+@app.get("/icon-192.png")
+def pwa_icon_192() -> FileResponse:
+    p = _BRAND_DIR / "never_app_192.png"
+    if p.exists():
+        return FileResponse(p, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Icon 192 not found")
+
+
+@app.get("/icon-512.png")
+def pwa_icon_512() -> FileResponse:
+    p = _BRAND_DIR / "never_app_512.png"
+    if p.exists():
+        return FileResponse(p, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Icon 512 not found")
+
+
+@app.get("/manifest.webmanifest")
+def pwa_manifest() -> Response:
+    manifest = {
+        "id": "never-ai-studio-pwa",
+        "name": "NEVER-AI — Studio Souverain",
+        "short_name": "NEVER-AI",
+        "description": "Assistant IA souverain évolutif (Normal, Amical, Cash/Grok, Recherche Web & Progression Live).",
+        "lang": "fr",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#000000",
+        "theme_color": "#000000",
+        "icons": [
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+        ],
+    }
+    return Response(content=json.dumps(manifest, indent=2), media_type="application/manifest+json")
+
+
+@app.get("/sw.js")
+def pwa_service_worker() -> Response:
+    sw_code = (
+        "const CACHE='never-ai-studio-v1.5';\n"
+        "self.addEventListener('install',e=>{self.skipWaiting();});\n"
+        "self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});\n"
+        "self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;"
+        "e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});\n"
+    )
+    return Response(content=sw_code, media_type="application/javascript")
+
+
+@app.get("/mobile", response_class=RedirectResponse)
+def mobile_pwa_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/mobile/index.html", status_code=302)
+
+
+@app.get("/mobile/{asset_name}")
+def mobile_pwa_asset(asset_name: str) -> Response:
+    allowed = {
+        "index.html": "text/html; charset=utf-8",
+        "manifest.webmanifest": "application/manifest+json",
+        "sw.js": "application/javascript",
+        "icon-192.png": "image/png",
+        "icon-512.png": "image/png",
+    }
+    if asset_name not in allowed:
+        raise HTTPException(status_code=404, detail="Not found")
+    fp = _REPO_ROOT / "mobile_pwa" / asset_name
+    if not fp.exists():
+        raise HTTPException(status_code=404, detail="Asset missing")
+    return FileResponse(fp, media_type=allowed[asset_name])
+
+
 @app.api_route("/download/NeverAI-Setup.exe", methods=["GET", "HEAD"])
 @app.api_route("/api/download/exe", methods=["GET", "HEAD"])
 def api_download_setup_exe() -> Response:

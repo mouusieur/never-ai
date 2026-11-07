@@ -8,7 +8,8 @@
 
 - **Installateur Windows 10/11 (`.exe` Inno Setup 6, sans script PowerShell ni compression UPX, scanné `0 menace` par Microsoft Defender) :** [**`NeverAI-Setup-x64.exe`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup-x64.exe) *(Python 3.11 + PyTorch + interface + cerveau déjà inclus — aucun outil externe requis).*
 - **Version Portable `.zip` (recommandée si Chrome affiche « fichier peu couramment téléchargé » sur un `.exe` neuf) :** [**`NeverAI-Portable-Windows-x64.zip`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Portable-Windows-x64.zip) *(Décompressez le dossier puis double-cliquez sur **`NeverAI.exe`**).*
-- **Mises à jour à distance automatiques (`OTA` — Zéro Réinstallation) :** Une fois installé **une seule fois** sur votre PC, Never-AI se met à jour tout seul à distance depuis GitHub au lancement (ou en 1 clic dans l'application) tout en conservant 100 % de vos discussions, comptes et poids neuronaux (`checkpoints/`).
+- **📲 Application Android Officielle (`PWA` standard W3C — Zéro `.apk` externe) :** [**Ouvrir NEVER-AI Mobile sur Android**](https://raw.githack.com/mouusieur/never-ai/arena/403f5d7f-never-ai/mobile_pwa/index.html) *(Dans Chrome sur Android : appuyez sur **⋮ → Ajouter à l'écran d'accueil → Installer** pour obtenir l'application plein écran avec icône noire officielle et mises à jour OTA automatiques, dans le strict respect de la sécurité Android).*
+- **Mises à jour à distance automatiques (`OTA` — Zéro Réinstallation) :** Une fois installé **une seule fois** sur votre PC ou Android, Never-AI se met à jour tout seul à distance depuis GitHub au lancement tout en conservant 100 % de vos discussions, comptes et poids neuronaux (`checkpoints/`).
 
 ---
 

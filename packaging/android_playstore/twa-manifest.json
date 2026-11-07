@@ -1,0 +1,20 @@
+{
+  "packageId": "io.neverai.studio",
+  "host": "mouusieur.github.io",
+  "name": "NEVER-AI",
+  "launcherName": "NEVER-AI",
+  "display": "standalone",
+  "themeColor": "#000000",
+  "navigationColor": "#000000",
+  "backgroundColor": "#000000",
+  "enableNotifications": false,
+  "startUrl": "/never-ai/mobile_pwa/index.html",
+  "iconUrl": "https://raw.githubusercontent.com/mouusieur/never-ai/arena/403f5d7f-never-ai/mobile_pwa/icon-512.png",
+  "maskableIconUrl": "https://raw.githubusercontent.com/mouusieur/never-ai/arena/403f5d7f-never-ai/mobile_pwa/icon-512.png",
+  "appVersionName": "1.5.0",
+  "appVersionCode": 150,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "neverai-playstore"
+  }
+}

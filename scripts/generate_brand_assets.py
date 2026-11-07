@@ -141,8 +141,19 @@ def main() -> None:
     (BRAND_DIR / "never_mark_white.svg").write_text(SVG_MARK_WHITE, encoding="utf-8")
     (BRAND_DIR / "never_app_badge.svg").write_text(SVG_APP_BADGE, encoding="utf-8")
 
+    png_192 = _encode_png_rgba(_render_monogram_rgba(192))
+    (BRAND_DIR / "never_app_192.png").write_bytes(png_192)
+
     png_256 = _encode_png_rgba(_render_monogram_rgba(256))
     (BRAND_DIR / "never_app_256.png").write_bytes(png_256)
+
+    png_512 = _encode_png_rgba(_render_monogram_rgba(512))
+    (BRAND_DIR / "never_app_512.png").write_bytes(png_512)
+
+    pwa_dir = Path("mobile_pwa")
+    if pwa_dir.exists():
+        (pwa_dir / "icon-192.png").write_bytes(png_192)
+        (pwa_dir / "icon-512.png").write_bytes(png_512)
 
     ico_bytes = _build_ico([16, 32, 48, 64, 128, 256])
     (BRAND_DIR / "never_ai.ico").write_bytes(ico_bytes)

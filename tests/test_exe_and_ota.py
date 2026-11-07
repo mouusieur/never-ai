@@ -126,3 +126,13 @@ def test_download_exe_and_ota_endpoints(tmp_path: Path, monkeypatch) -> None:
     r_pref = client.post("/api/ota/preferences", json={"auto_update_on_boot": False})
     assert r_pref.status_code == 200
     assert r_pref.json()["auto_update_on_boot"] is False
+
+    # 4. Official W3C Android PWA endpoints (manifest, service worker, icons, mobile shell)
+    r_man = client.get("/manifest.webmanifest")
+    assert r_man.status_code == 200
+    assert r_man.json()["display"] == "standalone"
+    assert client.get("/sw.js").status_code == 200
+    assert client.get("/icon-192.png").status_code == 200
+    assert client.get("/icon-512.png").status_code == 200
+    assert client.get("/mobile/index.html").status_code == 200
+

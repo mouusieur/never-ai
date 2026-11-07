@@ -1,0 +1,40 @@
+{
+  "id": "never-ai-android-pwa",
+  "name": "NEVER-AI — Intelligence Souveraine",
+  "short_name": "NEVER-AI",
+  "description": "Assistant IA souverain évolutif (Modes Normal, Amical, Cash/Grok, Recherche Web & Outils Hors-Ligne) avec mises à jour OTA automatiques.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["productivity", "education", "utilities"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
