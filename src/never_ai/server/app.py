@@ -585,6 +585,18 @@ def api_ota_apply() -> dict[str, Any]:
     return res
 
 
+@app.post("/api/ota/sync_brain")
+def api_ota_sync_brain() -> dict[str, Any]:
+    """Download the latest pre-trained neural parameters from GitHub Releases if missing."""
+    from never_ai.updater.brain_bootstrap import download_brain_from_github_releases
+
+    eng = get_engine()
+    return download_brain_from_github_releases(
+        vault_dir=eng.vault.vault_root,
+        telemetry_path=eng.telemetry_path,
+    )
+
+
 @app.post("/api/ota/preferences")
 def api_ota_preferences(req: OTAPreferencesRequest) -> dict[str, Any]:
     return get_ota().set_preferences(

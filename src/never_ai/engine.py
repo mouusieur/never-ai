@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import json
 import math
+import os
 from pathlib import Path
 import queue
 import re
@@ -79,6 +80,12 @@ class NeverAIEngine:
         self.seq_len = seq_len
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        if os.environ.get("NEVER_AI_BOOTSTRAP_GITHUB_BRAIN", "0") == "1" and "PYTEST_CURRENT_TEST" not in os.environ:
+            from never_ai.updater.brain_bootstrap import detect_available_ram_mb, download_brain_from_github_releases
+
+            if detect_available_ram_mb() >= 900:
+                download_brain_from_github_releases(vault_dir=vault_dir, telemetry_path=self.telemetry_path)
 
         ckpts = self.vault.list_checkpoints()
         train_docs, val_docs = synthesize_bilingual_curriculum(seed=42, scale_factor=2)

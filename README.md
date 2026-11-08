@@ -13,6 +13,20 @@
 
 ---
 
+## ☁️ Héberger TOUTE l'IA (Python + Paramètres `Sprout-MoE` + 16 Plugins) sur un Service Extérieur pour Android
+
+GitHub stocke le code **et** les paramètres neuronaux pré-entraînés ([`never-ai-brain-sprout-moe.zip` dans GitHub Releases](https://github.com/mouusieur/never-ai/releases/latest)), mais GitHub seul n'exécute pas de serveur Python/PyTorch 24h/24. Grâce au `Dockerfile` et au chargeur automatique `brain_bootstrap.py`, vous pouvez lancer **100 % de la vraie IA Never-AI** sur un service cloud gratuit relié à ce dépôt GitHub, puis l'installer comme **PWA plein écran sur Android** (sans `.apk` externe) :
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mouusieur/never-ai/tree/arena/403f5d7f-never-ai)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/mouusieur/never-ai&branch=arena/403f5d7f-never-ai&builder=dockerfile)
+
+### Option Cloud n°1 (Recommandée — 16 Go de RAM 100 % Gratuit sans carte bancaire) : **Hugging Face Spaces (Docker)**
+1. Créez un Space gratuit sur [huggingface.co/new-space](https://huggingface.co/new-space) → choisissez **SDK : Docker (Blank)** et **CPU Basic (2 vCPU · 16 GB RAM · Free)**.
+2. Importez/poussez ce dépôt GitHub (`Dockerfile` est déjà configuré sur le port `7860` avec `NEVER_AI_BOOTSTRAP_GITHUB_BRAIN=1` : il télécharge automatiquement les paramètres `Sprout-MoE` depuis GitHub Releases au démarrage !).
+3. Sur votre téléphone **Android** (dans Chrome), ouvrez l'URL `https://<votre-pseudo>-<nom-space>.hf.space` puis appuyez sur **Menu ⋮ → Ajouter à l'écran d'accueil → Installer** : vous avez **100 % du vrai Studio Never-AI** (poids PyTorch, 16 plugins, modes Normal/Amical/Cash-Grok, Recherche Web et mises à jour OTA) en plein écran sur Android !
+
+---
+
 **`never-ai`** est un projet d'ingénierie et de recherche visant à construire, entraîner de zéro et faire grandir continuellement un **Modèle de Langage Morphogénétique Souverain (`ChronoMorph-LM`)** couplé à un écosystème modulaire de **Plugins** et d'auto-apprentissage.
 
 ## Caractéristiques Architecturales Clés

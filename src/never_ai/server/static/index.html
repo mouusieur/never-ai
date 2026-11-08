@@ -322,20 +322,84 @@
        3. X.COM / GROK 3-COLUMN SOVEREIGN CHATBOT WORKSPACE
        ========================================================================= */
     #appView {
-      height: 100vh;
+      height: 100dvh;
       max-width: 1420px;
       margin: 0 auto;
       display: grid;
       grid-template-columns: 268px minmax(0, 1fr) 348px;
       background: #000000;
     }
+    .mobile-menu-btn {
+      display: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: #0D0F12;
+      color: #FFFFFF;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .mobile-drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 90;
+    }
+    .studio-mobile-nav {
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.96);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      flex-shrink: 0;
+    }
+    .studio-mnav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 2px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+    }
+    .studio-mnav-btn.active, .studio-mnav-btn:active { color: #FFFFFF; }
     @media (max-width: 1120px) {
       #appView { grid-template-columns: 235px minmax(0, 1fr); }
       .right-rail { display: none !important; }
     }
     @media (max-width: 720px) {
       #appView { grid-template-columns: 1fr; }
-      .left-rail { display: none !important; }
+      .mobile-menu-btn { display: inline-flex; }
+      .studio-mobile-nav { display: grid; }
+      .cta-stack, .signin-block { width: 100% !important; max-width: 360px; }
+      .left-rail {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        height: 100dvh !important;
+        background: #000000;
+        z-index: 95;
+        transform: translateX(-105%);
+        transition: transform 0.2s ease;
+        box-shadow: 8px 0 32px rgba(0,0,0,0.85);
+      }
+      .left-rail.mobile-open {
+        transform: translateX(0);
+      }
+      .mobile-drawer-backdrop.mobile-open {
+        display: block;
+      }
     }
 
     .left-rail {
@@ -344,7 +408,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
     }
     .left-top {
@@ -461,7 +525,7 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      height: 100dvh;
       position: relative;
       background: #000000;
     }
@@ -1471,10 +1535,15 @@
       </div>
     </aside>
 
+    <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" onclick="closeMobileDrawer()"></div>
+
     <!-- CENTER WORKSPACE COLUMN -->
     <main class="center-col">
       <header class="sticky-header">
-        <div class="header-title" id="centerTitle">Discussion</div>
+        <div style="display:flex;align-items:center;gap:9px;">
+          <button class="mobile-menu-btn" onclick="toggleMobileDrawer()" aria-label="Menu">☰</button>
+          <div class="header-title" id="centerTitle">Discussion</div>
+        </div>
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
           <span id="toastBar" class="toast-bar"></span>
           <select class="mode-select" id="styleModeSelect" onchange="onStyleModeChange()" title="Personnalité conversationnelle (Normal, Amical ou Cash sans filtre style Grok)">
@@ -1851,6 +1920,24 @@
           </div>
         </div>
       </div>
+      <!-- ANDROID / MOBILE BOTTOM NAVIGATION BAR FOR FULL STUDIO PWA -->
+      <nav class="studio-mobile-nav" id="studioMobileNav">
+        <button class="studio-mnav-btn active" onclick="closeMobileDrawer(); switchTab('chat')">
+          <span style="font-size:16px;">💬</span><span>Chat</span>
+        </button>
+        <button class="studio-mnav-btn" onclick="closeMobileDrawer(); switchTab(isUserMode() ? 'user-learning' : 'anatomy')">
+          <span style="font-size:16px;">📈</span><span>Live</span>
+        </button>
+        <button class="studio-mnav-btn" onclick="closeMobileDrawer(); switchTab(isUserMode() ? 'user-benchmarks' : 'omega')">
+          <span style="font-size:16px;">📊</span><span>Bench</span>
+        </button>
+        <button class="studio-mnav-btn" onclick="closeMobileDrawer(); switchTab(isUserMode() ? 'user-tools' : 'plugins')">
+          <span style="font-size:16px;">🧰</span><span>Outils</span>
+        </button>
+        <button class="studio-mnav-btn" onclick="installStudioPwaOrGuide()">
+          <span style="font-size:16px;">📲</span><span>App</span>
+        </button>
+      </nav>
     </main>
 
     <!-- RIGHT LIVE RAIL (ADAPTIVE: CONSUMER INTELLIGENCE vs R&D LAB TELEMETRY) -->
@@ -4023,6 +4110,36 @@
         if (fb) fb.textContent = 'Erreur lors de la mise à jour OTA : ' + e.message;
       } finally {
         if (btn) btn.disabled = false;
+      }
+    }
+
+    let studioDeferredPwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      studioDeferredPwaPrompt = e;
+    });
+
+    function toggleMobileDrawer() {
+      const rail = document.querySelector('.left-rail');
+      const bd = document.getElementById('mobileDrawerBackdrop');
+      if (rail) rail.classList.toggle('mobile-open');
+      if (bd) bd.classList.toggle('mobile-open');
+    }
+
+    function closeMobileDrawer() {
+      const rail = document.querySelector('.left-rail');
+      const bd = document.getElementById('mobileDrawerBackdrop');
+      if (rail) rail.classList.remove('mobile-open');
+      if (bd) bd.classList.remove('mobile-open');
+    }
+
+    async function installStudioPwaOrGuide() {
+      if (studioDeferredPwaPrompt) {
+        studioDeferredPwaPrompt.prompt();
+        await studioDeferredPwaPrompt.userChoice;
+        studioDeferredPwaPrompt = null;
+      } else {
+        showToast('Sur Chrome Android : Menu ⋮ → Ajouter à l\'écran d\'accueil → Installer');
       }
     }
 
