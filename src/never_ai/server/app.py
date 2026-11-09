@@ -597,6 +597,74 @@ def api_ota_sync_brain() -> dict[str, Any]:
     )
 
 
+class CortexConfigRequest(BaseModel):
+    engine: str | None = None
+    provider_preset: str | None = None
+    base_url: str | None = None
+    api_key: str | None = None
+    model: str | None = None
+    webgpu_model: str | None = None
+    hf_model_id: str | None = None
+    distill_to_chronomorph: bool | None = None
+
+
+class CortexDistillRequest(BaseModel):
+    user_message: str
+    assistant_reply: str
+    thread_id: str | None = None
+    owner: str = "local"
+    style_mode: str = "normal"
+    engine_label: str = "Super-Cortex"
+    web_sources: list[dict[str, str]] = Field(default_factory=list)
+
+
+@app.get("/api/cortex/config")
+def api_cortex_get_config() -> dict[str, Any]:
+    return get_engine().cortex.public_status()
+
+
+@app.post("/api/cortex/config")
+def api_cortex_set_config(req: CortexConfigRequest) -> dict[str, Any]:
+    return get_engine().cortex.update_config(req.model_dump(exclude_none=True))
+
+
+@app.post("/api/cortex/distill")
+def api_cortex_distill(req: CortexDistillRequest) -> dict[str, Any]:
+    """Persist a Browser-WebGPU / External-Teacher turn AND distill it into local ChronoMorph-LM!"""
+    eng = get_engine()
+    payload = {
+        "visible_answer": req.assistant_reply,
+        "thoughts": [f"Généré via {req.engine_label} + distillé dans ChronoMorph-LM."],
+        "tool_traces": [],
+        "routed_tools": ["web_search_engine"] if req.web_sources else [],
+        "web_sources": req.web_sources,
+        "style_mode": req.style_mode,
+    }
+    thread_meta: dict[str, Any] = {}
+    with eng.lock:
+        if req.thread_id:
+            t = eng.conversations.append_exchange(
+                thread_id=req.thread_id,
+                user_message=req.user_message,
+                assistant_payload=payload,
+                owner=req.owner,
+            )
+            thread_meta = {"thread_id": t["id"], "thread_title": t["title"]}
+        if eng.cortex.config.get("distill_to_chronomorph", True) and req.assistant_reply.strip():
+            eng.learn_dialogue_exchange(req.user_message, req.assistant_reply, priority=3.5)
+            eng.cortex.record_distilled_turn()
+        eng._refresh_status_cache()
+
+    if eng.cortex.config.get("distill_to_chronomorph", True) and not eng._bg_running:
+        eng._assimilate_turn_async(req.user_message, req.assistant_reply, source=f"distillation {req.engine_label}")
+
+    return {
+        "ok": True,
+        "distilled_turns": eng.cortex.public_status()["distilled_turns"],
+        **thread_meta,
+    }
+
+
 @app.post("/api/ota/preferences")
 def api_ota_preferences(req: OTAPreferencesRequest) -> dict[str, Any]:
     return get_ota().set_preferences(

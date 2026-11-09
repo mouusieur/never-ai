@@ -1546,6 +1546,9 @@
         </div>
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
           <span id="toastBar" class="toast-bar"></span>
+          <button class="mode-select" id="btnSuperCortex" onclick="openSuperCortexModal()" style="border-color:rgba(16,185,129,0.55);color:#6EE7B7;font-weight:700;" title="Activer un moteur textuel surpuissant (WebGPU Qwen2.5, Groq 70B, Ollama local ou GPU Colab)">
+            ⚡ Cerveau Texte : Natif
+          </button>
           <select class="mode-select" id="styleModeSelect" onchange="onStyleModeChange()" title="Personnalité conversationnelle (Normal, Amical ou Cash sans filtre style Grok)">
             <option value="normal" selected>💬 Ton Normal</option>
             <option value="amical">🤝 Ton Amical</option>
@@ -2076,6 +2079,98 @@
       </div>
       </div>
     </aside>
+  </div>
+
+  <!-- SUPER-CORTEX MULTI-ENGINE TEXT POWERHOUSE MODAL -->
+  <div id="superCortexModal" class="modal-backdrop hidden" onclick="if(event.target===this) closeSuperCortexModal()">
+    <div class="auth-modal" style="max-width:720px;max-height:90dvh;overflow-y:auto;padding:22px 26px 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <h3 style="font-size:19px;font-weight:800;letter-spacing:-0.02em;">⚡ Hyper-Cortex — Rendre Never-AI Surpuissante en Texte</h3>
+          <div style="font-size:12.5px;color:var(--text-muted);margin-top:3px;">
+            Zéro réponse pré-enregistrée : greffez un vrai LLM entraîné sur des milliers de milliards de tokens + distillez son savoir dans votre <code>ChronoMorph-LM</code>.
+          </div>
+        </div>
+        <button class="icon-circle" onclick="closeSuperCortexModal()">✕</button>
+      </div>
+
+      <!-- OPTION 1: IN-BROWSER WEBGPU (0 API KEY, 0 INSTALL, DIRECT IN CHROME!) -->
+      <div style="background:#080A0D;border:1px solid rgba(16,185,129,0.45);border-radius:14px;padding:15px 16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
+          <strong style="font-size:14px;color:#FFF;">1. ⚡ WebGPU Direct dans Chrome (Gratuit · 0 Clé API · 0 Installation)</strong>
+          <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(16,185,129,0.15);color:#34D399;">18 000 Mds de tokens</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;margin-bottom:10px;">
+          Télécharge une seule fois dans le cache de Chrome et exécute sur votre GPU un véritable modèle de fondation open-source (<strong>Qwen2.5-1.5B-Instruct</strong> ou <strong>Llama-3.2-1B</strong>) : français ultra-fluide, argot, humour, code et raisonnement — <strong>aucune phrase pré-écrite</strong>.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <select id="selWebGpuModel" class="mode-select" style="flex:1;height:38px;min-width:220px;">
+            <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Qwen2.5-1.5B-Instruct (Recommandé · Français excellent · ~1.0 Go)</option>
+            <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B-Instruct (Ultra-rapide · ~700 Mo)</option>
+            <option value="SmolLM2-1.7B-Instruct-q4f16_1-MLC">SmolLM2-1.7B-Instruct (HuggingFace · ~1.1 Go)</option>
+          </select>
+          <button id="btnActivateWebGpu" class="pill-btn pill-white" style="height:38px;padding:0 16px;font-size:12.5px;" onclick="activateBrowserWebGpu()">
+            ⚡ Charger &amp; Activer sur mon GPU Chrome
+          </button>
+        </div>
+        <div id="webGpuProgressBox" style="font-size:12px;color:#6EE7B7;font-family:var(--font-mono);min-height:16px;"></div>
+      </div>
+
+      <!-- OPTION 2: TURBO 70B+ API + LIVE DISTILLATION -->
+      <div style="background:#080A0D;border:1px solid var(--border);border-radius:14px;padding:15px 16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
+          <strong style="font-size:14px;color:#FFF;">2. 🚀 Mode Turbo 70B+ (Groq Gratuit · OpenRouter · Mistral · Ollama Local)</strong>
+          <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(29,155,240,0.16);color:#93C5FD;">Niveau GPT-4o / Grok</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;margin-bottom:10px;">
+          Branchez une clé gratuite <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:#93C5FD;">console.groq.com</a> (<strong>Llama-3.3-70B à 300 tok/s</strong>), <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" style="color:#93C5FD;">openrouter.ai</a> ou votre <strong>Ollama local</strong>. Chaque réponse entraîne automatiquement votre <code>ChronoMorph-LM</code> en arrière-plan !
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <select id="selApiPreset" class="mode-select" style="height:36px;" onchange="applyCortexPreset(this.value)">
+            <option value="groq">Groq Cloud (Llama-3.3-70B · Gratuit)</option>
+            <option value="openrouter">OpenRouter (Llama-3.3-70B :free)</option>
+            <option value="mistral">Mistral AI (mistral-small-latest)</option>
+            <option value="ollama">Ollama 100% Local (localhost:11434)</option>
+          </select>
+          <input id="inpCortexModel" class="thread-search-inp" style="margin-top:0;border-radius:10px;" value="llama-3.3-70b-versatile" placeholder="Modèle (ex: llama-3.3-70b-versatile)" />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <input id="inpCortexBaseUrl" class="thread-search-inp" style="margin-top:0;border-radius:10px;" value="https://api.groq.com/openai/v1" placeholder="URL API OpenAI-compatible" />
+          <input id="inpCortexApiKey" type="password" class="thread-search-inp" style="margin-top:0;border-radius:10px;" placeholder="Clé API (gsk_... ou vide pour Ollama)" />
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#E7E9EA;cursor:pointer;">
+            <input type="checkbox" id="chkDistillCortex" checked />
+            Distiller chaque réponse dans <code>ChronoMorph-LM</code> (<span id="lblDistilledCount">0</span> tours appris)
+          </label>
+          <button class="pill-btn pill-accent" style="height:36px;padding:0 18px;font-size:12.5px;" onclick="saveAndActivateTurboApi()">
+            🚀 Activer ce Moteur
+          </button>
+        </div>
+        <div id="turboApiFeedback" style="font-size:12px;color:#6EE7B7;margin-top:7px;"></div>
+      </div>
+
+      <!-- OPTION 3: COLAB GPU FROM-SCRATCH TRAINER + NATIVE TOGGLE -->
+      <div style="background:#080A0D;border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:240px;">
+          <strong style="font-size:13.5px;color:#FFF;">3. 🔥 Entraîner ChronoMorph-LM « From Scratch » sur GPU T4 + Google Drive</strong>
+          <p style="font-size:11.5px;color:var(--text-muted);margin-top:3px;line-height:1.4;">
+            Notebook Google Colab gratuit qui entraîne votre propre architecture sur Wikipedia FR + FineWeb-Edu (50× plus rapide que sur CPU) et sauvegarde dans Google Drive.
+          </p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a class="pill-btn pill-outline-white" style="height:34px;font-size:12px;padding:0 13px;text-decoration:none;" href="https://colab.research.google.com/github/mouusieur/never-ai/blob/arena/403f5d7f-never-ai/notebooks/NeverAI_GPU_SuperTrainer_Colab.ipynb" target="_blank" rel="noopener">
+            ⚡ Ouvrir sur Google Colab GPU
+          </a>
+          <button class="pill-btn pill-outline-white" style="height:34px;font-size:12px;padding:0 12px;" onclick="switchBackToNativeChronoMorph()">
+            🌱 Revenir à ChronoMorph pur
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- WINDOWS .EXE DOWNLOAD & ZERO-REINSTALL REMOTE OTA AUTO-UPDATE MODAL -->
@@ -3174,6 +3269,18 @@
       activeStreamCtrl = new AbortController();
 
       try {
+        const handledBySuperCortex = await maybeStreamViaBrowserSuperCortex({
+          text,
+          temperature,
+          style_mode,
+          owner,
+          botMsg,
+          signal: activeStreamCtrl.signal
+        });
+        if (handledBySuperCortex) {
+          return;
+        }
+
         const res = await fetch('/api/chat/stream', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
@@ -4142,6 +4249,312 @@
         showToast('Sur Chrome Android : Menu ⋮ → Ajouter à l\'écran d\'accueil → Installer');
       }
     }
+
+    /* ---------------- SUPER-CORTEX MULTI-ENGINE RUNTIME (WEBGPU + 70B API + DISTILLATION) ---------------- */
+    const CORTEX_PRESETS = {
+      groq: { baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
+      openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct:free' },
+      mistral: { baseUrl: 'https://api.mistral.ai/v1', model: 'mistral-small-latest' },
+      ollama: { baseUrl: 'http://127.0.0.1:11434/v1', model: 'qwen2.5:3b' }
+    };
+
+    let browserCortexState = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('never_ai_super_cortex_v2') || '{}');
+      } catch (_) {
+        return {};
+      }
+    })();
+    let webLlmEngine = null;
+    let webLlmLoadedModel = null;
+
+    function saveBrowserCortexState() {
+      try { localStorage.setItem('never_ai_super_cortex_v2', JSON.stringify(browserCortexState)); } catch (_) {}
+      updateSuperCortexBadge();
+    }
+
+    function updateSuperCortexBadge() {
+      const btn = document.getElementById('btnSuperCortex');
+      if (!btn) return;
+      const mode = browserCortexState.mode || 'native';
+      if (mode === 'webgpu' && webLlmEngine) {
+        btn.textContent = '⚡ WebGPU : ' + (webLlmLoadedModel || 'Qwen2.5').split('-Instruct')[0];
+        btn.style.borderColor = '#10B981';
+        btn.style.color = '#6EE7B7';
+      } else if (mode === 'turbo_api' && (browserCortexState.apiKey || (browserCortexState.baseUrl || '').includes('127.0.0.1') || (browserCortexState.baseUrl || '').includes('localhost'))) {
+        const shortM = (browserCortexState.model || '70B').split('/').pop().slice(0, 16);
+        btn.textContent = '🚀 Cortex : ' + shortM;
+        btn.style.borderColor = '#1D9BF0';
+        btn.style.color = '#93C5FD';
+      } else {
+        btn.textContent = '⚡ Cerveau Texte : Natif';
+        btn.style.borderColor = 'rgba(16,185,129,0.55)';
+        btn.style.color = '#6EE7B7';
+      }
+    }
+
+    function openSuperCortexModal() {
+      document.getElementById('superCortexModal').classList.remove('hidden');
+      if (browserCortexState.baseUrl) document.getElementById('inpCortexBaseUrl').value = browserCortexState.baseUrl;
+      if (browserCortexState.model) document.getElementById('inpCortexModel').value = browserCortexState.model;
+      if (browserCortexState.apiKey) document.getElementById('inpCortexApiKey').value = browserCortexState.apiKey;
+      fetch('/api/cortex/config').then((r) => r.json()).then((d) => {
+        const lbl = document.getElementById('lblDistilledCount');
+        if (lbl && typeof d.distilled_turns === 'number') lbl.textContent = d.distilled_turns;
+      }).catch(() => {});
+    }
+
+    function closeSuperCortexModal() {
+      document.getElementById('superCortexModal').classList.add('hidden');
+    }
+
+    function applyCortexPreset(presetKey) {
+      const p = CORTEX_PRESETS[presetKey];
+      if (!p) return;
+      document.getElementById('inpCortexBaseUrl').value = p.baseUrl;
+      document.getElementById('inpCortexModel').value = p.model;
+    }
+
+    async function activateBrowserWebGpu() {
+      const modelId = document.getElementById('selWebGpuModel').value;
+      const progBox = document.getElementById('webGpuProgressBox');
+      const btn = document.getElementById('btnActivateWebGpu');
+      if (!navigator.gpu) {
+        progBox.style.color = '#FCA5A5';
+        progBox.textContent = '⚠️ WebGPU non détecté sur ce navigateur. Utilisez Google Chrome récent ou le Mode Turbo 70B juste en dessous !';
+        return;
+      }
+      btn.disabled = true;
+      progBox.style.color = '#6EE7B7';
+      progBox.textContent = 'Initialisation du moteur WebGPU (@mlc-ai/web-llm)...';
+      try {
+        const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+        webLlmEngine = await webllm.CreateMLCEngine(modelId, {
+          initProgressCallback: (report) => {
+            const pct = report.progress ? Math.round(report.progress * 100) + '% — ' : '';
+            progBox.textContent = '⚡ ' + pct + (report.text || 'Chargement des poids neuronaux...');
+          }
+        });
+        webLlmLoadedModel = modelId;
+        browserCortexState.mode = 'webgpu';
+        browserCortexState.webgpuModel = modelId;
+        saveBrowserCortexState();
+        progBox.textContent = '✅ ' + modelId + ' chargé sur votre GPU Chrome ! Fermez cette fenêtre et discutez.';
+        toast('Cerveau WebGPU ' + modelId.split('-Instruct')[0] + ' activé !');
+      } catch (e) {
+        progBox.style.color = '#FCA5A5';
+        progBox.textContent = '⚠️ Erreur WebGPU : ' + (e.message || e);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function saveAndActivateTurboApi() {
+      const preset = document.getElementById('selApiPreset').value;
+      const baseUrl = document.getElementById('inpCortexBaseUrl').value.trim();
+      const model = document.getElementById('inpCortexModel').value.trim();
+      const apiKey = document.getElementById('inpCortexApiKey').value.trim();
+      const distill = document.getElementById('chkDistillCortex').checked;
+      const fb = document.getElementById('turboApiFeedback');
+
+      const isLocal = baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost');
+      if (!apiKey && !isLocal) {
+        fb.style.color = '#FDBA74';
+        fb.textContent = '⚠️ Entrez votre clé API gratuite (ex: gsk_... depuis console.groq.com) ou choisissez Ollama Local.';
+        return;
+      }
+
+      browserCortexState = {
+        ...browserCortexState,
+        mode: 'turbo_api',
+        preset,
+        baseUrl,
+        model,
+        apiKey,
+        distill
+      };
+      saveBrowserCortexState();
+
+      try {
+        await fetch('/api/cortex/config', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            engine: isLocal ? 'ollama_local' : 'openai_compatible',
+            provider_preset: preset,
+            base_url: baseUrl,
+            api_key: apiKey,
+            model,
+            distill_to_chronomorph: distill
+          })
+        });
+      } catch (_) {}
+
+      fb.style.color = '#6EE7B7';
+      fb.textContent = '✅ Moteur ' + model + ' activé avec distillation vers ChronoMorph-LM !';
+      toast('Moteur Turbo ' + model + ' actif !');
+    }
+
+    async function switchBackToNativeChronoMorph() {
+      browserCortexState.mode = 'native';
+      saveBrowserCortexState();
+      try {
+        await fetch('/api/cortex/config', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({engine: 'chronomorph_native'})
+        });
+      } catch (_) {}
+      toast('Retour au réseau local ChronoMorph-LM pur.');
+      closeSuperCortexModal();
+    }
+
+    function buildClientSystemPrompt(styleMode, webContext) {
+      let base = '';
+      if (styleMode === 'grok') {
+        base = "Tu es NEVER-AI en mode CASH (esprit Grok) : ultra-vif, direct, drôle, cultivé, franc et naturel. Tu maîtrises l'argot français, le second degré, les vannes et les débats corsés. Zéro langue de bois corporate, zéro phrase pré-enregistrée : écris avec du mordant, une vraie plume fluide et une précision chirurgicale.";
+      } else if (styleMode === 'amical') {
+        base = "Tu es NEVER-AI en mode AMICAL : chaleureux, spontané, curieux et ultra-fluide, comme un meilleur ami super calé. Écris de façon vivante et naturelle, sans jamais réciter de modèle figé.";
+      } else {
+        base = "Tu es NEVER-AI, intelligence artificielle souveraine et évolutive. Tu t'exprimes dans un français d'une fluidité, d'une richesse de vocabulaire et d'une clarté remarquables, sans aucune réponse générique pré-enregistrée.";
+      }
+      if (webContext) {
+        base += "\n\nSources Web en direct récupérées à l'instant (utilise-les pour répondre avec précision) :\n" + webContext;
+      }
+      return base;
+    }
+
+    async function maybeStreamViaBrowserSuperCortex({ text, temperature, style_mode, owner, botMsg, signal }) {
+      const mode = browserCortexState.mode || 'native';
+      const canWebGpu = mode === 'webgpu' && webLlmEngine;
+      const canTurboBrowser = mode === 'turbo_api' && browserCortexState.apiKey && !(browserCortexState.baseUrl || '').includes('127.0.0.1');
+      if (!canWebGpu && !canTurboBrowser) return false;
+
+      // Optional live Web Search context before LLM synthesis
+      let webContext = '';
+      const cleanQ = text.replace(/^\/web\s+/i, '').trim();
+      if (webSearchActive || /^\/web\s+/i.test(text)) {
+        try {
+          const wr = await fetch('/api/plugins/invoke', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({plugin: 'web_search_engine', params: {query: cleanQ}}),
+            signal
+          });
+          const wd = await wr.json();
+          if (wd.ok && wd.results && wd.results.length) {
+            botMsg.web_sources = wd.results;
+            renderChatFeed();
+            webContext = wd.results.slice(0, 5).map((r) => `- ${r.title}: ${r.snippet} (${r.url})`).join('\n');
+          }
+        } catch (_) {}
+      }
+
+      const sysPrompt = buildClientSystemPrompt(style_mode, webContext);
+      const historyMsgs = currentMessages
+        .slice(0, -2)
+        .slice(-8)
+        .filter((m) => m.content && m.content.trim())
+        .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content.slice(0, 2000) }));
+      const llmMessages = [
+        { role: 'system', content: sysPrompt },
+        ...historyMsgs,
+        { role: 'user', content: cleanQ }
+      ];
+
+      let engineLabel = 'Super-Cortex';
+      if (canWebGpu) {
+        engineLabel = 'WebGPU ' + (webLlmLoadedModel || 'Qwen2.5');
+        botMsg.thoughts = [`Génération neuronale locale sur votre GPU Chrome via ${engineLabel} (0 réponse pré-enregistrée).`];
+        const chunks = await webLlmEngine.chat.completions.create({
+          messages: llmMessages,
+          temperature: Math.max(0.4, temperature),
+          max_tokens: 900,
+          stream: true
+        });
+        for await (const chunk of chunks) {
+          if (signal.aborted) break;
+          const delta = chunk.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            botMsg.content += delta;
+            renderChatFeed();
+          }
+        }
+      } else if (canTurboBrowser) {
+        engineLabel = 'Turbo ' + (browserCortexState.model || '70B');
+        botMsg.thoughts = [`Streaming haute puissance via ${engineLabel} + distillation vers ChronoMorph-LM.`];
+        const baseUrl = (browserCortexState.baseUrl || 'https://api.groq.com/openai/v1').replace(/\/+$/, '');
+        const resp = await fetch(baseUrl + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + browserCortexState.apiKey
+          },
+          body: JSON.stringify({
+            model: browserCortexState.model || 'llama-3.3-70b-versatile',
+            messages: llmMessages,
+            temperature: Math.max(0.45, temperature),
+            max_tokens: 1024,
+            stream: true
+          }),
+          signal
+        });
+        if (!resp.ok) {
+          const errTxt = await resp.text();
+          botMsg.content = '⚠️ Erreur API (' + resp.status + ') : ' + errTxt.slice(0, 260);
+          renderChatFeed();
+          return true;
+        }
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() || '';
+          for (const raw of lines) {
+            const ln = raw.trim();
+            if (!ln.startsWith('data:')) continue;
+            const payload = ln.slice(5).trim();
+            if (payload === '[DONE]') break;
+            try {
+              const j = JSON.parse(payload);
+              const delta = j.choices?.[0]?.delta?.content || '';
+              if (delta) {
+                botMsg.content += delta;
+                renderChatFeed();
+              }
+            } catch (_) {}
+          }
+        }
+      }
+
+      // Persist thread & distill fluent Teacher output into local ChronoMorph-LM!
+      if (botMsg.content.trim()) {
+        try {
+          const dr = await fetch('/api/cortex/distill', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              user_message: text,
+              assistant_reply: botMsg.content,
+              thread_id: currentThreadId,
+              owner,
+              style_mode,
+              engine_label: engineLabel,
+              web_sources: botMsg.web_sources || []
+            })
+          });
+          const dd = await dr.json();
+          if (dd.thread_title) document.getElementById('centerTitle').textContent = dd.thread_title;
+        } catch (_) {}
+      }
+      return true;
+    }
+
+    updateSuperCortexBadge();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

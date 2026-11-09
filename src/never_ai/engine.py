@@ -44,6 +44,7 @@ from never_ai.morphogenesis.operators import (
     verify_function_preservation,
 )
 from never_ai.optim.composite_muon import CompositeMuonOptimizer, WSMCheckpointMerger
+from never_ai.cortex.super_cortex import SuperCortexManager
 from never_ai.plugins.agent_harness import SovereignAgentHarness
 from never_ai.plugins.builtin import build_default_plugin_registry
 from never_ai.plugins.deep_research import SOVEREIGN_PERSONAS
@@ -75,6 +76,7 @@ class NeverAIEngine:
         self.memory = EvolveMemStore(memory_path)
         self.identities = LocalIdentityVault(mem_dir / "identities.json")
         self.conversations = ConversationStore(mem_dir / "conversations.json")
+        self.cortex = SuperCortexManager(mem_dir / "cortex_config.json")
         self.telemetry_path = Path(telemetry_path)
         self.telemetry_path.parent.mkdir(parents=True, exist_ok=True)
         self.seq_len = seq_len
@@ -1219,6 +1221,66 @@ class NeverAIEngine:
 
         threading.Thread(target=_bg_assimilate, daemon=True).start()
 
+    def _run_super_cortex_turn(
+        self,
+        message: str,
+        recent_hist: list[dict[str, Any]],
+        style_mode: str = "normal",
+        web_search: bool = False,
+        temperature: float = 0.6,
+        on_event: Any = None,
+    ) -> dict[str, Any]:
+        """Execute a turn using the active Foundation / 70B Super-Cortex + Sovereign Tools & Memory."""
+        mem_hits = self.memory.search(message, top_k=4)
+        mem_texts = [f"{m['key']}: {m['content']}" for m in mem_hits if m.get("content")]
+
+        web_sources: list[dict[str, str]] = []
+        web_ctx = ""
+        clean_q = message[5:].strip() if message.lower().startswith("/web ") else message
+        if web_search or message.lower().startswith("/web "):
+            wres = self.registry.invoke("web_search_engine", query=clean_q)
+            if wres.get("ok") and wres.get("results"):
+                web_sources = wres["results"]
+                if on_event is not None:
+                    on_event({"type": "web_sources", "sources": web_sources})
+                web_ctx = "\n".join(
+                    f"- {r.get('title')}: {r.get('snippet')} ({r.get('url')})" for r in web_sources[:5]
+                )
+
+        chunks: list[str] = []
+        for delta in self.cortex.stream_server_llm(
+            user_message=clean_q,
+            recent_history=recent_hist,
+            style_mode=style_mode,
+            memories=mem_texts,
+            web_context=web_ctx,
+            temperature=max(0.35, float(temperature)),
+        ):
+            chunks.append(delta)
+            if on_event is not None:
+                if on_event({"type": "answer_delta", "text": delta}) is False:
+                    break
+
+        full_ans = "".join(chunks).strip()
+        if self.cortex.config.get("distill_to_chronomorph", True) and full_ans:
+            self.learn_dialogue_exchange(clean_q, full_ans, priority=3.5)
+            self.cortex.record_distilled_turn()
+
+        return {
+            "visible_answer": full_ans,
+            "thoughts": [f"Génération neuronale fluide via Super-Cortex ({self.cortex.config.get('engine')} · {self.cortex.config.get('model')})."],
+            "tool_traces": [],
+            "routed_tools": ["web_search_engine"] if web_sources else [],
+            "raw_generation": full_ans,
+            "titans_mean_surprise": 0.0,
+            "artifacts": [],
+            "citations": [],
+            "web_sources": web_sources,
+            "persona": "polymathe",
+            "style_mode": style_mode,
+            "deep_think": False,
+        }
+
     def chat(
         self,
         message: str,
@@ -1234,6 +1296,29 @@ class NeverAIEngine:
         self._active_chats += 1
         try:
             recent_hist = self._get_recent_thread_messages(thread_id)
+            if self.cortex.is_server_llm_active():
+                try:
+                    result = self._run_super_cortex_turn(
+                        message=message,
+                        recent_hist=recent_hist,
+                        style_mode=style_mode,
+                        web_search=web_search,
+                        temperature=temperature,
+                    )
+                    if thread_id:
+                        with self.lock:
+                            thread = self.conversations.append_exchange(
+                                thread_id=thread_id,
+                                user_message=message,
+                                assistant_payload=result,
+                                owner=owner,
+                            )
+                            result["thread_id"] = thread["id"]
+                            result["thread_title"] = thread["title"]
+                            self._refresh_status_cache()
+                    return result
+                except Exception:  # noqa: BLE001
+                    pass
             with self.lock:
                 if not recent_hist:
                     self.harness.reset_session_fast_weights()
@@ -1286,6 +1371,32 @@ class NeverAIEngine:
             res_for_assim: dict[str, Any] | None = None
             try:
                 recent_hist = self._get_recent_thread_messages(thread_id)
+                if self.cortex.is_server_llm_active():
+                    try:
+                        res = self._run_super_cortex_turn(
+                            message=message,
+                            recent_hist=recent_hist,
+                            style_mode=style_mode,
+                            web_search=web_search,
+                            temperature=temperature,
+                            on_event=lambda ev: (False if aborted_flag.is_set() else (q.put(ev) or True)),
+                        )
+                        with self.lock:
+                            if thread_id:
+                                thread = self.conversations.append_exchange(
+                                    thread_id=thread_id,
+                                    user_message=message,
+                                    assistant_payload=res,
+                                    owner=owner,
+                                )
+                                res["thread_id"] = thread["id"]
+                                res["thread_title"] = thread["title"]
+                            self._refresh_status_cache()
+                        res_for_assim = res
+                        q.put({"type": "done", "result": res})
+                        return
+                    except Exception as cortex_exc:  # noqa: BLE001
+                        q.put({"type": "think_delta", "text": f"[Fallback local : {cortex_exc}]\n"})
                 with self.lock:
                     if not recent_hist:
                         self.harness.reset_session_fast_weights()
