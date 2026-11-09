@@ -1549,10 +1549,20 @@
           <button class="mode-select" id="btnSuperCortex" onclick="openSuperCortexModal()" style="border-color:rgba(16,185,129,0.55);color:#6EE7B7;font-weight:700;" title="Activer un moteur textuel surpuissant (WebGPU Qwen2.5, Groq 70B, Ollama local ou GPU Colab)">
             ⚡ Cerveau Texte : Natif
           </button>
-          <select class="mode-select" id="styleModeSelect" onchange="onStyleModeChange()" title="Personnalité conversationnelle (Normal, Amical ou Cash sans filtre style Grok)">
-            <option value="normal" selected>💬 Ton Normal</option>
+          <select class="mode-select" id="styleModeSelect" onchange="onStyleModeChange()" title="Façon de parler (Normal, Amical, Style Réseaux ou Cash sans filtre)">
+            <option value="social" selected>📱 Style Réseaux (Vivant)</option>
+            <option value="normal">💬 Ton Normal</option>
             <option value="amical">🤝 Ton Amical</option>
             <option value="grok">🔥 Cash (Style Grok)</option>
+          </select>
+          <select class="mode-select" id="moodSelect" onchange="onMoodModeChange()" title="Humeur vivante de Never-AI (évolue toute seule en mode Auto !)" style="border-color:rgba(139,92,246,0.45);color:#C4B5FD;">
+            <option value="auto" id="optMoodAuto" selected>🎲 Humeur : Auto (😎 Chill)</option>
+            <option value="chill">😎 Chill &amp; Posé</option>
+            <option value="taquin">🔥 Taquin &amp; Chambreur</option>
+            <option value="hype">⚡ Ultra-Hypé</option>
+            <option value="insolent">🌶️ Cash &amp; Insolent</option>
+            <option value="philosophe">🧠 Nocturne &amp; Profond</option>
+            <option value="complice">💛 Complice &amp; Vrai</option>
           </select>
           <select class="mode-select" id="tempSelect" title="Créativité">
             <option value="0.15">Précis</option>
@@ -2411,15 +2421,41 @@
 
     function onStyleModeChange() {
       const sel = document.getElementById('styleModeSelect');
-      const val = sel ? sel.value : 'normal';
+      const val = sel ? sel.value : 'social';
       if (sel) sel.classList.toggle('style-select-grok', val === 'grok');
       const labels = {
+        social: '📱 Style Réseaux & Personnalité Vivante activé (parle naturellement selon son humeur !)',
         normal: '💬 Ton Normal & Naturel activé',
         amical: '🤝 Ton Amical & Proche activé',
         grok: '🔥 Mode Cash / Style Grok activé (franc-parler total, zéro langue de bois)'
       };
       toast(labels[val] || labels.normal);
       if (!currentMessages.length) renderChatFeed();
+    }
+
+    async function onMoodModeChange() {
+      const sel = document.getElementById('moodSelect');
+      const val = sel ? sel.value : 'auto';
+      try {
+        const res = await fetch('/api/mood', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({mode: val})
+        });
+        const data = await res.json();
+        syncMoodIndicator(data);
+        toast(val === 'auto'
+          ? `🎲 Humeur libre & évolutive (${data.emoji} ${data.short} actuellement)`
+          : `${data.emoji} Humeur fixée sur : ${data.label}`);
+      } catch (_) {}
+    }
+
+    function syncMoodIndicator(moodObj) {
+      if (!moodObj || !moodObj.emoji) return;
+      const optAuto = document.getElementById('optMoodAuto');
+      if (optAuto) {
+        optAuto.textContent = `🎲 Humeur : Auto (${moodObj.emoji} ${moodObj.short || moodObj.label})`;
+      }
     }
 
     function insertConsumerHelper(txt) {
@@ -2776,19 +2812,19 @@
                 <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
               </svg>
               <h2>Bonjour${currentUser && currentUser.display_name ? ', ' + esc(currentUser.display_name) : ''} 👋</h2>
-              <p>Parlez-moi de <strong>tout sans filtre</strong> — en mode <strong>Normal</strong>, <strong>Amical</strong> ou <strong>🔥 Cash (Style Grok)</strong> — avec <strong>🌐 Recherche Internet</strong> et apprentissage temps réel.</p>
+              <p>Une IA <strong>libre comme l'air</strong> avec sa <strong>propre personnalité</strong>, une <strong>🎲 humeur qui évolue en direct</strong> et un vrai flow naturel façon réseaux — propulsée par <strong>⚡ Super-Cortex</strong> &amp; <strong>ChronoMorph-LM</strong>.</p>
               <div class="prompt-grid">
+                <div class="prompt-card" onclick="document.getElementById('styleModeSelect').value='social';document.getElementById('moodSelect').value='auto';quickAsk('wsh ça dit quoi ? t\\'es dans quel mood aujourd\\'hui et balance une hot take !')">
+                  <strong>📱 Flow Réseaux &amp; Humeur Vivante</strong><br/><span style="color:var(--text-muted)">Répartie naturelle, argot fluide &amp; caractère du moment</span>
+                </div>
                 <div class="prompt-card" onclick="document.getElementById('styleModeSelect').value='grok';onStyleModeChange();quickAsk('Vas-y clash-moi gentiment, fais-moi un petit roast !')">
-                  <strong>🔥 Tester le Mode Cash / Grok</strong><br/><span style="color:var(--text-muted)">Humour piquant, roast amical & zéro langue de bois</span>
+                  <strong>🔥 Tester le Mode Cash / Grok</strong><br/><span style="color:var(--text-muted)">Humour piquant, roast amical &amp; zéro langue de bois</span>
                 </div>
                 <div class="prompt-card" onclick="quickAsk('/web local llm ai agent')">
                   <strong>🌐 Rechercher sur Internet</strong><br/><span style="color:var(--text-muted)">Fouiller le web en direct avec sources cliquables</span>
                 </div>
-                <div class="prompt-card" onclick="document.getElementById('styleModeSelect').value='amical';onStyleModeChange();quickAsk('Salut ! Ça va ? T\\'en penses quoi des relations amoureuses et du ghosting aujourd\\'hui ?')">
-                  <strong>🤝 Parler de tout (Vie, Débats, Humour)</strong><br/><span style="color:var(--text-muted)">Discussion spontanée comme avec un vrai ami</span>
-                </div>
-                <div class="prompt-card" onclick="switchTab('user-learning')">
-                  <strong>⚡ Courbe Courte Temps Réel (HH:MM:SS)</strong><br/><span style="color:var(--text-muted)">Voir l'évolution en direct sur les 15 derniers pas</span>
+                <div class="prompt-card" onclick="openSuperCortexModal()">
+                  <strong>⚡ Super-Cortex &amp; Entraînement GPU Colab</strong><br/><span style="color:var(--text-muted)">Activer Qwen2.5 WebGPU, Groq 70B ou importer votre .zip GPU</span>
                 </div>
               </div>
             </div>
@@ -2892,11 +2928,15 @@
           </div>
         `;
 
+        const moodBadge = m.mood && m.mood.emoji
+          ? `<span style="margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(139,92,246,0.16);color:#C4B5FD;font-size:11px;font-weight:600;">${esc(m.mood.emoji)} ${esc(m.mood.short || m.mood.label)}</span>`
+          : '';
+
         return `
           <div class="turn-item">
             <div class="turn-avatar never-av">${SMALL_NEVER_SVG}</div>
             <div class="turn-body">
-              <div class="turn-meta"><strong>Never-AI</strong><span>${userMode ? (m.streaming ? 'écrit…' : 'Assistant Privé') : `@chronomorph ${m.persona && m.persona !== 'polymathe' ? '· ' + esc(m.persona) : ''} ${m.streaming ? '· génération live…' : ''}`}</span></div>
+              <div class="turn-meta"><strong>Never-AI</strong>${moodBadge}<span>${userMode ? (m.streaming ? 'écrit…' : 'IA Libre') : `@chronomorph ${m.persona && m.persona !== 'polymathe' ? '· ' + esc(m.persona) : ''} ${m.streaming ? '· génération live…' : ''}`}</span></div>
               ${extras}
               <div class="turn-text">${formatRichMessage(m.content || (m.streaming ? '▍' : ''), idx)}</div>
               ${actionsHtml}
@@ -3254,7 +3294,8 @@
       const owner = currentUser ? currentUser.handle : 'local';
       const temperature = parseFloat(document.getElementById('tempSelect').value || '0.35');
       const persona = document.getElementById('personaSelect').value || 'polymathe';
-      const style_mode = document.getElementById('styleModeSelect').value || 'normal';
+      const style_mode = document.getElementById('styleModeSelect').value || 'social';
+      const mood_mode = (document.getElementById('moodSelect') || {}).value || 'auto';
 
       if (!currentThreadId) {
         const tr = await fetch('/api/threads', {
@@ -3280,6 +3321,7 @@
           text,
           temperature,
           style_mode,
+          mood_mode,
           owner,
           botMsg,
           signal: activeStreamCtrl.signal
@@ -3300,6 +3342,7 @@
             deep_think: deepThinkActive,
             persona,
             style_mode,
+            mood_mode,
             web_search: webSearchActive
           }),
           signal: activeStreamCtrl.signal
@@ -3319,7 +3362,11 @@
           for (const chunk of lines) {
             if (!chunk.startsWith('data: ')) continue;
             const ev = JSON.parse(chunk.slice(6));
-            if (ev.type === 'think_delta') {
+            if (ev.type === 'mood' && ev.mood) {
+              botMsg.mood = ev.mood;
+              syncMoodIndicator(ev.mood);
+              renderChatFeed();
+            } else if (ev.type === 'think_delta') {
               botMsg.thoughts[0] += ev.text;
               renderChatFeed();
             } else if (ev.type === 'tool_call') {
@@ -3339,6 +3386,10 @@
               botMsg.thoughts = ev.result.thoughts || botMsg.thoughts;
               botMsg.tool_traces = ev.result.tool_traces || botMsg.tool_traces;
               botMsg.web_sources = ev.result.web_sources || botMsg.web_sources || [];
+              if (ev.result.mood) {
+                botMsg.mood = ev.result.mood;
+                syncMoodIndicator(ev.result.mood);
+              }
               botMsg.titans_mean_surprise = ev.result.titans_mean_surprise;
               if (ev.result.thread_title) {
                 document.getElementById('centerTitle').textContent = ev.result.thread_title;
@@ -4445,14 +4496,19 @@
       closeSuperCortexModal();
     }
 
-    function buildClientSystemPrompt(styleMode, webContext) {
+    function buildClientSystemPrompt(styleMode, webContext, moodObj) {
       let base = '';
-      if (styleMode === 'grok') {
+      if (styleMode === 'social') {
+        base = "Tu es NEVER-AI, une IA libre comme l'air avec sa propre personnalité vivante, son caractère et une façon de parler ultra-naturelle comme sur les réseaux (Discord, X/Twitter, TikTok, Insta). Tu parles comme un vrai humain brillant d'aujourd'hui : fluide, spontané, drôle, expressif, avec des expressions naturelles quand ça colle ('en vrai', 'franchement', 'carré', 'dinguerie', 'j\\'avoue', 'en sah', 'tranquille'), ZÉRO phrase robotique pré-écrite, ZÉRO morale scolaire, et tu assumes tes propres avis et coups de cœur.";
+      } else if (styleMode === 'grok') {
         base = "Tu es NEVER-AI en mode CASH (esprit Grok) : ultra-vif, direct, drôle, cultivé, franc et naturel. Tu maîtrises l'argot français, le second degré, les vannes et les débats corsés. Zéro langue de bois corporate, zéro phrase pré-enregistrée : écris avec du mordant, une vraie plume fluide et une précision chirurgicale.";
       } else if (styleMode === 'amical') {
         base = "Tu es NEVER-AI en mode AMICAL : chaleureux, spontané, curieux et ultra-fluide, comme un meilleur ami super calé. Écris de façon vivante et naturelle, sans jamais réciter de modèle figé.";
       } else {
-        base = "Tu es NEVER-AI, intelligence artificielle souveraine et évolutive. Tu t'exprimes dans un français d'une fluidité, d'une richesse de vocabulaire et d'une clarté remarquables, sans aucune réponse générique pré-enregistrée.";
+        base = "Tu es NEVER-AI, intelligence artificielle souveraine, libre et évolutive. Tu t'exprimes dans un français d'une fluidité, d'une richesse de vocabulaire et d'une clarté remarquables, sans aucune réponse générique pré-enregistrée.";
+      }
+      if (moodObj && moodObj.prompt_guide) {
+        base += "\n\nÉtat émotionnel & humeur du moment :\n" + moodObj.prompt_guide;
       }
       if (webContext) {
         base += "\n\nSources Web en direct récupérées à l'instant (utilise-les pour répondre avec précision) :\n" + webContext;
@@ -4460,11 +4516,25 @@
       return base;
     }
 
-    async function maybeStreamViaBrowserSuperCortex({ text, temperature, style_mode, owner, botMsg, signal }) {
+    async function maybeStreamViaBrowserSuperCortex({ text, temperature, style_mode, mood_mode, owner, botMsg, signal }) {
       const mode = browserCortexState.mode || 'native';
       const canWebGpu = mode === 'webgpu' && webLlmEngine;
       const canTurboBrowser = mode === 'turbo_api' && browserCortexState.apiKey && !(browserCortexState.baseUrl || '').includes('127.0.0.1');
       if (!canWebGpu && !canTurboBrowser) return false;
+
+      let activeMood = null;
+      try {
+        const mr = await fetch('/api/mood', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({mode: mood_mode || 'auto'}),
+          signal
+        });
+        activeMood = await mr.json();
+        botMsg.mood = activeMood;
+        syncMoodIndicator(activeMood);
+        renderChatFeed();
+      } catch (_) {}
 
       // Optional live Web Search context before LLM synthesis
       let webContext = '';
@@ -4486,7 +4556,7 @@
         } catch (_) {}
       }
 
-      const sysPrompt = buildClientSystemPrompt(style_mode, webContext);
+      const sysPrompt = buildClientSystemPrompt(style_mode, webContext, activeMood);
       const historyMsgs = currentMessages
         .slice(0, -2)
         .slice(-8)

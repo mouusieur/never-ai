@@ -26,7 +26,9 @@ from never_ai.core.special_tokens import (
     USER_TOKEN,
 )
 from never_ai.core.tokenizer import MorphTokenizer
+from never_ai.cortex.mood_engine import LimbicMoodEngine
 from never_ai.data.curriculum import ContinualDatasetAndReplay, synthesize_bilingual_curriculum
+from never_ai.data.social_persona_corpus import synthesize_social_mood_corpus
 from never_ai.data.omega_domains import OMEGA_DOMAIN_KNOWLEDGE
 from never_ai.evolution.seal_and_grpo import (
     GRPOReasoningTrainer,
@@ -77,6 +79,7 @@ class NeverAIEngine:
         self.identities = LocalIdentityVault(mem_dir / "identities.json")
         self.conversations = ConversationStore(mem_dir / "conversations.json")
         self.cortex = SuperCortexManager(mem_dir / "cortex_config.json")
+        self.mood = LimbicMoodEngine(mem_dir / "limbic_mood.json")
         self.telemetry_path = Path(telemetry_path)
         self.telemetry_path.parent.mkdir(parents=True, exist_ok=True)
         self.seq_len = seq_len
@@ -91,6 +94,9 @@ class NeverAIEngine:
 
         ckpts = self.vault.list_checkpoints()
         train_docs, val_docs = synthesize_bilingual_curriculum(seed=42, scale_factor=2)
+        soc_train, soc_val = synthesize_social_mood_corpus(seed=42, scale_factor=2)
+        train_docs = train_docs + soc_train
+        val_docs = val_docs + soc_val
 
         if ckpts:
             latest_tag = self._select_latest_tag([c.get("folder", c["tag"]) for c in ckpts])
@@ -132,6 +138,8 @@ class NeverAIEngine:
         self.harness = SovereignAgentHarness(
             self.model, self.tokenizer, self.registry, self.memory
         )
+        if ckpts:
+            self.harness.pure_neural_dialogue = bool(manifest.get("metrics", {}).get("colab_gpu_trained"))
         self._seed_omega_domains_if_needed()
 
         self.telemetry_history: list[dict[str, Any]] = self._load_recent_telemetry()
@@ -677,6 +685,7 @@ class NeverAIEngine:
         snap["background_training"] = self._bg_running
         snap["auto_morphogenesis"] = self._auto_morphogenesis
         snap["bg_steps_session"] = self._bg_steps_session
+        snap["mood"] = self.mood.public_status()
         return snap
 
     def learn_dialogue_exchange(
@@ -1228,6 +1237,7 @@ class NeverAIEngine:
         style_mode: str = "normal",
         web_search: bool = False,
         temperature: float = 0.6,
+        active_mood: dict[str, Any] | None = None,
         on_event: Any = None,
     ) -> dict[str, Any]:
         """Execute a turn using the active Foundation / 70B Super-Cortex + Sovereign Tools & Memory."""
@@ -1254,6 +1264,7 @@ class NeverAIEngine:
             style_mode=style_mode,
             memories=mem_texts,
             web_context=web_ctx,
+            mood_guide=(active_mood or {}).get("prompt_guide", ""),
             temperature=max(0.35, float(temperature)),
         ):
             chunks.append(delta)
@@ -1278,6 +1289,7 @@ class NeverAIEngine:
             "web_sources": web_sources,
             "persona": "polymathe",
             "style_mode": style_mode,
+            "mood": active_mood or self.mood.public_status(),
             "deep_think": False,
         }
 
@@ -1292,9 +1304,11 @@ class NeverAIEngine:
         persona: str = "polymathe",
         style_mode: str = "normal",
         web_search: bool = False,
+        mood_mode: str | None = None,
     ) -> dict[str, Any]:
         self._active_chats += 1
         try:
+            active_mood = self.mood.evolve_on_message(message, override_mode=mood_mode)
             recent_hist = self._get_recent_thread_messages(thread_id)
             if self.cortex.is_server_llm_active():
                 try:
@@ -1304,6 +1318,7 @@ class NeverAIEngine:
                         style_mode=style_mode,
                         web_search=web_search,
                         temperature=temperature,
+                        active_mood=active_mood,
                     )
                     if thread_id:
                         with self.lock:
@@ -1332,7 +1347,9 @@ class NeverAIEngine:
                     persona=persona,
                     style_mode=style_mode,
                     web_search=web_search,
+                    mood_id=active_mood["current_mood"] if (style_mode == "social" or (mood_mode and mood_mode != "auto")) else None,
                 )
+                result["mood"] = active_mood
                 learned = result.pop("learned_pair", None)
                 if learned:
                     self.learn_dialogue_exchange(*learned, priority=3.0)
@@ -1361,6 +1378,7 @@ class NeverAIEngine:
         persona: str = "polymathe",
         style_mode: str = "normal",
         web_search: bool = False,
+        mood_mode: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Stream live SSE events (`think_delta`, `tool_call`, `web_sources`, `answer_delta`, `done`)."""
         q: queue.Queue[dict[str, Any] | None] = queue.Queue()
@@ -1370,6 +1388,8 @@ class NeverAIEngine:
             self._active_chats += 1
             res_for_assim: dict[str, Any] | None = None
             try:
+                active_mood = self.mood.evolve_on_message(message, override_mode=mood_mode)
+                q.put({"type": "mood", "mood": active_mood})
                 recent_hist = self._get_recent_thread_messages(thread_id)
                 if self.cortex.is_server_llm_active():
                     try:
@@ -1379,6 +1399,7 @@ class NeverAIEngine:
                             style_mode=style_mode,
                             web_search=web_search,
                             temperature=temperature,
+                            active_mood=active_mood,
                             on_event=lambda ev: (False if aborted_flag.is_set() else (q.put(ev) or True)),
                         )
                         with self.lock:
@@ -1410,8 +1431,10 @@ class NeverAIEngine:
                         persona=persona,
                         style_mode=style_mode,
                         web_search=web_search,
+                        mood_id=active_mood["current_mood"] if (style_mode == "social" or (mood_mode and mood_mode != "auto")) else None,
                         on_event=lambda ev: (False if aborted_flag.is_set() else (q.put(ev) or True)),
                     )
+                    res["mood"] = active_mood
                     learned = res.pop("learned_pair", None)
                     if learned:
                         self.learn_dialogue_exchange(*learned, priority=3.0)
@@ -1479,8 +1502,9 @@ class NeverAIEngine:
             self.model = model
             self.tokenizer = tokenizer
             train_docs, val_docs = synthesize_bilingual_curriculum(seed=42, scale_factor=2)
+            soc_train, soc_val = synthesize_social_mood_corpus(seed=42, scale_factor=2)
             self.dataset = ContinualDatasetAndReplay(self.tokenizer, seq_len=self.seq_len)
-            self.dataset.load_corpora(train_docs, val_docs)
+            self.dataset.load_corpora(train_docs + soc_train, val_docs + soc_val)
             self.optimizer = CompositeMuonOptimizer(
                 self.model,
                 muon_lr=2.2e-3,
@@ -1498,6 +1522,7 @@ class NeverAIEngine:
                 workspace_root=".",
             )
             self.harness = SovereignAgentHarness(self.model, self.tokenizer, self.registry, self.memory)
+            self.harness.pure_neural_dialogue = bool(manifest.get("metrics", {}).get("colab_gpu_trained"))
             self._refresh_status_cache()
 
         return {

@@ -85,6 +85,7 @@ class SovereignAgentHarness:
         self.registry = registry
         self.memory = memory
         self.titans_session_states: list[TitansMemoryState | None] | None = None
+        self.pure_neural_dialogue: bool = False
 
     def reset_session_fast_weights(self) -> None:
         self.titans_session_states = None
@@ -94,6 +95,7 @@ class SovereignAgentHarness:
         user_message: str,
         use_tool_rag: bool = True,
         recent_history: list[dict[str, Any]] | None = None,
+        mood_id: str | None = None,
     ) -> tuple[str, list[str]]:
         active_tools: list[str] = []
         ctx_parts: list[str] = []
@@ -103,6 +105,9 @@ class SovereignAgentHarness:
             if tools and tools[0].name == "math_engine" and _MATH_EXPR_RE.search(user_message):
                 active_tools = [t.name for t in tools]
                 ctx_parts.append("Tools: math_engine")
+
+        if mood_id and not active_tools:
+            ctx_parts.append(f"Humeur: {mood_id}")
 
         # Keep prompt clean & aligned with training distribution; only attach context if needed
         ctx_block = f"{CONTEXT_TOKEN}{' // '.join(ctx_parts)}" if ctx_parts else ""
@@ -117,6 +122,7 @@ class SovereignAgentHarness:
         recent_history: list[dict[str, Any]] | None,
         style_mode: str = "normal",
         web_search: bool = False,
+        mood_id: str | None = None,
     ) -> dict[str, Any] | None:
         """
         Handle deterministic neuro-symbolic & episodic memory operations (personal memory
@@ -323,11 +329,13 @@ class SovereignAgentHarness:
         if omega_hit is not None:
             return omega_hit
 
-        # 9. Natural Multi-Register Conversational Universe (Normal, Amical, Cash/Grok)
+        # 9. Natural Multi-Register Conversational Universe (bypassed when GPU brain is active!)
         conv_hit = match_conversational_intent(
             user_message=user_message,
             style_mode=style_mode,
             recent_history=recent_history,
+            mood_id=mood_id,
+            pure_neural_dialogue=self.pure_neural_dialogue,
         )
         if conv_hit is not None:
             return {
@@ -353,6 +361,7 @@ class SovereignAgentHarness:
         persona: str = "polymathe",
         style_mode: str = "normal",
         web_search: bool = False,
+        mood_id: str | None = None,
         on_event: Callable[[dict[str, Any]], bool | None] | None = None,
     ) -> dict[str, Any]:
         # Fast-path episodic/symbolic/Omega/Web/Conversational skills with verified traces
@@ -362,6 +371,7 @@ class SovereignAgentHarness:
             recent_history=recent_history,
             style_mode=style_mode,
             web_search=web_search,
+            mood_id=mood_id,
         )
         if fast is not None:
             vis_fast, th_fast, cites_fast = enrich_with_deep_think_and_rag(
@@ -402,6 +412,7 @@ class SovereignAgentHarness:
         prompt_text, routed_tools = self.build_prompt(
             user_message,
             recent_history=recent_history,
+            mood_id=mood_id,
         )
         running_text = prompt_text
         tool_traces: list[dict[str, Any]] = []

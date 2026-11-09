@@ -100,6 +100,11 @@ class ChatRequest(BaseModel):
     persona: str = Field(default="polymathe")
     style_mode: str = Field(default="normal")
     web_search: bool = Field(default=False)
+    mood_mode: str = Field(default="auto")
+
+
+class MoodModeRequest(BaseModel):
+    mode: str = Field(default="auto", max_length=24)
 
 
 class WebSearchDirectRequest(BaseModel):
@@ -428,6 +433,7 @@ def api_chat(req: ChatRequest) -> dict[str, Any]:
         persona=req.persona,
         style_mode=req.style_mode,
         web_search=req.web_search,
+        mood_mode=req.mood_mode,
     )
 
 
@@ -444,6 +450,7 @@ def api_chat_stream(req: ChatRequest) -> StreamingResponse:
             persona=req.persona,
             style_mode=req.style_mode,
             web_search=req.web_search,
+            mood_mode=req.mood_mode,
         ):
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
 
@@ -663,6 +670,16 @@ def api_cortex_distill(req: CortexDistillRequest) -> dict[str, Any]:
         "distilled_turns": eng.cortex.public_status()["distilled_turns"],
         **thread_meta,
     }
+
+
+@app.get("/api/mood")
+def api_mood_get() -> dict[str, Any]:
+    return get_engine().mood.public_status()
+
+
+@app.post("/api/mood")
+def api_mood_set(req: MoodModeRequest) -> dict[str, Any]:
+    return get_engine().mood.set_mode(req.mode)
 
 
 @app.post("/api/cortex/import_brain_zip")

@@ -31,6 +31,12 @@ CONVERSATIONAL_STYLES: dict[str, dict[str, str]] = {
         "short": "Cash (Grok)",
         "desc": "Franc-parler total, humour piquant, argot compris, zéro langue de bois ni morale.",
     },
+    "social": {
+        "id": "social",
+        "label": "📱 Réseaux / Vivant",
+        "short": "Réseaux",
+        "desc": "Langage naturel Discord / X / TikTok & humeur vivante évolutive.",
+    },
 }
 
 
@@ -296,11 +302,14 @@ def match_conversational_intent(
     user_message: str,
     style_mode: str = "normal",
     recent_history: list[dict[str, Any]] | None = None,
+    mood_id: str | None = None,
+    pure_neural_dialogue: bool = False,
 ) -> dict[str, Any] | None:
     """
     Match natural conversational, casual, slang, opinion, emotional or debate turns
-    and return a natural response shaped to `style_mode` ('normal' | 'amical' | 'grok').
-    Also handles dynamic style-recast requests ('version cash', 'plus drôle', 'et toi ?').
+    and return a natural response shaped to `style_mode` ('normal' | 'amical' | 'grok' | 'social').
+    When `pure_neural_dialogue` is True (Colab GPU brain loaded), only the vital harm guard runs
+    so ChronoMorph-LM generates 100% original unscripted responses!
     """
     msg = (user_message or "").strip()
     if not msg:
@@ -313,6 +322,13 @@ def match_conversational_intent(
             "visible_answer": harm_msg,
             "thoughts": ["Garde-fou éthique minimal déclenché (danger vital ou illégalité grave)."],
         }
+
+    if pure_neural_dialogue:
+        return None
+
+    eff_style = style
+    if style == "social":
+        eff_style = "grok" if mood_id in ("taquin", "insolent", "hype") else "amical"
 
     # Follow-up conversational recast on the previous topic!
     if recent_history and len(recent_history) >= 2:
@@ -327,7 +343,7 @@ def match_conversational_intent(
     for item in CONVERSATIONAL_UNIVERSE:
         for pat in item["patterns"]:
             if re.search(pat, msg, flags=re.IGNORECASE):
-                ans = item.get(style) or item["normal"]
+                ans = item.get(eff_style) or item.get(style) or item["normal"]
                 return {
                     "visible_answer": ans,
                     "thoughts": [f"Dialogue naturel ({CONVERSATIONAL_STYLES[style]['short']}) : {item['thought']}"],
