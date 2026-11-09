@@ -665,6 +665,18 @@ def api_cortex_distill(req: CortexDistillRequest) -> dict[str, Any]:
     }
 
 
+@app.post("/api/cortex/import_brain_zip")
+async def api_cortex_import_brain_zip(request: Request) -> dict[str, Any]:
+    """Hot-reload a Colab-trained `never-ai-brain-*.zip` checkpoint without restarting!"""
+    raw = await request.body()
+    if not raw or len(raw) < 100:
+        raise HTTPException(status_code=400, detail="Fichier .zip vide ou manquant.")
+    try:
+        return get_engine().import_brain_zip_bytes(raw)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/api/ota/preferences")
 def api_ota_preferences(req: OTAPreferencesRequest) -> dict[str, Any]:
     return get_ota().set_preferences(

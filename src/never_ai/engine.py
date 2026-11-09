@@ -1447,6 +1447,67 @@ class NeverAIEngine:
         finally:
             aborted_flag.set()
 
+    def import_brain_zip_bytes(self, zip_bytes: bytes) -> dict[str, Any]:
+        """Hot-swap the live ChronoMorph-LM checkpoint from a Colab-trained `never-ai-brain-*.zip`!"""
+        import io
+        import zipfile
+
+        latest_dir = self.vault.vault_root / "latest"
+        latest_dir.mkdir(parents=True, exist_ok=True)
+
+        extracted: list[str] = []
+        with zipfile.ZipFile(io.BytesIO(zip_bytes), "r") as zf:
+            for member in zf.infolist():
+                if member.is_dir():
+                    continue
+                fname = Path(member.filename).name
+                if fname in {
+                    "config.json",
+                    "manifest.json",
+                    "tokenizer.json",
+                    "model_wsm.safetensors",
+                    "model_live.safetensors",
+                }:
+                    (latest_dir / fname).write_bytes(zf.read(member))
+                    extracted.append(fname)
+
+        if "config.json" not in extracted or "tokenizer.json" not in extracted:
+            raise ValueError("Archive .zip invalide : config.json ou tokenizer.json manquant.")
+
+        with self.lock:
+            model, tokenizer, manifest = self.vault.load_checkpoint("latest", prefer_wsm=True, device=self.device)
+            self.model = model
+            self.tokenizer = tokenizer
+            train_docs, val_docs = synthesize_bilingual_curriculum(seed=42, scale_factor=2)
+            self.dataset = ContinualDatasetAndReplay(self.tokenizer, seq_len=self.seq_len)
+            self.dataset.load_corpora(train_docs, val_docs)
+            self.optimizer = CompositeMuonOptimizer(
+                self.model,
+                muon_lr=2.2e-3,
+                adamw_lr=6.0e-4,
+                weight_decay=0.01,
+                warmup_steps=20,
+            )
+            self.wsm = WSMCheckpointMerger(max_snapshots=6)
+            self.wsm.record_snapshot(self.model)
+            self.eval_harness = ImmutableEvalHarness(self.dataset, eval_batches=4, batch_size=4)
+            self.seal = SEALConsolidator(self.dataset, self.eval_harness)
+            self.registry = build_default_plugin_registry(
+                mem_store=self.memory,
+                anatomy_provider=self.model.inspect_anatomy,
+                workspace_root=".",
+            )
+            self.harness = SovereignAgentHarness(self.model, self.tokenizer, self.registry, self.memory)
+            self._refresh_status_cache()
+
+        return {
+            "ok": True,
+            "stage_name": self.model.cfg.stage_name,
+            "vocab_size": self.tokenizer.vocab_size,
+            "parameter_counts": self.model.count_parameters(),
+            "metrics": manifest.get("metrics", {}),
+        }
+
     def start_background_growth_loop(
         self,
         batch_size: int = 2,

@@ -34,6 +34,42 @@ def partition_muon_adamw_parameters(
     return muon_params, adamw_params
 
 
+class _FallbackMuon(torch.optim.Optimizer):
+    """Pure-PyTorch 5-step Newton-Schulz Muon fallback for PyTorch < 2.7 runtimes."""
+
+    def __init__(self, params: Any, lr: float = 1e-2, weight_decay: float = 0.01, momentum: float = 0.95) -> None:
+        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum))
+
+    @torch.no_grad()
+    def step(self, closure: Any = None) -> Any:
+        for group in self.param_groups:
+            lr, wd, mom = group["lr"], group["weight_decay"], group["momentum"]
+            for p in group["params"]:
+                if p.grad is None:
+                    continue
+                g = p.grad
+                st = self.state[p]
+                if "momentum_buffer" not in st:
+                    st["momentum_buffer"] = torch.zeros_like(g)
+                buf = st["momentum_buffer"]
+                buf.mul_(mom).add_(g)
+                u = g.add(buf, alpha=mom).bfloat16()
+                transposed = u.size(0) > u.size(1)
+                if transposed:
+                    u = u.T
+                u = u / (u.norm() + 1e-7)
+                for _ in range(5):
+                    a = u @ u.T
+                    u = 3.4445 * u - 4.7750 * (a @ u) + 2.0315 * (a @ a @ u)
+                if transposed:
+                    u = u.T
+                if wd != 0:
+                    p.mul_(1.0 - lr * wd)
+                scale = 0.2 * math.sqrt(max(p.size(0), p.size(1)))
+                p.add_(u.to(p.dtype), alpha=-lr * scale)
+        return None
+
+
 class CompositeMuonOptimizer:
     """
     Unified wrapper combining native PyTorch `torch.optim.Muon` on 2D hidden matrices
@@ -69,19 +105,26 @@ class CompositeMuonOptimizer:
         self.mup_scale = min(1.0, 256.0 / max(256.0, d_model))
         self._steps_since_rebuild = 0
 
-        self.muon_opt = (
-            torch.optim.Muon(
-                muon_params,
-                lr=self.muon_base_lr * self.mup_scale,
-                weight_decay=self.weight_decay,
-                momentum=0.95,
-                nesterov=True,
-                ns_steps=5,
-                adjust_lr_fn="match_rms_adamw",
-            )
-            if muon_params
-            else None
-        )
+        if muon_params:
+            if hasattr(torch.optim, "Muon"):
+                self.muon_opt: torch.optim.Optimizer | None = torch.optim.Muon(
+                    muon_params,
+                    lr=self.muon_base_lr * self.mup_scale,
+                    weight_decay=self.weight_decay,
+                    momentum=0.95,
+                    nesterov=True,
+                    ns_steps=5,
+                    adjust_lr_fn="match_rms_adamw",
+                )
+            else:
+                self.muon_opt = _FallbackMuon(
+                    muon_params,
+                    lr=self.muon_base_lr * self.mup_scale,
+                    weight_decay=self.weight_decay,
+                    momentum=0.95,
+                )
+        else:
+            self.muon_opt = None
         self.adamw_opt = (
             torch.optim.AdamW(
                 adamw_params,

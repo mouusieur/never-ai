@@ -2153,22 +2153,29 @@
         <div id="turboApiFeedback" style="font-size:12px;color:#6EE7B7;margin-top:7px;"></div>
       </div>
 
-      <!-- OPTION 3: COLAB GPU FROM-SCRATCH TRAINER + NATIVE TOGGLE -->
-      <div style="background:#080A0D;border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:240px;">
-          <strong style="font-size:13.5px;color:#FFF;">3. 🔥 Entraîner ChronoMorph-LM « From Scratch » sur GPU T4 + Google Drive</strong>
-          <p style="font-size:11.5px;color:var(--text-muted);margin-top:3px;line-height:1.4;">
-            Notebook Google Colab gratuit qui entraîne votre propre architecture sur Wikipedia FR + FineWeb-Edu (50× plus rapide que sur CPU) et sauvegarde dans Google Drive.
-          </p>
+      <!-- OPTION 3: COLAB GPU FROM-SCRATCH TRAINER + 1-CLICK .ZIP IMPORT + NATIVE TOGGLE -->
+      <div style="background:#080A0D;border:1px solid var(--border);border-radius:14px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:240px;">
+            <strong style="font-size:13.5px;color:#FFF;">3. 🔥 Entraîner ChronoMorph-LM « From Scratch » sur GPU Colab (Sans Google Drive requis)</strong>
+            <p style="font-size:11.5px;color:var(--text-muted);margin-top:3px;line-height:1.4;">
+              Notebook Google Colab GPU T4 gratuit (dialogues français OASST2 + Wikipedia FR) qui fonctionne <strong>sans Google Drive</strong> (compatible contrôle parental / Family Link) et télécharge directement <code>never-ai-brain-sprout-moe.zip</code>.
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="pill-btn pill-outline-white" style="height:34px;font-size:12px;padding:0 13px;text-decoration:none;" href="https://colab.research.google.com/github/mouusieur/never-ai/blob/arena/403f5d7f-never-ai/notebooks/NeverAI_GPU_SuperTrainer_Colab.ipynb" target="_blank" rel="noopener">
+              ⚡ Ouvrir sur Google Colab GPU
+            </a>
+            <input type="file" id="inpColabBrainZip" accept=".zip" class="hidden" onchange="uploadColabBrainZip(this)" />
+            <button class="pill-btn pill-blue" style="height:34px;font-size:12px;padding:0 13px;" onclick="document.getElementById('inpColabBrainZip').click()">
+              📥 Importer .zip Colab
+            </button>
+            <button class="pill-btn pill-outline-white" style="height:34px;font-size:12px;padding:0 12px;" onclick="switchBackToNativeChronoMorph()">
+              🌱 ChronoMorph pur
+            </button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <a class="pill-btn pill-outline-white" style="height:34px;font-size:12px;padding:0 13px;text-decoration:none;" href="https://colab.research.google.com/github/mouusieur/never-ai/blob/arena/403f5d7f-never-ai/notebooks/NeverAI_GPU_SuperTrainer_Colab.ipynb" target="_blank" rel="noopener">
-            ⚡ Ouvrir sur Google Colab GPU
-          </a>
-          <button class="pill-btn pill-outline-white" style="height:34px;font-size:12px;padding:0 12px;" onclick="switchBackToNativeChronoMorph()">
-            🌱 Revenir à ChronoMorph pur
-          </button>
-        </div>
+        <div id="colabZipImportFeedback" style="font-size:12px;color:#6EE7B7;margin-top:6px;"></div>
       </div>
     </div>
   </div>
@@ -4393,6 +4400,35 @@
       fb.style.color = '#6EE7B7';
       fb.textContent = '✅ Moteur ' + model + ' activé avec distillation vers ChronoMorph-LM !';
       toast('Moteur Turbo ' + model + ' actif !');
+    }
+
+    async function uploadColabBrainZip(fileInput) {
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      if (!file) return;
+      const fb = document.getElementById('colabZipImportFeedback');
+      fb.style.color = '#93C5FD';
+      fb.textContent = '⏳ Importation à chaud de ' + file.name + ' (' + (file.size / 1048576).toFixed(1) + ' Mo)...';
+      try {
+        const buf = await file.arrayBuffer();
+        const res = await fetch('/api/cortex/import_brain_zip', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/zip'},
+          body: buf
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Échec import .zip');
+        browserCortexState.mode = 'native';
+        saveBrowserCortexState();
+        fb.style.color = '#6EE7B7';
+        fb.textContent = '✅ Cerveau ' + data.stage_name + ' (vocab=' + data.vocab_size + ') importé et activé à chaud !';
+        toast('Cerveau Colab GPU activé à chaud !');
+        if (typeof refreshStatus === 'function') refreshStatus();
+      } catch (e) {
+        fb.style.color = '#FCA5A5';
+        fb.textContent = '⚠️ Erreur : ' + (e.message || e);
+      } finally {
+        fileInput.value = '';
+      }
     }
 
     async function switchBackToNativeChronoMorph() {
