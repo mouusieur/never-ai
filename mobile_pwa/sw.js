@@ -1,52 +1,32 @@
-const CACHE_NAME = 'never-ai-android-pwa-v1.5.0';
-const CORE_ASSETS = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icon-192.png',
-  './icon-512.png'
-];
+const CACHE = 'never-ai-monolith-pwa-v3.4';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting())
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-
-  // External API calls (Wikipedia, GitHub OTA check, custom server): network-only with graceful fallback
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  // Network-first for app shell so OTA updates apply automatically when online, instant cache fallback offline
-  event.respondWith(
-    fetch(req)
-      .then((res) => {
-        if (res && res.status === 200) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  const u = new URL(e.request.url);
+  if (u.pathname.includes('/api/')) return;
+  e.respondWith(
+    fetch(e.request)
+      .then((r) => {
+        if (r && r.status === 200) {
+          const cl = r.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, cl)).catch(() => {});
         }
-        return res;
+        return r;
       })
-      .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+      .catch(() => caches.match(e.request).then((m) => m || caches.match('./index.html')))
   );
 });

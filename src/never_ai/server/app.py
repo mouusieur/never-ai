@@ -198,33 +198,115 @@ def pwa_icon_512() -> FileResponse:
 def pwa_manifest() -> Response:
     manifest = {
         "id": "never-ai-studio-pwa",
-        "name": "NEVER-AI — Studio Souverain",
-        "short_name": "NEVER-AI",
-        "description": "Assistant IA souverain évolutif (Normal, Amical, Cash/Grok, Recherche Web & Progression Live).",
+        "name": "Never-AI",
+        "short_name": "Never-AI",
+        "description": "Modèle neuronal libre auto-construit (ChronoMorph-LM · GitHub) avec entraînement continu et mises à jour OTA.",
         "lang": "fr",
-        "start_url": "/",
+        "start_url": "/?source=pwa",
         "scope": "/",
         "display": "standalone",
+        "display_override": ["standalone", "minimal-ui"],
+        "orientation": "any",
         "background_color": "#000000",
         "theme_color": "#000000",
+        "categories": ["productivity", "utilities", "education"],
         "icons": [
-            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        ],
+        "shortcuts": [
+            {
+                "name": "Nouvelle discussion",
+                "short_name": "Discuter",
+                "url": "/?view=chat",
+                "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}],
+            },
+            {
+                "name": "Entraîner Never-AI",
+                "short_name": "Entraîner",
+                "url": "/?view=model",
+                "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}],
+            },
         ],
     }
-    return Response(content=json.dumps(manifest, indent=2), media_type="application/manifest+json")
+    return Response(content=json.dumps(manifest, indent=2, ensure_ascii=False), media_type="application/manifest+json")
 
 
 @app.get("/sw.js")
 def pwa_service_worker() -> Response:
     sw_code = (
-        "const CACHE='never-ai-studio-v1.5';\n"
-        "self.addEventListener('install',e=>{self.skipWaiting();});\n"
-        "self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});\n"
-        "self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;"
-        "e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});\n"
+        "const CACHE='never-ai-monolith-v3.4';\n"
+        "const SHELL=['/','/manifest.webmanifest','/icon-192.png','/icon-512.png','/favicon.ico'];\n"
+        "self.addEventListener('install',e=>{\n"
+        "  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));\n"
+        "  self.skipWaiting();\n"
+        "});\n"
+        "self.addEventListener('activate',e=>{\n"
+        "  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));\n"
+        "});\n"
+        "self.addEventListener('fetch',e=>{\n"
+        "  if(e.request.method!=='GET')return;\n"
+        "  const u=new URL(e.request.url);\n"
+        "  if(u.pathname.startsWith('/api/'))return;\n"
+        "  e.respondWith(fetch(e.request).then(r=>{if(r&&r.status===200){const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl)).catch(()=>{});}return r;}).catch(()=>caches.match(e.request).then(m=>m||caches.match('/'))));\n"
+        "});\n"
     )
-    return Response(content=sw_code, media_type="application/javascript")
+    return Response(
+        content=sw_code,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
+    )
+
+
+@app.get("/pwa", response_class=RedirectResponse)
+def pwa_entry_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/?pwa=1", status_code=302)
+
+
+@app.get("/api/pwa/qr.svg")
+def pwa_qr_svg(url: str = Query(default="https://github.com/mouusieur/never-ai")) -> Response:
+    clean_url = (url or "https://github.com/mouusieur/never-ai").strip()[:400]
+    try:
+        import io
+        import segno
+
+        buf = io.BytesIO()
+        qr = segno.make(clean_url, error="m")
+        qr.save(buf, kind="svg", dark="#FFFFFF", light="#000000", border=2, scale=5, xmldecl=False)
+        return Response(content=buf.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+    except Exception:  # noqa: BLE001
+        fallback = (
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">'
+            '<rect width="180" height="180" fill="#000"/><rect x="14" y="14" width="152" height="152" rx="12" fill="none" stroke="#fff" stroke-width="2"/>'
+            '<text x="90" y="95" fill="#fff" font-family="monospace" font-size="12" text-anchor="middle">HTTPS PWA</text></svg>'
+        )
+        return Response(content=fallback, media_type="image/svg+xml")
+
+
+@app.api_route("/download/NeverAI-PWA.zip", methods=["GET", "HEAD"])
+@app.api_route("/api/download/pwa", methods=["GET", "HEAD"])
+def api_download_pwa_bundle() -> Response:
+    import io
+    import zipfile
+
+    pwa_dir = _REPO_ROOT / "mobile_pwa"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        if pwa_dir.exists():
+            for fp in sorted(pwa_dir.iterdir()):
+                if fp.is_file():
+                    zf.write(fp, arcname=f"NeverAI-PWA/{fp.name}")
+    payload = buf.getvalue()
+    return Response(
+        content=payload,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": 'attachment; filename="NeverAI-PWA.zip"',
+            "Content-Length": str(len(payload)),
+        },
+    )
 
 
 @app.get("/mobile", response_class=RedirectResponse)

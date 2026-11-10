@@ -1683,6 +1683,13 @@
             </span>
             <span id="engineBadgeText">Never-AI · GitHub</span>
           </button>
+          <button id="btnTopPwa" class="btn-arch" style="padding:5px 11px;font-size:11.5px;border-radius:999px;" onclick="openPwaModal()" title="Installer l'application PWA (Android / iOS / PC)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="2.5" width="12" height="19" rx="2.6"/>
+              <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.2"/>
+            </svg>
+            <span>PWA</span>
+          </button>
           <button class="icon-btn" onclick="exportCurrentThread()" title="Exporter la discussion (.md)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 3v12"/>
@@ -1969,16 +1976,23 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="card-title">Application Android (PWA officielle)</div>
-                  <div class="card-desc">S'installe directement via Google Chrome en plein écran, sans APK externe (compatible contrôle parental / Family Link).</div>
+                  <div class="card-title">Application Android &amp; Mobile (PWA officielle)</div>
+                  <div class="card-desc">S'installe directement via Google Chrome ou Safari en plein écran, sans APK externe (100 % compatible contrôle parental / Family Link).</div>
                 </div>
               </div>
-              <span class="mono-tag">Android · HTTPS</span>
+              <span class="mono-tag">PWA · HTTPS</span>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button class="btn-monolith" onclick="installPwa()">Installer sur cet appareil</button>
+              <button class="btn-monolith" onclick="openPwaModal()">Installer la PWA / QR Code</button>
+              <a id="cardOpenPwaTab" class="btn-arch" href="/?pwa=1" target="_blank" rel="noopener">
+                <span>Ouvrir en plein onglet</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </a>
+              <a class="btn-arch" href="/download/NeverAI-PWA.zip" download>
+                <span>Pack NeverAI-PWA.zip</span>
+              </a>
               <a class="btn-arch" href="https://render.com/deploy?repo=https://github.com/mouusieur/never-ai" target="_blank" rel="noopener">
-                <span>Déployer mon serveur Cloud</span>
+                <span>Cloud 24/7 (Render)</span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
               </a>
             </div>
@@ -1986,6 +2000,59 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- PWA INSTALL & QR HUB MODAL -->
+  <div id="pwaModal" class="modal-backdrop hidden" onclick="if(event.target===this) closePwaModal()">
+    <div class="modal-box" style="max-width:520px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-badge-icon" style="width:32px;height:32px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="2.5" width="12" height="19" rx="2.6"/>
+              <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.2"/>
+            </svg>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display);font-size:17px;letter-spacing:-0.02em;">Application Never-AI (PWA)</strong>
+            <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted);">Android · iOS · Windows · macOS — Sans APK externe</div>
+          </div>
+        </div>
+        <button class="icon-btn" onclick="closePwaModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:148px 1fr;gap:16px;align-items:center;background:var(--surface-2);border:1px solid var(--border-mid);border-radius:14px;padding:14px;">
+        <div style="width:148px;height:148px;border-radius:12px;border:1px solid var(--border-mid);background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;">
+          <img id="pwaQrImg" alt="QR Code PWA Never-AI" style="width:100%;height:100%;object-fit:contain;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;min-width:0;">
+          <div style="font-size:12.5px;line-height:1.45;color:var(--fg-body);">
+            Scannez ce QR code sur <strong>Android (Chrome)</strong> ou ouvrez le lien hors de l'aperçu pour installer l'icône <strong>Never-AI</strong> en plein écran (compatible Family Link).
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input id="pwaLiveUrlInput" class="field" readonly style="font-family:var(--font-mono);font-size:11px;padding:7px 10px;" />
+            <button class="btn-arch" style="padding:7px 11px;white-space:nowrap;" onclick="copyPwaUrl()">Copier</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="btnModalNativeInstall" class="btn-monolith" style="padding:8px 14px;font-size:12px;" onclick="triggerNativePwaInstall()">Installer maintenant</button>
+            <a id="btnModalOpenFullTab" class="btn-arch" style="padding:8px 12px;font-size:12px;" href="/?pwa=1" target="_blank" rel="noopener">
+              <span>Ouvrir hors cadre</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11.5px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>Pour un serveur personnel actif 24h/24 relié au modèle GitHub :</span>
+        <div style="display:flex;gap:8px;">
+          <a class="btn-arch" style="padding:5px 10px;font-size:11px;" href="https://render.com/deploy?repo=https://github.com/mouusieur/never-ai" target="_blank" rel="noopener">Render 1-Clic</a>
+          <a class="btn-arch" style="padding:5px 10px;font-size:11px;" href="/download/NeverAI-PWA.zip" download>NeverAI-PWA.zip</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- LOCAL PROFILE MODAL -->
@@ -2948,13 +3015,65 @@
       }
     }
 
-    async function installPwa() {
+    function getLivePwaUrl() {
+      return window.location.origin + '/?pwa=1';
+    }
+
+    function openPwaModal() {
+      const url = getLivePwaUrl();
+      const inp = document.getElementById('pwaLiveUrlInput');
+      const qr = document.getElementById('pwaQrImg');
+      const fullBtn = document.getElementById('btnModalOpenFullTab');
+      if (inp) inp.value = url;
+      if (qr) qr.src = '/api/pwa/qr.svg?url=' + encodeURIComponent(url);
+      if (fullBtn) {
+        fullBtn.href = url;
+        fullBtn.style.display = (window.self !== window.top) ? 'inline-flex' : 'none';
+      }
+      document.getElementById('pwaModal').classList.remove('hidden');
+    }
+
+    function closePwaModal() {
+      document.getElementById('pwaModal').classList.add('hidden');
+    }
+
+    async function copyPwaUrl() {
+      const url = getLivePwaUrl();
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Lien PWA HTTPS copié !');
+      } catch (_) {
+        const inp = document.getElementById('pwaLiveUrlInput');
+        if (inp) { inp.select(); document.execCommand('copy'); toast('Lien PWA copié !'); }
+      }
+    }
+
+    async function triggerNativePwaInstall() {
       if (deferredPwaPrompt) {
         deferredPwaPrompt.prompt();
         await deferredPwaPrompt.userChoice;
         deferredPwaPrompt = null;
+        closePwaModal();
+        return;
+      }
+      if (window.self !== window.top) {
+        window.open(getLivePwaUrl(), '_blank', 'noopener');
+        toast('Ouverture en plein onglet pour lancer l\'installation native Chrome…');
+        return;
+      }
+      const ua = navigator.userAgent || '';
+      if (/iPhone|iPad|iPod/i.test(ua)) {
+        toast('Sur Safari iOS : bouton Partager → Sur l\'écran d\'accueil');
       } else {
-        toast('Sur Chrome Android : Menu ⋮ → Ajouter à l\'écran d\'accueil → Installer');
+        toast('Sur Chrome : Menu ⋮ → Installer l\'application (ou Ajouter à l\'écran d\'accueil)');
+      }
+    }
+
+    async function installPwa() {
+      if (deferredPwaPrompt) {
+        await triggerNativePwaInstall();
+      } else {
+        openPwaModal();
       }
     }
 
@@ -2965,10 +3084,22 @@
         localStorage.setItem('never_ai_user_v3', JSON.stringify(currentUser));
       }
       localStorage.removeItem('never_ai_super_cortex_v2');
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+        const topPwa = document.getElementById('btnTopPwa');
+        if (topPwa) topPwa.style.display = 'none';
+      }
       syncProfileUI();
       renderChat(true);
       loadThreads();
       refreshGlobalBrainStatus();
+      const params = new URLSearchParams(window.location.search);
+      const vParam = params.get('view');
+      if (vParam === 'model' || vParam === 'apps' || vParam === 'chat') {
+        switchView(vParam);
+      }
+      if (params.get('pwa') === '1') {
+        setTimeout(openPwaModal, 180);
+      }
       setInterval(() => {
         if (!document.getElementById('view-model').classList.contains('hidden')) refreshStatus();
       }, 4000);
