@@ -29,7 +29,7 @@ from never_ai.vault.manager import VaultManager
 def train_coherent_brain(
     vault_dir: str | Path = "checkpoints",
     telemetry_path: str | Path = "logs/training_telemetry.jsonl",
-    total_steps: int = 300,
+    total_steps: int = 400,
 ) -> dict[str, object]:
     torch.set_num_threads(max(1, os.cpu_count() or 2))
     t_start = time.perf_counter()
@@ -87,7 +87,7 @@ def train_coherent_brain(
     )
     wsm = WSMCheckpointMerger(max_snapshots=6)
 
-    batch_size = 12
+    batch_size = 14
     pool = list(ds.train_sequences)
     rng = random.Random(2026)
 

@@ -76,7 +76,7 @@ def _reload_engine_if_upgraded() -> None:
             vault_dir=_ENGINE.vault.vault_root,
             telemetry_path=_ENGINE.telemetry_path,
         )
-        if seed_res.get("upgraded") or getattr(_ENGINE, "total_tokens_trained", 0) < 100_000:
+        if seed_res.get("upgraded") or getattr(_ENGINE, "total_tokens_trained", 0) < 310_000:
             _ENGINE = NeverAIEngine(
                 vault_dir=_ENGINE.vault.vault_root,
                 memory_path=_ENGINE.memory.storage_path,

@@ -1190,68 +1190,19 @@ class NeverAIEngine:
         return list(t.get("messages", []))[-8:]
 
     def _assimilate_turn_async(self, question: str, answer: str, source: str = "discussion") -> None:
-        """Non-blocking online synaptic micro-update exclusively for verified external knowledge (e.g. web search)."""
+        """Store verified external web knowledge in EvolveMem without running noisy unsupervised gradient steps."""
         if source != "recherche web" or not question.strip() or not answer.strip() or "```svg" in answer:
             return
-
-        def _bg_assimilate() -> None:
-            if self._active_chats > 0:
-                return
-            try:
-                t0 = time.perf_counter()
-                doc = f"{BOS_TOKEN}{USER_TOKEN}{question.strip()[:240]}{NEVER_TOKEN}{answer.strip()[:480]}{EOS_TOKEN}"
-                ids = self.tokenizer.encode(doc)
-                mask = self.tokenizer.build_target_loss_mask(ids)
-                L = self.seq_len + 1
-                if len(ids) > L:
-                    ids = ids[:L]
-                    mask = mask[:L]
-
-                use_titans_grad = self.device.type == "cuda"
-                with self.lock:
-                    pad_n = max(0, L - len(ids))
-                    self.dataset.push_to_replay(ids + [0] * pad_n, mask + [0.0] * pad_n, surprise=2.2)
-                    t_ids = torch.tensor([ids[:-1]], dtype=torch.long, device=self.device)
-                    t_tgt = torch.tensor([ids[1:]], dtype=torch.long, device=self.device)
-                    t_msk = torch.tensor([mask[1:]], dtype=torch.float32, device=self.device)
-                    rep = self.dataset.sample_batch(batch_size=1, split="train", replay_ratio=0.5, device=self.device)
-                    inp, tgt, msk = self._concat_aligned_batches(t_ids, t_tgt, t_msk, rep)
-
-                    self.model.train()
-                    self.optimizer.zero_grad()
-                    out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=use_titans_grad)
-                    if out.loss is not None:
-                        out.loss.backward()
-                        opt_stats = self.optimizer.step(self.model)
-                        self.model.update_moe_biases()
-                        toks = int(inp.numel())
-                        self.total_tokens_trained += toks
-                        self._bg_steps_session += 1
-                        self._bg_tokens_since_molt += toks
-                        elapsed = max(1e-4, time.perf_counter() - t0)
-                        tok_s = round(toks / elapsed, 1)
-                        self._last_bg_ce = round(out.ce_loss, 4)
-                        self._last_bg_tok_s = tok_s
-                        self._append_telemetry(
-                            {
-                                "type": "train_step",
-                                "timestamp": round(time.time(), 2),
-                                "stage": self.model.cfg.stage_name,
-                                "generation": self.model.cfg.generation,
-                                "global_step": int(opt_stats["step"]),
-                                "total_tokens": self.total_tokens_trained,
-                                "ce_loss": self._last_bg_ce,
-                                "mtp_loss": round(out.mtp_loss, 4),
-                                "grad_norm": round(opt_stats["grad_norm"], 4),
-                                "tok_per_sec": tok_s,
-                                "source": source,
-                            }
-                        )
-                        self._refresh_status_cache()
-            except Exception:  # noqa: BLE001
-                pass
-
-        threading.Thread(target=_bg_assimilate, daemon=True).start()
+        try:
+            with self.lock:
+                self.memory.store(
+                    key=f"web_{int(time.time())}",
+                    content=f"{question.strip()[:120]} -> {answer.strip()[:220]}",
+                    category="semantic",
+                    tags=["web"],
+                )
+        except Exception:  # noqa: BLE001
+            pass
 
     def _run_super_cortex_turn(
         self,

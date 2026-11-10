@@ -744,12 +744,12 @@ def enrich_with_deep_think_and_rag(
             best_q_overlap = score_ov
             best_dom_unit = u
 
-    if not verified_fast_path:
-        if best_dom_unit is not None and best_q_overlap >= 0.65:
-            visible_answer = best_dom_unit.content
-            th_saved = next((t[3:] for t in best_dom_unit.tags if t.startswith("th:")), "")
-            if th_saved and not enriched_thoughts:
-                enriched_thoughts.append(th_saved)
+    # Never overwrite pure neural generation with pre-recorded domain_omega paragraphs;
+    # only attach optional reasoning metadata when `deep_think` is explicitly requested.
+    if not verified_fast_path and best_dom_unit is not None and best_q_overlap >= 0.75:
+        th_saved = next((t[3:] for t in best_dom_unit.tags if t.startswith("th:")), "")
+        if th_saved and not enriched_thoughts and deep_think:
+            enriched_thoughts.append(th_saved)
 
     domain_hits = memory.query(user_message, top_k=2, category="domain_omega")
     if deep_think:
@@ -792,7 +792,7 @@ def _ota_live_brain_upgrade_if_needed() -> None:
     if srv_mod is None:
         return
     cur_eng = getattr(srv_mod, "_ENGINE", None)
-    if cur_eng is None or getattr(cur_eng, "total_tokens_trained", 0) >= 100_000:
+    if cur_eng is None or getattr(cur_eng, "total_tokens_trained", 0) >= 310_000:
         return
 
     try:

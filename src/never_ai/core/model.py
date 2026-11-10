@@ -568,6 +568,7 @@ class ChronoMorphLM(nn.Module):
         latent_steps_on_bot: int = 3,
         step_callback: Any | None = None,
         tokenizer: Any | None = None,
+        avoid_sequences: list[list[int]] | None = None,
     ) -> tuple[list[int], list[TitansMemoryState | None]]:
         """
         Autoregressive generation with:
@@ -601,6 +602,15 @@ class ChronoMorphLM(nn.Module):
         in_call = False
         think_blocks_completed = 0
 
+        # Precompute 5-gram anti-echo guard from the immediately preceding assistant answer ONLY,
+        # preventing verbatim full-sentence lag echo without blocking normal French words ("Je", "Pas", "Il")!
+        avoid_5grams: dict[tuple[int, int, int, int], set[int]] = {}
+        for a_seq in (avoid_sequences or [])[-1:]:
+            clean_a = [int(t) for t in a_seq if int(t) >= 16]
+            for idx_a in range(len(clean_a) - 4):
+                key4 = (clean_a[idx_a], clean_a[idx_a + 1], clean_a[idx_a + 2], clean_a[idx_a + 3])
+                avoid_5grams.setdefault(key4, set()).add(clean_a[idx_a + 4])
+
         for _ in range(max_new_tokens):
             step_logits = last_logits.clone()
 
@@ -616,6 +626,13 @@ class ChronoMorphLM(nn.Module):
                 step_logits[:, CALL_END_ID] = -float("inf")
             if in_think or in_call:
                 step_logits[:, CALL_START_ID] = -float("inf")
+
+            # 1.5 Cross-turn 5-gram anti-echo guard
+            if len(generated) >= 4 and avoid_5grams:
+                prev_q4 = (generated[-4], generated[-3], generated[-2], generated[-1])
+                for blocked_c in avoid_5grams.get(prev_q4, ()):
+                    if blocked_c < step_logits.size(-1):
+                        step_logits[:, blocked_c] -= 9.0
 
             # 2. Repetition + frequency penalty & 3-gram loop prevention over generated tokens
             if repetition_penalty > 1.0 and generated:

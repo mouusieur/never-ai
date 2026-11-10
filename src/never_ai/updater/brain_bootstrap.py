@@ -66,7 +66,7 @@ def detect_available_ram_mb() -> int:
 
 
 def is_checkpoint_converged(ckpt_dir: Path) -> bool:
-    """Return True iff `ckpt_dir` holds a valid, converged checkpoint (`>= 100k` tokens & `CE <= 2.5`)."""
+    """Return True iff `ckpt_dir` holds a valid, converged v3.5+ checkpoint (`>= 310k` tokens & `CE <= 2.5`)."""
     cfg_p = ckpt_dir / "config.json"
     mf_p = ckpt_dir / "manifest.json"
     has_weights = (ckpt_dir / "model_wsm.safetensors").exists() or (ckpt_dir / "model_live.safetensors").exists()
@@ -77,7 +77,7 @@ def is_checkpoint_converged(ckpt_dir: Path) -> bool:
         metrics = mf.get("metrics") or {}
         toks = int(metrics.get("total_tokens_trained", 0))
         ce = float(metrics.get("val_ce_loss", metrics.get("final_ce_loss", 9.9)))
-        return toks >= 100_000 and ce <= 2.5
+        return toks >= 310_000 and ce <= 2.5
     except Exception:  # noqa: BLE001
         return False
 

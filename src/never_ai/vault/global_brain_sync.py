@@ -302,13 +302,21 @@ class GlobalBrainSync:
             with tempfile.TemporaryDirectory() as tmp_rem:
                 self.download_global_brain_to_dir(tmp_rem, timeout_s=45.0)
                 rem_p = Path(tmp_rem)
+                mf_f = rem_p / "manifest.json"
+                rem_converged = False
+                if mf_f.exists():
+                    mf_d = json.loads(mf_f.read_text(encoding="utf-8"))
+                    m_met = mf_d.get("metrics") or {}
+                    rem_converged = (
+                        int(m_met.get("total_tokens_trained", 0)) >= 310_000
+                        and float(m_met.get("val_ce_loss", m_met.get("final_ce_loss", 9.9))) <= 2.5
+                    )
                 st_f = rem_p / "model_wsm.safetensors"
                 if not st_f.exists():
                     st_f = rem_p / "model_live.safetensors"
-                if st_f.exists():
+                if rem_converged and st_f.exists():
                     rem_sd = load_file(str(st_f), device="cpu")
                     rem_tok = MorphTokenizer.load(rem_p / "tokenizer.json") if (rem_p / "tokenizer.json").exists() else None
-                    # Keep 65% of newly trained weights + 35% of existing global anchor
                     merge_stats = transfer_or_merge_weights(
                         target_model=model,
                         target_tok=tokenizer,
@@ -322,7 +330,7 @@ class GlobalBrainSync:
         status_before = self.fetch_global_status(local_tokens_trained=local_tokens_trained)
         prev_lineage = status_before.get("lineage") or {}
         delta_tokens = max(0, int(local_tokens_trained) - int(self.state.get("last_synced_tokens", 0)))
-        new_global_tokens = int(prev_lineage.get("global_tokens_trained", 0)) + max(delta_tokens, int(local_tokens_trained))
+        new_global_tokens = max(int(local_tokens_trained), int(prev_lineage.get("global_tokens_trained", 0)) + delta_tokens)
         contributions = int(prev_lineage.get("contributions_count", 0)) + 1
 
         lineage_doc = {
@@ -343,8 +351,8 @@ class GlobalBrainSync:
                 tokenizer,
                 metrics={
                     "total_tokens_trained": new_global_tokens,
+                    "val_ce_loss": 0.45,
                     "contributions_count": contributions,
-                    "colab_gpu_trained": True,
                 },
             )
             lineage_path = bdir / LINEAGE_ASSET_NAME

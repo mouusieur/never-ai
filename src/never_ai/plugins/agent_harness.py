@@ -91,6 +91,24 @@ class SovereignAgentHarness:
     def reset_session_fast_weights(self) -> None:
         self.titans_session_states = None
 
+    @staticmethod
+    def _is_anaphoric_followup(user_message: str) -> bool:
+        msg = re.sub(r"[?!.,;:]+$", "", user_message.strip().lower()).strip()
+        exact_anaphoric = {
+            "pourquoi",
+            "et pourquoi",
+            "pourquoi ça",
+            "comment ça",
+            "plus simple",
+            "plus court",
+            "développe",
+            "précise",
+            "c'est-à-dire",
+            "explique mieux",
+            "et l'inverse",
+        }
+        return msg in exact_anaphoric
+
     def build_prompt(
         self,
         user_message: str,
@@ -106,32 +124,39 @@ class SovereignAgentHarness:
                 active_tools = [t.name for t in tools]
                 ctx_parts.append("Tools: math_engine")
 
-        # Neural Attention Context Grounding (RETRO-style character-ngram retrieval, zero canned bypass)
+        recent_assistant_texts = [
+            str(t.get("content") or "").strip()
+            for t in (recent_history or [])[-6:]
+            if t.get("role") in ("never", "assistant") and str(t.get("content") or "").strip()
+        ]
+        recent_user_texts = [
+            str(t.get("content") or "").strip()
+            for t in (recent_history or [])[-6:]
+            if t.get("role") == "user" and str(t.get("content") or "").strip()
+        ]
+
+        # Neural Attention Context Grounding strictly scoped to the CURRENT user request
+        # (never injecting raw prior assistant answers that would cause 1-turn delayed parroting!)
         if not active_tools:
             social_facts = [
                 u.content
                 for u in list(self.memory.units.values())[-120:]
                 if u.category in ("social_stream", "semantic", "episodic")
             ]
-            neural_ctx = retrieve_neural_context(user_message, extra_facts=social_facts)
+            query_for_ctx = user_message
+            if self._is_anaphoric_followup(user_message) and recent_user_texts:
+                query_for_ctx = f"{recent_user_texts[-1]} {user_message}"
+
+            neural_ctx = retrieve_neural_context(
+                query_for_ctx,
+                extra_facts=social_facts,
+                avoid_texts=recent_assistant_texts[-3:],
+            )
             if neural_ctx:
                 ctx_parts.append(neural_ctx)
 
-        # Pure multi-turn history without any behavioral/persona/mood directive!
-        hist_chunks: list[str] = []
-        for turn in (recent_history or [])[-4:]:
-            role = turn.get("role")
-            content = str(turn.get("content") or "").strip()
-            if not content:
-                continue
-            if role == "user":
-                hist_chunks.append(f"{USER_TOKEN}{content[:450]}")
-            else:
-                hist_chunks.append(f"{NEVER_TOKEN}{content[:550]}{EOS_TOKEN}")
-
         ctx_block = f"{CONTEXT_TOKEN}{' // '.join(ctx_parts)}" if ctx_parts else ""
-        hist_str = "".join(hist_chunks)
-        prompt = f"{BOS_TOKEN}{ctx_block}{hist_str}{USER_TOKEN}{user_message}{NEVER_TOKEN}"
+        prompt = f"{BOS_TOKEN}{ctx_block}{USER_TOKEN}{user_message}{NEVER_TOKEN}"
         return prompt, active_tools
 
     def _try_symbolic_or_episodic_skill(
@@ -428,8 +453,13 @@ class SovereignAgentHarness:
                 "deep_think": deep_think,
             }
 
-        if self.titans_session_states is not None and len(self.titans_session_states) != self.model.cfg.n_layers:
-            self.titans_session_states = None
+        # Isolate Titans associative memory per turn to eliminate cross-turn state carryover lag
+        self.titans_session_states = None
+        avoid_seqs = [
+            self.tokenizer.encode(str(t.get("content") or "").strip()[:240])
+            for t in (recent_history or [])[-6:]
+            if t.get("role") in ("never", "assistant") and str(t.get("content") or "").strip()
+        ][-3:]
 
         prompt_text, routed_tools = self.build_prompt(
             user_message,
@@ -496,6 +526,7 @@ class SovereignAgentHarness:
                 titans_states=self.titans_session_states,
                 step_callback=_on_token if on_event is not None else None,
                 tokenizer=self.tokenizer,
+                avoid_sequences=avoid_seqs,
             )
             seg_text = self.tokenizer.decode(out_ids, skip_special_tokens=False)
             generated_segments.append(seg_text)
