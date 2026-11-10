@@ -26,23 +26,20 @@ from never_ai.core.special_tokens import (
 )
 from never_ai.core.tokenizer import MorphTokenizer
 from never_ai.data.conversational_universe import CONVERSATIONAL_UNIVERSE
+from never_ai.data.natural_dialogue_fr import format_natural_french_sequences
 from never_ai.data.omega_domains import OMEGA_DOMAIN_KNOWLEDGE
-from never_ai.data.social_corpus_fr import build_natural_french_social_corpus
 
 
 def synthesize_bilingual_curriculum(seed: int = 42, scale_factor: int = 1) -> tuple[list[str], list[str]]:
     """
     Build a clean, zero-pollution, zero-mode French/EN training & validation corpus:
-    - Natural French conversational & X/social threads (zero robotic <|think|> meta-headers)
+    - Compositional Everyday Spoken French corpus (zero canned slogans, zero <|context|> answer copy)
     - Factual general knowledge & scientific explanations
     - Clean symbolic math plugin trajectories (kept concise so they never drown natural speech)
     """
     rng = random.Random(seed)
-    docs: list[str] = []
-
-    # 1. Primary Natural French Conversational & Social Corpus (dominant 75%+ of training tokens!)
-    social_docs = build_natural_french_social_corpus(seed=seed, scale_factor=max(1, scale_factor))
-    docs.extend(social_docs)
+    tr_nat, va_nat = format_natural_french_sequences(seed=seed)
+    docs: list[str] = list(tr_nat) + list(va_nat)
 
     # 2. Clean Direct Q&A from Conversational Universe (ONLY natural direct speech — zero [Ton ...] tags!)
     for c_item in CONVERSATIONAL_UNIVERSE:

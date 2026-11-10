@@ -92,22 +92,27 @@ class SovereignAgentHarness:
         self.titans_session_states = None
 
     @staticmethod
-    def _is_anaphoric_followup(user_message: str) -> bool:
+    def _is_short_contextual_reaction(user_message: str) -> bool:
         msg = re.sub(r"[?!.,;:]+$", "", user_message.strip().lower()).strip()
-        exact_anaphoric = {
-            "pourquoi",
-            "et pourquoi",
-            "pourquoi ça",
-            "comment ça",
-            "plus simple",
-            "plus court",
-            "développe",
-            "précise",
-            "c'est-à-dire",
-            "explique mieux",
-            "et l'inverse",
-        }
-        return msg in exact_anaphoric
+        words = re.findall(r"[a-zà-öø-ÿ0-9']+", msg)
+        if not words or len(words) > 6:
+            return False
+        # Standalone greetings or explicit standalone questions don't need prior user topic
+        standalone_starts = (
+            "salut", "coucou", "yo", "wesh", "bonjour", "bonsoir", "hey",
+            "merci", "au revoir", "bye", "ciao", "raconte", "donne", "explique l'",
+            "c'est quoi ", "quelle est ", "quel est ", "qui est ", "tu connais ",
+            "t'es ", "tu es ", "tu préfères ", "tu preferes ", "j'ai mal", "il pleut",
+            "suce ", "je t'aime", "le caca",
+        )
+        if any(msg.startswith(s) for s in standalone_starts):
+            return False
+        reaction_cues = (
+            "et toi", "pas grand chose", "rien", "pas drole", "pas drôle", "nul",
+            "plus rapide", "plus simple", "plus court", "sucré", "salé",
+            "pas compris", "pourquoi", "comment ça", "c'est-à-dire", "et ", "déjà",
+        )
+        return any(c in msg for c in reaction_cues)
 
     def build_prompt(
         self,
@@ -124,36 +129,16 @@ class SovereignAgentHarness:
                 active_tools = [t.name for t in tools]
                 ctx_parts.append("Tools: math_engine")
 
-        recent_assistant_texts = [
-            str(t.get("content") or "").strip()
-            for t in (recent_history or [])[-6:]
-            if t.get("role") in ("never", "assistant") and str(t.get("content") or "").strip()
-        ]
         recent_user_texts = [
             str(t.get("content") or "").strip()
             for t in (recent_history or [])[-6:]
             if t.get("role") == "user" and str(t.get("content") or "").strip()
         ]
 
-        # Neural Attention Context Grounding strictly scoped to the CURRENT user request
-        # (never injecting raw prior assistant answers that would cause 1-turn delayed parroting!)
-        if not active_tools:
-            social_facts = [
-                u.content
-                for u in list(self.memory.units.values())[-120:]
-                if u.category in ("social_stream", "semantic", "episodic")
-            ]
-            query_for_ctx = user_message
-            if self._is_anaphoric_followup(user_message) and recent_user_texts:
-                query_for_ctx = f"{recent_user_texts[-1]} {user_message}"
-
-            neural_ctx = retrieve_neural_context(
-                query_for_ctx,
-                extra_facts=social_facts,
-                avoid_texts=recent_assistant_texts[-3:],
-            )
-            if neural_ctx:
-                ctx_parts.append(neural_ctx)
+        # Pure neural generation: NEVER inject pre-written answers into <|context|>!
+        # Only pass the user's own previous turn topic on short conversational reactions.
+        if not active_tools and recent_user_texts and self._is_short_contextual_reaction(user_message):
+            ctx_parts.append(recent_user_texts[-1][:85])
 
         ctx_block = f"{CONTEXT_TOKEN}{' // '.join(ctx_parts)}" if ctx_parts else ""
         prompt = f"{BOS_TOKEN}{ctx_block}{USER_TOKEN}{user_message}{NEVER_TOKEN}"

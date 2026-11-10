@@ -792,7 +792,7 @@ def _ota_live_brain_upgrade_if_needed() -> None:
     if srv_mod is None:
         return
     cur_eng = getattr(srv_mod, "_ENGINE", None)
-    if cur_eng is None or getattr(cur_eng, "total_tokens_trained", 0) >= 310_000:
+    if cur_eng is None or getattr(cur_eng, "total_tokens_trained", 0) >= 1_800_000:
         return
 
     try:

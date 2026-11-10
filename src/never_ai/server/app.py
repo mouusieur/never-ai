@@ -76,7 +76,7 @@ def _reload_engine_if_upgraded() -> None:
             vault_dir=_ENGINE.vault.vault_root,
             telemetry_path=_ENGINE.telemetry_path,
         )
-        if seed_res.get("upgraded") or getattr(_ENGINE, "total_tokens_trained", 0) < 310_000:
+        if seed_res.get("upgraded") or getattr(_ENGINE, "total_tokens_trained", 0) < 1_800_000:
             _ENGINE = NeverAIEngine(
                 vault_dir=_ENGINE.vault.vault_root,
                 memory_path=_ENGINE.memory.storage_path,
@@ -133,7 +133,7 @@ class ThreadCreateRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
     max_new_tokens: int = Field(default=160, ge=8, le=360)
-    temperature: float = Field(default=0.2, ge=0.0, le=1.5)
+    temperature: float = Field(default=0.55, ge=0.0, le=1.5)
     thread_id: str | None = None
     owner: str = Field(default="local")
     deep_think: bool = Field(default=False)

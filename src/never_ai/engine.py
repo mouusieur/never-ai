@@ -1130,15 +1130,17 @@ class NeverAIEngine:
             t_msk = torch.tensor([mask[1:]], dtype=torch.float32, device=self.device)
 
             use_titans_grad = self.device.type == "cuda"
+            teach_opt = torch.optim.AdamW(self.model.parameters(), lr=1.5e-4, weight_decay=0.0)
             self.model.train()
             for _ in range(max(1, train_steps)):
-                rep = self.dataset.sample_batch(batch_size=2, split="train", replay_ratio=0.5, device=self.device)
+                rep = self.dataset.sample_batch(batch_size=4, split="train", replay_ratio=0.5, device=self.device)
                 inp, tgt, msk = self._concat_aligned_batches(t_ids, t_tgt, t_msk, rep)
-                self.optimizer.zero_grad()
+                teach_opt.zero_grad(set_to_none=True)
                 out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=use_titans_grad)
                 assert out.loss is not None
                 out.loss.backward()
-                self.optimizer.step(self.model)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
+                teach_opt.step()
                 self.model.update_moe_biases()
                 self.total_tokens_trained += int(inp.numel())
                 losses.append(round(out.ce_loss, 4))

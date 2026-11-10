@@ -644,12 +644,12 @@ class ChronoMorphLM(nn.Module):
                     pen = repetition_penalty * (1.0 + 0.12 * (cnt - 1))
                     val = step_logits[:, tid]
                     step_logits[:, tid] = torch.where(val > 0, val / pen, val * pen)
-                if len(generated) >= 2:
-                    bi = (generated[-2], generated[-1])
+                if len(generated) >= 3:
+                    tri = (generated[-3], generated[-2], generated[-1])
                     win = generated[-64:]
-                    for idx_g in range(len(win) - 2):
-                        if (win[idx_g], win[idx_g + 1]) == bi and win[idx_g + 2] >= 16:
-                            step_logits[:, win[idx_g + 2]] = -float("inf")
+                    for idx_g in range(len(win) - 3):
+                        if (win[idx_g], win[idx_g + 1], win[idx_g + 2]) == tri and win[idx_g + 3] >= 16:
+                            step_logits[:, win[idx_g + 3]] = -float("inf")
 
             # 2.5 Orthographic subword guard (prevents glued 22-char gibberish or triple-letter stutters)
             if tokenizer is not None and generated:
@@ -666,16 +666,20 @@ class ChronoMorphLM(nn.Module):
                     ):
                         step_logits[:, cid] = -float("inf")
 
-            # 3. Entropy-Adaptive Sampling (cools uncertain steps to prevent subword babble + crisp EOS stop)
+            # 3. Entropy-Adaptive Nucleus Sampling (natural variety on clear steps, crisp cooling on uncertain steps)
             raw_probs = F.softmax(step_logits, dim=-1)
-            if len(generated) >= 10 and EOS_ID in stop_set and float(raw_probs[0, EOS_ID].item()) >= 0.22:
+            if len(generated) >= 4 and EOS_ID in stop_set and float(raw_probs[0, EOS_ID].item()) >= 0.32:
                 next_id = EOS_ID
             elif temperature <= 1e-5:
                 next_id = int(torch.argmax(step_logits, dim=-1).item())
             else:
                 ent = float(-(raw_probs * (raw_probs + 1e-12).log()).sum().item())
-                eff_temp = temperature * max(0.12, min(1.0, 1.0 - 0.38 * max(0.0, ent - 1.2)))
-                eff_min_p = min(0.42, max(min_p, 0.09 * ent if ent > 1.3 else min_p))
+                if ent <= 2.1:
+                    eff_temp = max(0.38, temperature)
+                    eff_min_p = max(min_p, 0.12)
+                else:
+                    eff_temp = temperature * max(0.25, 1.0 - 0.30 * (ent - 2.1))
+                    eff_min_p = min(0.40, max(min_p, 0.18 + 0.08 * (ent - 2.1)))
 
                 scaled = step_logits / max(1e-4, eff_temp)
                 if top_k > 0:
@@ -685,12 +689,12 @@ class ChronoMorphLM(nn.Module):
                 if eff_min_p > 0.0:
                     max_prob = probs.max(dim=-1, keepdim=True).values
                     probs = torch.where(probs >= eff_min_p * max_prob, probs, torch.zeros_like(probs))
-                if 0.0 < top_p < 1.0:
-                    sorted_probs, sorted_idx = torch.sort(probs, descending=True, dim=-1)
-                    cum_probs = torch.cumsum(sorted_probs, dim=-1)
-                    cutoff = cum_probs - sorted_probs > top_p
-                    sorted_probs[cutoff] = 0.0
-                    probs = torch.zeros_like(probs).scatter(-1, sorted_idx, sorted_probs)
+                eff_top_p = min(top_p, 0.86) if top_p > 0.0 else 0.86
+                sorted_probs, sorted_idx = torch.sort(probs, descending=True, dim=-1)
+                cum_probs = torch.cumsum(sorted_probs, dim=-1)
+                cutoff = cum_probs - sorted_probs > eff_top_p
+                sorted_probs[cutoff] = 0.0
+                probs = torch.zeros_like(probs).scatter(-1, sorted_idx, sorted_probs)
                 prob_sum = probs.sum(dim=-1, keepdim=True)
                 if float(prob_sum.item()) <= 1e-9:
                     next_id = int(torch.argmax(step_logits, dim=-1).item())
