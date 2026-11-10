@@ -27,8 +27,8 @@ import zipfile
 
 DEFAULT_GITHUB_REPO = "mouusieur/never-ai"
 CANDIDATE_BRANCHES = ("arena/403f5d7f-never-ai", "main")
-APP_VERSION = "3.4.0"
-USER_AGENT = "NeverAI-Sovereign/3.4 (+https://github.com/mouusieur/never-ai)"
+APP_VERSION = "3.4.1"
+USER_AGENT = "NeverAI-Sovereign/3.4.1 (+https://github.com/mouusieur/never-ai)"
 
 # Directories that MUST NEVER be overwritten during an OTA code update
 PROTECTED_TOP_DIRS = {
@@ -46,6 +46,8 @@ PROTECTED_TOP_DIRS = {
 SYNC_PATHS = (
     "src/never_ai",
     "assets",
+    "mobile_pwa",
+    "scripts",
     "docs",
     "README.md",
     "pyproject.toml",
@@ -372,13 +374,19 @@ class OTAUpdater:
 
     @staticmethod
     def hot_reload_runtime_modules() -> list[str]:
-        """Reload updated Python data/plugin modules in-memory without dropping neural weights."""
+        """Reload updated Python data/core/plugin modules in-memory."""
         reloaded: list[str] = []
         target_prefixes = (
+            "never_ai.data.social_corpus_fr",
             "never_ai.data.omega_domains",
             "never_ai.data.conversational_universe",
+            "never_ai.data.curriculum",
+            "never_ai.core.model",
+            "never_ai.optim.composite_muon",
+            "never_ai.updater.brain_bootstrap",
             "never_ai.plugins.web_search",
             "never_ai.plugins.omega_tools",
+            "never_ai.plugins.agent_harness",
             "never_ai.plugins.deep_research",
         )
         for mod_name in target_prefixes:

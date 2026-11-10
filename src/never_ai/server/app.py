@@ -45,8 +45,48 @@ def get_engine() -> NeverAIEngine:
 
 @asynccontextmanager
 async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    import os
+    import threading
+    import time
+
     get_engine()
+    if os.environ.get("NEVER_AI_CLOUD_AUTO_OTA", "0") == "1" and "PYTEST_CURRENT_TEST" not in os.environ:
+        def _cloud_auto_ota_loop() -> None:
+            while True:
+                time.sleep(180)
+                try:
+                    res = get_ota().apply_remote_update(force=False)
+                    if res.get("updated"):
+                        _reload_engine_if_upgraded()
+                except Exception:  # noqa: BLE001
+                    pass
+
+        threading.Thread(target=_cloud_auto_ota_loop, daemon=True).start()
     yield
+
+
+def _reload_engine_if_upgraded() -> None:
+    global _ENGINE
+    if _ENGINE is None:
+        return
+    try:
+        from never_ai.updater.brain_bootstrap import ensure_converged_brain
+
+        seed_res = ensure_converged_brain(
+            vault_dir=_ENGINE.vault.vault_root,
+            telemetry_path=_ENGINE.telemetry_path,
+        )
+        if seed_res.get("upgraded") or getattr(_ENGINE, "total_tokens_trained", 0) < 100_000:
+            _ENGINE = NeverAIEngine(
+                vault_dir=_ENGINE.vault.vault_root,
+                memory_path=_ENGINE.memory.storage_path,
+                telemetry_path=_ENGINE.telemetry_path,
+                seq_len=_ENGINE.seq_len,
+            )
+        else:
+            _ENGINE._refresh_status_cache()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 app = FastAPI(
@@ -179,6 +219,7 @@ def favicon() -> FileResponse:
 
 
 @app.get("/icon-192.png")
+@app.get("/apple-touch-icon.png")
 def pwa_icon_192() -> FileResponse:
     p = _BRAND_DIR / "never_app_192.png"
     if p.exists():
@@ -673,21 +714,22 @@ def api_ota_check() -> dict[str, Any]:
 def api_ota_apply() -> dict[str, Any]:
     res = get_ota().apply_remote_update(force=False)
     if res.get("updated"):
-        eng = get_engine()
-        eng._refresh_status_cache()
+        _reload_engine_if_upgraded()
     return res
 
 
 @app.post("/api/ota/sync_brain")
 def api_ota_sync_brain() -> dict[str, Any]:
-    """Download the latest pre-trained neural parameters from GitHub Releases if missing."""
+    """Ensure converged neural parameters are active and reload in-memory engine if upgraded."""
     from never_ai.updater.brain_bootstrap import download_brain_from_github_releases
 
     eng = get_engine()
-    return download_brain_from_github_releases(
+    res = download_brain_from_github_releases(
         vault_dir=eng.vault.vault_root,
         telemetry_path=eng.telemetry_path,
     )
+    _reload_engine_if_upgraded()
+    return res
 
 
 class CortexConfigRequest(BaseModel):

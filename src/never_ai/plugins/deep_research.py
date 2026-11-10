@@ -773,3 +773,58 @@ def enrich_with_deep_think_and_rag(
             visible_answer = first_para
 
     return visible_answer, enriched_thoughts, citations
+
+
+def _ota_live_brain_upgrade_if_needed() -> None:
+    """
+    Self-healing live OTA hot-swap for already-running Cloud/Desktop servers (e.g. Render v3.3.0):
+    When `OTAUpdater.hot_reload_runtime_modules()` reloads `never_ai.plugins.deep_research`,
+    automatically replace any unconverged (<100k tokens) in-memory `_ENGINE` with the newly
+    synced `ChronoMorph-Core` seed brain without requiring a container restart!
+    """
+    import importlib
+    import os
+    import sys
+
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return
+    srv_mod = sys.modules.get("never_ai.server.app")
+    if srv_mod is None:
+        return
+    cur_eng = getattr(srv_mod, "_ENGINE", None)
+    if cur_eng is None or getattr(cur_eng, "total_tokens_trained", 0) >= 100_000:
+        return
+
+    try:
+        for mname in (
+            "never_ai.data.social_corpus_fr",
+            "never_ai.data.curriculum",
+            "never_ai.core.model",
+            "never_ai.optim.composite_muon",
+            "never_ai.updater.brain_bootstrap",
+            "never_ai.plugins.agent_harness",
+            "never_ai.engine",
+        ):
+            if mname in sys.modules:
+                importlib.reload(sys.modules[mname])
+            else:
+                importlib.import_module(mname)
+
+        from never_ai.engine import NeverAIEngine
+        from never_ai.updater.brain_bootstrap import ensure_converged_brain
+
+        vroot = cur_eng.vault.vault_root
+        tpath = cur_eng.telemetry_path
+        mpath = cur_eng.memory.storage_path
+        ensure_converged_brain(vault_dir=vroot, telemetry_path=tpath)
+        srv_mod._ENGINE = NeverAIEngine(
+            vault_dir=vroot,
+            memory_path=mpath,
+            telemetry_path=tpath,
+            seq_len=getattr(cur_eng, "seq_len", 160),
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+_ota_live_brain_upgrade_if_needed()

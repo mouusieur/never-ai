@@ -87,10 +87,14 @@ class NeverAIEngine:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        if os.environ.get("NEVER_AI_BOOTSTRAP_GITHUB_BRAIN", "1") == "1" and "PYTEST_CURRENT_TEST" not in os.environ:
-            from never_ai.updater.brain_bootstrap import detect_available_ram_mb, download_brain_from_github_releases
+        if "PYTEST_CURRENT_TEST" not in os.environ:
+            from never_ai.updater.brain_bootstrap import (
+                download_brain_from_github_releases,
+                ensure_converged_brain,
+            )
 
-            if detect_available_ram_mb() >= 900:
+            ensure_converged_brain(vault_dir=vault_dir, telemetry_path=self.telemetry_path)
+            if os.environ.get("NEVER_AI_BOOTSTRAP_GITHUB_BRAIN", "1") == "1":
                 download_brain_from_github_releases(vault_dir=vault_dir, telemetry_path=self.telemetry_path)
 
         ckpts = self.vault.list_checkpoints()
