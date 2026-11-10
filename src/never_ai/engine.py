@@ -1267,7 +1267,7 @@ class NeverAIEngine:
 
         full_ans = "".join(chunks).strip()
         if self.cortex.config.get("distill_to_chronomorph", True) and full_ans:
-            self.learn_dialogue_exchange(clean_q, full_ans, priority=3.5)
+            self.learn_dialogue_exchange(question=clean_q, thought="", answer=full_ans, priority=3.5)
             self.cortex.record_distilled_turn()
 
         return {

@@ -662,7 +662,12 @@ def api_cortex_distill(req: CortexDistillRequest) -> dict[str, Any]:
             )
             thread_meta = {"thread_id": t["id"], "thread_title": t["title"]}
         if eng.cortex.config.get("distill_to_chronomorph", True) and req.assistant_reply.strip():
-            eng.learn_dialogue_exchange(req.user_message, req.assistant_reply, priority=3.5)
+            eng.learn_dialogue_exchange(
+                question=req.user_message,
+                thought="",
+                answer=req.assistant_reply,
+                priority=3.5,
+            )
             eng.cortex.record_distilled_turn()
         eng._refresh_status_cache()
 
