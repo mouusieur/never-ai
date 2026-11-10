@@ -550,6 +550,25 @@ def api_status() -> dict[str, Any]:
     return get_engine().status()
 
 
+@app.get("/api/graft/status")
+def api_graft_status() -> dict[str, Any]:
+    return get_engine().neural_graft.status_snapshot()
+
+
+@app.post("/api/graft/bootstrap")
+def api_graft_bootstrap() -> dict[str, Any]:
+    eng = get_engine()
+    if eng.neural_graft.ready:
+        return {"ok": True, **eng.neural_graft.status_snapshot()}
+    eng.neural_graft.start_background_download(on_ready=eng._refresh_status_cache)
+    return {"ok": True, **eng.neural_graft.status_snapshot()}
+
+
+@app.get("/api/affect")
+def api_affect_status() -> dict[str, Any]:
+    return get_engine().affect_field.snapshot()
+
+
 @app.post("/api/chat")
 def api_chat(req: ChatRequest) -> dict[str, Any]:
     return get_engine().chat(

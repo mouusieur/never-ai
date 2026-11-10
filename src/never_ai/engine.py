@@ -46,6 +46,7 @@ from never_ai.morphogenesis.operators import (
     verify_function_preservation,
 )
 from never_ai.optim.composite_muon import CompositeMuonOptimizer, WSMCheckpointMerger
+from never_ai.cortex.neural_graft import AffectiveStanceField, NeuralGraftRuntime
 from never_ai.cortex.super_cortex import SuperCortexManager
 from never_ai.plugins.agent_harness import SovereignAgentHarness
 from never_ai.plugins.builtin import build_default_plugin_registry
@@ -148,8 +149,24 @@ class NeverAIEngine:
                 del self.memory.units[uid]
             self.memory.save()
 
+        repo_root = Path(__file__).resolve().parents[2]
+        self.affect_field = AffectiveStanceField(
+            state_path=mem_dir / "affect_state.json",
+            vectors_path=repo_root / "assets" / "neural_graft" / "affect_vectors.safetensors",
+        )
+        self.neural_graft = NeuralGraftRuntime(
+            repo_root=repo_root,
+            vault_dir=vault_dir,
+            affect_field=self.affect_field,
+        )
+
         self.harness = SovereignAgentHarness(
-            self.model, self.tokenizer, self.registry, self.memory
+            self.model,
+            self.tokenizer,
+            self.registry,
+            self.memory,
+            neural_graft=self.neural_graft,
+            affect_field=self.affect_field,
         )
         self._seed_omega_domains_if_needed()
 
@@ -165,6 +182,7 @@ class NeverAIEngine:
         self._bg_thread: threading.Thread | None = None
 
         self._status_cache: dict[str, Any] = {}
+        self.neural_graft.try_load_or_bootstrap_async(on_ready=self._refresh_status_cache)
         self._refresh_status_cache()
 
     @staticmethod
@@ -663,6 +681,10 @@ class NeverAIEngine:
             round(100.0 * self._bg_tokens_since_molt / max(1, self.AUTO_MOLT_TOKEN_INTERVAL), 1),
         )
         anat = self.model.inspect_anatomy()
+        graft_snap = self.neural_graft.status_snapshot()
+        affect_snap = self.affect_field.snapshot()
+        anat["graft_params"] = int(graft_snap.get("total_effective_params", 0))
+        anat["combined_params"] = int(anat["total_params"]) + anat["graft_params"]
         comm = self._build_commercial_snapshot(anat, pct_next_molt)
         self._status_cache = {
             "version": "1.2.0-dual-horizon",
@@ -679,6 +701,8 @@ class NeverAIEngine:
             "total_tokens_trained": self.total_tokens_trained,
             "replay_buffer_size": len(self.dataset.replay_reservoir),
             "anatomy": anat,
+            "neural_graft": graft_snap,
+            "affect_state": affect_snap,
             "wsm": self.wsm.describe(),
             "memories_count": len(self.memory.units),
             "rag_documents": self.list_rag_documents(),
@@ -1225,6 +1249,27 @@ class NeverAIEngine:
         if source != "discussion" or self._active_chats > 0:
             return
         try:
+            # 1. Plastic Upper-Cortex LoRA Self-Forge + Distillation into ChronoMorph when 497M Graft is active
+            if self.neural_graft.ready and answer.strip():
+                self.self_forge.observe_prompt(q_clean, surprise=2.4)
+                self.learn_dialogue_exchange(question=q_clean, thought="", answer=answer.strip(), priority=2.6)
+                if self.self_forge.prompts_observed % 2 == 0:
+                    g_res = self.neural_graft.plastic_self_forge_step(q_clean, answer.strip())
+                    if g_res.get("forged"):
+                        with self.lock:
+                            self.total_tokens_trained += int(g_res.get("tokens", 0))
+                            self._append_telemetry(
+                                {
+                                    "type": "train_step",
+                                    "timestamp": round(time.time(), 2),
+                                    "ce_loss": g_res["ce"],
+                                    "source": "auto-forge LoRA 497M",
+                                    "tok_per_sec": 0.0,
+                                }
+                            )
+                            self._refresh_status_cache()
+                return
+
             with self.lock:
                 surprise = self.self_forge.compute_prompt_surprise(
                     self.model, self.tokenizer, q_clean, self.device

@@ -1,6 +1,7 @@
 # Environnements virtuels & caches Python
 .venv/
 venv/
+.cache/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -17,6 +18,7 @@ checkpoints/
 artifacts/
 vault_cache/
 *.safetensors
+!assets/neural_graft/*.safetensors
 *.pt
 *.pth
 *.bin

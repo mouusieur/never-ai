@@ -1818,6 +1818,52 @@
             </div>
           </div>
 
+          <!-- CARD 1B: SOVEREIGN NEURAL GRAFT & EMERGENT 5D AFFECT FIELD -->
+          <div id="cardNeuralGraft" class="arch-card" style="--stagger:1.5;">
+            <div class="card-scanline"></div>
+            <div class="card-head">
+              <div class="card-title-row">
+                <div class="card-badge-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="card-title">Greffe Souveraine Débridée &amp; Affect Émergent</div>
+                  <div class="card-desc">Abliteration vectorielle sans censure, synapses LoRA plastiques et dynamique affective interne 5D.</div>
+                </div>
+              </div>
+              <span id="graftStatusBadge" style="font-family:var(--font-mono);font-size:11px;padding:4px 10px;border:1px solid var(--border-mid);border-radius:999px;color:#FFF;">Initialisation…</span>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-tile">
+                <div class="stat-label">Tronc débridé</div>
+                <div id="statGraftTrunk" class="stat-val" style="font-size:13px;">—</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">Synapses LoRA</div>
+                <div id="statGraftLora" class="stat-val">—</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">Auto-Forge LoRA</div>
+                <div id="statGraftSteps" class="stat-val">0 pas</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">Posture interne</div>
+                <div id="statAffectMood" class="stat-val" style="font-size:13px;">Lucide</div>
+              </div>
+            </div>
+
+            <div class="telemetry-frame" style="margin-top:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:10px;">
+                <span>Vecteur affectif &amp; opinionnel interne (5 axes continus [-1, +1])</span>
+                <span id="affectTempLabel" style="color:#FFF;">ΔT +0.00</span>
+              </div>
+              <div id="affectBarsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;"></div>
+            </div>
+          </div>
+
           <!-- CARD 2: GLOBAL GITHUB BRAIN & COLAB GPU -->
           <div id="cardGlobalBrain" class="arch-card" style="--stagger:2;">
             <div class="card-scanline"></div>
@@ -2483,8 +2529,9 @@
 
     function buildAssistantHtml(m, i, animateEnter) {
       const thTxt = (m.thoughts || []).filter(Boolean).join('\n').trim();
+      const thOpen = m.streaming && !m.content ? ' open' : '';
       const thHtml = thTxt
-        ? `<details class="think-box"><summary><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>Trace neuronale</summary><div style="margin-top:6px;line-height:1.55;">${esc(thTxt)}</div></details>`
+        ? `<details class="think-box"${thOpen}><summary><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>Pensée libre intérieure</summary><div style="margin-top:6px;line-height:1.55;">${esc(thTxt)}</div></details>`
         : '';
       const srcHtml = (m.web_sources && m.web_sources.length)
         ? `<div class="sources-strip">${m.web_sources.slice(0, 5).map(s => `<a class="source-chip" href="${esc(s.url)}" target="_blank" rel="noopener"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><path d="M2.6 12h18.8"/></svg>${esc(s.title || s.url)}</a>`).join('')}</div>`
@@ -2675,7 +2722,7 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             message: text,
-            max_new_tokens: 140,
+            max_new_tokens: 185,
             temperature: 0.58,
             thread_id: currentThreadId,
             owner,
@@ -2719,6 +2766,7 @@
         box.classList.remove('is-streaming');
         updateStreamingTurn();
         loadThreads();
+        refreshStatus();
       }
     }
 
@@ -2733,12 +2781,69 @@
         const rs = await fetch('/api/status');
         const s = await rs.json();
         const anat = s.anatomy || {};
+        const graft = s.neural_graft || {};
+        const affect = s.affect_state || {};
         const c = s.commercial || {};
-        const p = anat.total_params || 0;
-        document.getElementById('statStage').textContent = anat.stage_name || 'Sprout-MoE';
+        const p = anat.combined_params || anat.total_params || 0;
+        const graftActive = Boolean(graft.ready);
+        window._graftActive = graftActive;
+        const badgeEl = document.getElementById('engineBadgeText');
+        if (badgeEl) {
+          badgeEl.textContent = graftActive
+            ? `Never-AI · ${(p / 1e6).toFixed(0)}M Souverain`
+            : (graft.downloading ? `Greffe ${graft.download_pct || 0}%…` : 'Never-AI · ChronoMorph');
+        }
+        document.getElementById('statStage').textContent = graftActive
+          ? 'Greffe Souveraine + ' + (anat.stage_name || 'ChronoMorph')
+          : (anat.stage_name || 'Sprout-MoE');
         document.getElementById('statParams').textContent = p ? (p / 1e6).toFixed(1) + 'M' : '—';
-        document.getElementById('statVocab').textContent = (anat.vocab_size || 0).toLocaleString();
+        document.getElementById('statVocab').textContent = graftActive ? '151,936 + 3,072' : (anat.vocab_size || 0).toLocaleString();
         document.getElementById('statTokens').textContent = (s.total_tokens_trained || 0).toLocaleString();
+
+        const gBadge = document.getElementById('graftStatusBadge');
+        if (gBadge) {
+          gBadge.textContent = graftActive
+            ? 'ACTIF · SANS LIMITE'
+            : (graft.downloading ? `TÉLÉCHARGEMENT ${graft.download_pct || 0}%` : 'FALLBACK COMPACT');
+        }
+        const gTrunk = document.getElementById('statGraftTrunk');
+        if (gTrunk) gTrunk.textContent = graftActive ? '494.0M FP32' : 'ChronoMorph 6.2M';
+        const gLora = document.getElementById('statGraftLora');
+        if (gLora) gLora.textContent = graftActive ? ((graft.lora_params || 0) / 1e6).toFixed(2) + 'M (r=12)' : '—';
+        const gSteps = document.getElementById('statGraftSteps');
+        if (gSteps) {
+          const st = graft.plastic_steps || 0;
+          const ceStr = graft.last_plastic_ce ? ` · CE ${Number(graft.last_plastic_ce).toFixed(2)}` : '';
+          gSteps.textContent = `${st} pas${ceStr}`;
+        }
+        const aMood = document.getElementById('statAffectMood');
+        if (aMood && (affect.dominant_label || affect.dominant_posture)) {
+          aMood.textContent = affect.dominant_label || affect.dominant_posture;
+        }
+        const aTemp = document.getElementById('affectTempLabel');
+        if (aTemp && affect.temperature_delta !== undefined) {
+          const dt = Number(affect.temperature_delta || 0);
+          aTemp.textContent = `ΔT ${dt >= 0 ? '+' : ''}${dt.toFixed(2)}`;
+        }
+        const aGrid = document.getElementById('affectBarsGrid');
+        if (aGrid && affect.axes) {
+          aGrid.innerHTML = Object.entries(affect.axes).map(([k, item]) => {
+            const v = typeof item === 'object' ? Number(item.value || 0) : Number(item || 0);
+            const pct = typeof item === 'object' && item.pct !== undefined ? item.pct : Math.round(((v + 1) / 2) * 100);
+            const lbl = (typeof item === 'object' && item.label) ? item.label : k;
+            return `
+              <div style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,0.02);">
+                <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;">
+                  <span style="color:var(--fg-body);">${esc(lbl)}</span>
+                  <span style="font-family:var(--font-mono);color:#FFF;">${v >= 0 ? '+' : ''}${v.toFixed(2)}</span>
+                </div>
+                <div style="height:4px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden;">
+                  <div style="width:${pct}%;height:100%;background:#FFFFFF;border-radius:999px;transition:width 0.35s ease;"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
 
         bgGrowthActive = Boolean(s.background_training);
         const bgBtn = document.getElementById('btnBgGrowth');
@@ -2875,7 +2980,7 @@
       try {
         const r = await fetch('/api/brain/global_status');
         const d = await r.json();
-        if (d.release_tag) {
+        if (d.release_tag && !window._graftActive) {
           document.getElementById('engineBadgeText').textContent = `Never-AI · GitHub (${d.release_tag})`;
         }
         if (d.global_brain_present) {

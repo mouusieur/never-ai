@@ -30,6 +30,7 @@ from never_ai.core.special_tokens import (
 )
 from never_ai.core.titans_memory import TitansMemoryState
 from never_ai.core.tokenizer import MorphTokenizer
+from never_ai.cortex.neural_graft import extract_organic_relational_facts
 from never_ai.data.conversational_universe import match_conversational_intent
 from never_ai.data.social_corpus_fr import retrieve_neural_context
 from never_ai.memory.evolvemem import EvolveMemStore
@@ -80,11 +81,15 @@ class SovereignAgentHarness:
         tokenizer: MorphTokenizer,
         registry: PluginRegistry,
         memory: EvolveMemStore,
+        neural_graft: Any = None,
+        affect_field: Any = None,
     ) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.registry = registry
         self.memory = memory
+        self.neural_graft = neural_graft
+        self.affect_field = affect_field
         self.titans_session_states: list[TitansMemoryState | None] | None = None
         self.pure_neural_dialogue: bool = True
 
@@ -175,9 +180,9 @@ class SovereignAgentHarness:
         msg_strip = user_message.strip()
         msg_low = msg_strip.lower()
 
-        # 1. Explicit personal name introduction
+        # 1. Explicit personal name introduction (canned greeting bypassed when 497M neural graft speaks natively)
         m_name = _NAME_FACT_RE.search(msg_strip)
-        if m_name:
+        if m_name and not (self.neural_graft is not None and getattr(self.neural_graft, "ready", False)):
             user_name = m_name.group(1).strip()
             self.memory.store(
                 key=f"user_name_{owner}",
@@ -239,8 +244,8 @@ class SovereignAgentHarness:
                 ),
             }
 
-        # 3. Recall user's name or taught memories
-        if any(
+        # 3. Recall user's name or taught memories (canned reply bypassed when 497M neural graft weaves all facts naturally)
+        if not (self.neural_graft is not None and getattr(self.neural_graft, "ready", False)) and any(
             p in msg_low
             for p in (
                 "comment je m'appelle",
@@ -378,6 +383,21 @@ class SovereignAgentHarness:
 
         return None
 
+    def _collect_relational_memories(self, user_message: str, owner: str) -> list[str]:
+        """Gather authentic user profile & episodic facts for factual context grounding."""
+        facts: list[str] = []
+        for u in self.memory.units.values():
+            if u.category == "episodic" and owner in u.tags:
+                facts.append(u.content)
+            elif u.key.startswith(f"fact_{owner}_"):
+                facts.append(u.content)
+        sem_hits = self.memory.query(user_message, top_k=2, category="document_rag")
+        for h in sem_hits:
+            if float(h.get("score", 0.0)) >= 0.18:
+                facts.append(str(h.get("content", ""))[:260])
+        # Deduplicate preserving order
+        return list(dict.fromkeys(facts))[:6]
+
     def run_turn(
         self,
         user_message: str,
@@ -394,7 +414,11 @@ class SovereignAgentHarness:
         mood_id: str | None = None,
         on_event: Callable[[dict[str, Any]], bool | None] | None = None,
     ) -> dict[str, Any]:
-        # Fast-path episodic/symbolic/Omega/Web/Conversational skills with verified traces
+        # 0. Passive organic relational memory extraction (zero canned confirmation interrupt!)
+        for r_key, r_fact, r_tags in extract_organic_relational_facts(user_message, owner=owner):
+            self.memory.store(key=r_key, content=r_fact, category="episodic", tags=r_tags)
+
+        # Fast-path episodic/symbolic/Omega/Web skills with verified traces
         fast = self._try_symbolic_or_episodic_skill(
             user_message,
             owner=owner,
@@ -404,6 +428,8 @@ class SovereignAgentHarness:
             mood_id=mood_id,
         )
         if fast is not None:
+            if self.affect_field is not None:
+                self.affect_field.update_from_turn(user_message)
             vis_fast, th_fast, cites_fast = enrich_with_deep_think_and_rag(
                 user_message=user_message,
                 visible_answer=fast["visible_answer"],
@@ -437,7 +463,62 @@ class SovereignAgentHarness:
                 "persona": persona,
                 "style_mode": style_mode,
                 "deep_think": deep_think,
+                "affect_state": self.affect_field.snapshot() if self.affect_field is not None else None,
             }
+
+        # Sovereign 497M Neural Graft Hemisphere (Abliterated FR + Plastic Upper-Cortex LoRA + 5D Affect Steering)
+        math_explicit = _MATH_EXPR_RE.search(user_message)
+        anat_explicit = any(k in user_message.lower() for k in ("anatomie", "combien de paramètres", "inspecte ton"))
+        if (
+            self.neural_graft is not None
+            and getattr(self.neural_graft, "ready", False)
+            and not math_explicit
+            and not anat_explicit
+        ):
+            factual_mems = self._collect_relational_memories(user_message, owner=owner)
+            think_chunks: list[str] = []
+            ans_chunks: list[str] = []
+            for kind, delta in self.neural_graft.stream_autonomous_turn(
+                user_message=user_message,
+                recent_history=recent_history,
+                factual_memories=factual_mems,
+                temperature=max(0.35, float(temperature)),
+                max_new_tokens=max(120, int(max_new_tokens)),
+                deep_think=deep_think,
+            ):
+                if kind == "think":
+                    think_chunks.append(delta)
+                    if on_event is not None:
+                        if on_event({"type": "think_delta", "text": delta}) is False:
+                            break
+                else:
+                    ans_chunks.append(delta)
+                    if on_event is not None:
+                        if on_event({"type": "answer_delta", "text": delta}) is False:
+                            break
+
+            vis_graft = "".join(ans_chunks).strip()
+            th_graft_str = "".join(think_chunks).strip()
+            th_list = [th_graft_str] if th_graft_str else []
+            return {
+                "visible_answer": vis_graft,
+                "thoughts": th_list,
+                "tool_traces": [],
+                "routed_tools": [],
+                "raw_generation": vis_graft,
+                "titans_mean_surprise": 0.0,
+                "artifacts": [],
+                "citations": [],
+                "web_sources": [],
+                "persona": persona,
+                "style_mode": style_mode,
+                "deep_think": deep_think,
+                "neural_graft_used": True,
+                "affect_state": self.affect_field.snapshot() if self.affect_field is not None else None,
+            }
+
+        if self.affect_field is not None:
+            self.affect_field.update_from_turn(user_message)
 
         # Isolate Titans associative memory per turn to eliminate cross-turn state carryover lag
         self.titans_session_states = None
@@ -596,10 +677,20 @@ class SovereignAgentHarness:
                         on_event({"type": "tool_call", "trace": trace_obj})
                     if not thoughts:
                         thoughts.append("Lecture directe des registres synaptiques via introspection_probe.")
+                    graft_p = (
+                        self.neural_graft.base_params_count + self.neural_graft.lora_params_count
+                        if self.neural_graft is not None and getattr(self.neural_graft, "ready", False)
+                        else 0
+                    )
+                    graft_note = (
+                        f" + greffe neuronale souveraine active de **{graft_p:,}** neurones débridés (`LoRA` plastique)"
+                        if graft_p > 0
+                        else ""
+                    )
                     visible = (
                         f"Mon cortex actif est au stade **{anat['stage_name']}** (Génération {anat['generation']}) "
-                        f"avec **{anat['total_params']:,}** paramètres totaux (**{anat['active_params']:,}** actifs/token), "
-                        f"`L={anat['n_layers']}`, `d={anat['d_model']}`, `H={anat['n_heads']}`."
+                        f"avec **{anat['total_params']:,}** paramètres ChronoMorph (**{anat['active_params']:,}** actifs/token), "
+                        f"`L={anat['n_layers']}`, `d={anat['d_model']}`, `H={anat['n_heads']}`{graft_note}."
                     )
                     if on_event is not None:
                         on_event({"type": "answer_replace", "text": visible})
@@ -660,6 +751,7 @@ class SovereignAgentHarness:
             "persona": persona,
             "style_mode": style_mode,
             "deep_think": deep_think,
+            "affect_state": self.affect_field.snapshot() if self.affect_field is not None else None,
         }
 
     def _execute_raw_call(self, raw_call: str) -> dict[str, Any]:
