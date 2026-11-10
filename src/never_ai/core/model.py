@@ -615,14 +615,22 @@ class ChronoMorphLM(nn.Module):
             if in_think or in_call:
                 step_logits[:, CALL_START_ID] = -float("inf")
 
-            # 2. Repetition penalty over recent non-special generated tokens
+            # 2. Repetition + frequency penalty & 3-gram loop prevention over generated tokens
             if repetition_penalty > 1.0 and generated:
-                recent_toks = {t for t in generated[-48:] if t >= 16}
-                for tid in recent_toks:
+                counts: dict[int, int] = {}
+                for t in generated[-56:]:
+                    if t >= 16:
+                        counts[t] = counts.get(t, 0) + 1
+                for tid, cnt in counts.items():
+                    pen = repetition_penalty * (1.0 + 0.12 * (cnt - 1))
                     val = step_logits[:, tid]
-                    step_logits[:, tid] = torch.where(
-                        val > 0, val / repetition_penalty, val * repetition_penalty
-                    )
+                    step_logits[:, tid] = torch.where(val > 0, val / pen, val * pen)
+                if len(generated) >= 2:
+                    bi = (generated[-2], generated[-1])
+                    win = generated[-64:]
+                    for idx_g in range(len(win) - 2):
+                        if (win[idx_g], win[idx_g + 1]) == bi and win[idx_g + 2] >= 16:
+                            step_logits[:, win[idx_g + 2]] = -float("inf")
 
             # 3. Sampling with Temperature + Top-K + Min-P + Top-P
             if temperature <= 1e-5:
