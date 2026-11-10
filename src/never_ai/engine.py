@@ -49,6 +49,7 @@ from never_ai.cortex.super_cortex import SuperCortexManager
 from never_ai.plugins.agent_harness import SovereignAgentHarness
 from never_ai.plugins.builtin import build_default_plugin_registry
 from never_ai.plugins.deep_research import SOVEREIGN_PERSONAS
+from never_ai.vault.global_brain_sync import GlobalBrainSync
 from never_ai.vault.manager import VaultManager
 
 
@@ -79,6 +80,7 @@ class NeverAIEngine:
         self.conversations = ConversationStore(mem_dir / "conversations.json")
         self.cortex = SuperCortexManager(mem_dir / "cortex_config.json")
         self.social = SocialStreamHarvester()
+        self.global_sync = GlobalBrainSync(state_path=mem_dir / "global_sync_state.json")
         self.telemetry_path = Path(telemetry_path)
         self.telemetry_path.parent.mkdir(parents=True, exist_ok=True)
         self.seq_len = seq_len
@@ -1514,6 +1516,33 @@ class NeverAIEngine:
             "losses": losses,
             "samples": samples[:5],
         }
+
+    def pull_global_brain(self) -> dict[str, Any]:
+        """Download & Federated-WSM-fuse the latest global Never-AI brain from GitHub Releases."""
+        with self.lock:
+            res = self.global_sync.pull_and_fuse_into_model(
+                model=self.model,
+                tokenizer=self.tokenizer,
+                vault=self.vault,
+                blend_alpha=0.55,
+            )
+            self.wsm.record_snapshot(self.model)
+            self._refresh_status_cache()
+            return res
+
+    def push_global_brain(self, github_token: str = "", contributor: str = "never-ai-studio") -> dict[str, Any]:
+        """Merge local synaptic learning into the shared global Never-AI model on GitHub Releases."""
+        with self.lock:
+            res = self.global_sync.contribute_to_global_release(
+                model=self.model,
+                tokenizer=self.tokenizer,
+                vault=self.vault,
+                local_tokens_trained=self.total_tokens_trained,
+                contributor=contributor,
+                github_token=github_token,
+            )
+            self._refresh_status_cache()
+            return res
 
     def import_brain_zip_bytes(self, zip_bytes: bytes) -> dict[str, Any]:
         """Hot-swap the live ChronoMorph-LM checkpoint from a Colab-trained `never-ai-brain-*.zip`!"""

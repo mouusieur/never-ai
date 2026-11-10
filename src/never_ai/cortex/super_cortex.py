@@ -49,8 +49,8 @@ def build_raw_factual_context(
     tool_context: str = "",
     web_context: str = "",
 ) -> str:
-    """Attach ONLY neutral factual data (episodic memory / tool stdout / web snippets) — ZERO behavioral directive."""
-    blocks: list[str] = []
+    """Strictly factual identity ('Never-AI') + raw data — ZERO behavioral or tone directive."""
+    blocks: list[str] = ["Ton nom est Never-AI."]
     if memories:
         blocks.append("\n".join(f"- {m}" for m in memories[:6]))
     if tool_context:

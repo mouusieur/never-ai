@@ -34,13 +34,9 @@ jobs:
           python scripts/build_release_brain.py never-ai-brain-sprout-moe.zip
           ls -lh never-ai-brain-sprout-moe.zip
 
-      - name: Upload Neural Parameters to Latest GitHub Release
+      - name: Upload Evolved Global Brain & Lineage to Latest GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          if [[ "$TAG" == *-brain* ]]; then
-            gh release upload v1.4.2 never-ai-brain-sprout-moe.zip --clobber
-          else
-            gh release upload "$TAG" never-ai-brain-sprout-moe.zip --clobber
-          fi
+          REL_TAG=$(gh release view --json tagName -q .tagName || echo "v1.4.2")
+          gh release upload "$REL_TAG" never-ai-brain-sprout-moe.zip global_lineage.json --clobber

@@ -1549,8 +1549,8 @@
           <button class="mode-select" id="btnSuperCortex" onclick="openSuperCortexModal()" style="border-color:rgba(16,185,129,0.55);color:#6EE7B7;font-weight:700;" title="Moteurs neuronaux & Super-Trainer GPU Colab">
             ⚡ Cerveau Texte : Natif
           </button>
-          <button class="mode-select" id="btnSocialStream" onclick="openSocialStreamModal()" style="border-color:rgba(29,155,240,0.55);color:#93C5FD;font-weight:700;" title="Entraîner directement les neurones sur X / Twitter & les réseaux sociaux (sans mode ni directive)">
-            📡 Nourrir sur X / Réseaux
+          <button class="mode-select" id="btnSocialStream" onclick="openSocialStreamModal()" style="border-color:rgba(29,155,240,0.55);color:#93C5FD;font-weight:700;" title="Entraîner Never-AI sur X / Réseaux & synchroniser avec le cerveau mondial GitHub">
+            🌍 Réseaux X &amp; Cerveau Mondial
           </button>
           <select class="mode-select" id="tempSelect" title="Créativité">
             <option value="0.15">Précis</option>
@@ -2214,9 +2214,31 @@
         </div>
         <textarea id="txtRawSocialPosts" class="text-input" rows="4" style="width:100%;font-size:12.5px;margin-bottom:9px;resize:vertical;" placeholder="Collez ici des posts ou threads X bruts (séparés par une ligne vide) — aucune consigne n'est ajoutée, l'IA apprend directement la langue et l'esprit des échanges..."></textarea>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:11.5px;color:var(--text-muted);">Pour pré-entraîner sur <strong>des dizaines de milliers de vrais tweets X</strong> à haute vitesse : utilisez le notebook GPU Colab v3.0.</span>
+          <span style="font-size:11.5px;color:var(--text-muted);">Pour pré-entraîner sur <strong>des dizaines de milliers de vrais tweets X</strong> : utilisez le notebook GPU Colab v3.1.</span>
           <button id="btnRunRawSocial" class="pill-btn pill-white" style="height:35px;font-size:12.5px;padding:0 15px;" onclick="runSocialIngestion(true)">
             ⚡ Absorber dans les Neurones
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 3: GLOBAL COLLECTIVE BRAIN SYNC ON GITHUB -->
+      <div style="background:rgba(29,155,240,0.06);border:1px solid rgba(29,155,240,0.35);border-radius:14px;padding:14px 16px;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <strong style="font-size:13.5px;color:#FFF;">3. 🌍 Cerveau Mondial <code>Never-AI</code> (Partagé sur GitHub)</strong>
+          <span id="globalBrainStatusPill" style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(16,185,129,0.16);color:#6EE7B7;">Synchronisation WSM Fédérée</span>
+        </div>
+        <p id="globalBrainSummary" style="font-size:12px;color:var(--text-muted);line-height:1.45;margin-bottom:9px;">
+          Chaque entraînement (sur votre PC ou sur Google Colab GPU) se fusionne dans le modèle officiel <code>mouusieur/never-ai</code> pour faire grandir le vrai <strong>Never-AI</strong> de tout le monde, sans jamais repartir de zéro.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <input id="inpGlobalGhToken" type="password" class="text-input" style="flex:1;height:35px;min-width:210px;font-size:12px;" placeholder="Token GitHub (optionnel pour publier : github_pat_...)" />
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="pill-btn pill-outline-white" style="height:35px;font-size:12px;padding:0 13px;" onclick="pullGlobalNeverAiBrain()">
+            ⬇️ Récupérer &amp; Fusionner depuis GitHub
+          </button>
+          <button class="pill-btn pill-blue" style="height:35px;font-size:12px;padding:0 14px;" onclick="pushGlobalNeverAiBrain()">
+            ⬆️ Contribuer mes apprentissages au modèle Never-AI
           </button>
         </div>
       </div>
@@ -4477,8 +4499,71 @@
       closeSuperCortexModal();
     }
 
-    function openSocialStreamModal() {
+    async function openSocialStreamModal() {
       document.getElementById('socialStreamModal').classList.remove('hidden');
+      refreshGlobalBrainBanner();
+    }
+
+    async function refreshGlobalBrainBanner() {
+      const sum = document.getElementById('globalBrainSummary');
+      const pill = document.getElementById('globalBrainStatusPill');
+      if (!sum) return;
+      try {
+        const res = await fetch('/api/brain/global_status');
+        const d = await res.json();
+        const lin = d.lineage || {};
+        if (d.global_brain_present) {
+          pill.textContent = `GitHub ${d.release_tag || 'latest'} · ${d.global_brain_mb || '?'} Mo`;
+          const contribs = lin.contributions_count ? ` · ${lin.contributions_count} contributions` : '';
+          const gtoks = lin.global_tokens_trained ? ` · ${(lin.global_tokens_trained / 1e6).toFixed(2)}M tokens cumulés` : '';
+          sum.innerHTML = `✅ <strong>Modèle mondial actif sur GitHub</strong> (${d.global_brain_mb} Mo${contribs}${gtoks}). Tokens entraînés localement prêts à contribuer : <strong>${(d.unsynced_local_tokens || 0).toLocaleString()}</strong>.`;
+        }
+      } catch (_) {}
+    }
+
+    async function pullGlobalNeverAiBrain() {
+      const fb = document.getElementById('socialIngestFeedback');
+      fb.style.color = '#93C5FD';
+      fb.style.fontWeight = '500';
+      fb.textContent = '⏳ Téléchargement et fusion synaptique WSM avec le cerveau mondial Never-AI...';
+      try {
+        const res = await fetch('/api/brain/pull_global', {method: 'POST'});
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'Échec fusion');
+        fb.style.color = '#6EE7B7';
+        fb.textContent = `✅ Cerveau mondial fusionné (${d.downloaded_mb} Mo · ${d.exact_tensors_merged} tenseurs fusionnés, ${d.vocab_rows_transplanted} tokens transplantés) sans écraser vos apprentissages !`;
+        toast('Cerveau mondial Never-AI fusionné !');
+        refreshGlobalBrainBanner();
+        if (typeof refreshStatus === 'function') refreshStatus();
+      } catch (e) {
+        fb.style.color = '#FCA5A5';
+        fb.textContent = '⚠️ ' + (e.message || e);
+      }
+    }
+
+    async function pushGlobalNeverAiBrain() {
+      const fb = document.getElementById('socialIngestFeedback');
+      const ghTok = (document.getElementById('inpGlobalGhToken').value || '').trim();
+      const who = (typeof currentUser !== 'undefined' && currentUser && currentUser.handle) ? currentUser.handle : 'never-ai-studio';
+      fb.style.color = '#93C5FD';
+      fb.textContent = '⏳ Consolidation WSM et publication vers le modèle officiel Never-AI sur GitHub...';
+      try {
+        const res = await fetch('/api/brain/push_global', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({github_token: ghTok, contributor: who})
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'Échec publication');
+        const lin = d.lineage || {};
+        fb.style.color = '#6EE7B7';
+        fb.textContent = `🌍 Publié sur le modèle officiel Never-AI ! Contribution #${lin.contributions_count || 1} · Total mondial : ${(lin.global_tokens_trained || 0).toLocaleString()} tokens.`;
+        toast('Modèle mondial Never-AI mis à jour sur GitHub !');
+        refreshGlobalBrainBanner();
+      } catch (e) {
+        fb.style.color = '#FDBA74';
+        fb.textContent = 'ℹ️ ' + (e.message || e);
+      }
     }
 
     function closeSocialStreamModal() {
@@ -4563,8 +4648,9 @@
         .slice(-8)
         .filter((m) => m.content && m.content.trim())
         .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content.slice(0, 2000) }));
+      const factualSys = 'Ton nom est Never-AI.' + (webContext ? '\n\n' + webContext : '');
       const llmMessages = [
-        ...(webContext ? [{ role: 'system', content: webContext }] : []),
+        { role: 'system', content: factualSys },
         ...historyMsgs,
         { role: 'user', content: cleanQ }
       ];

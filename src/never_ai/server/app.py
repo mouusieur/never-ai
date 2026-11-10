@@ -108,6 +108,11 @@ class SocialIngestRequest(BaseModel):
     train_steps: int = Field(default=8, ge=1, le=32)
 
 
+class GlobalBrainPushRequest(BaseModel):
+    github_token: str = Field(default="", max_length=300)
+    contributor: str = Field(default="never-ai-studio", max_length=64)
+
+
 class WebSearchDirectRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=300)
     max_results: int = Field(default=6, ge=1, le=10)
@@ -669,6 +674,31 @@ def api_cortex_distill(req: CortexDistillRequest) -> dict[str, Any]:
         "distilled_turns": eng.cortex.public_status()["distilled_turns"],
         **thread_meta,
     }
+
+
+@app.get("/api/brain/global_status")
+def api_brain_global_status() -> dict[str, Any]:
+    eng = get_engine()
+    return eng.global_sync.fetch_global_status(local_tokens_trained=eng.total_tokens_trained)
+
+
+@app.post("/api/brain/pull_global")
+def api_brain_pull_global() -> dict[str, Any]:
+    try:
+        return get_engine().pull_global_brain()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/brain/push_global")
+def api_brain_push_global(req: GlobalBrainPushRequest) -> dict[str, Any]:
+    try:
+        return get_engine().push_global_brain(
+            github_token=req.github_token,
+            contributor=req.contributor,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/api/social/ingest")
