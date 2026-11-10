@@ -87,7 +87,7 @@ class NeverAIEngine:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        if os.environ.get("NEVER_AI_BOOTSTRAP_GITHUB_BRAIN", "0") == "1" and "PYTEST_CURRENT_TEST" not in os.environ:
+        if os.environ.get("NEVER_AI_BOOTSTRAP_GITHUB_BRAIN", "1") == "1" and "PYTEST_CURRENT_TEST" not in os.environ:
             from never_ai.updater.brain_bootstrap import detect_available_ram_mb, download_brain_from_github_releases
 
             if detect_available_ram_mb() >= 900:

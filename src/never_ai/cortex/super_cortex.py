@@ -151,6 +151,10 @@ class SuperCortexManager:
             return int(self.config["distilled_turns"])
 
     def is_server_llm_active(self) -> bool:
+        import os
+
+        if os.environ.get("NEVER_AI_ALLOW_EXTERNAL_ENGINE", "0") != "1":
+            return False
         eng = str(self.config.get("engine", "chronomorph_native"))
         if eng == "openai_compatible":
             return bool(self.config.get("base_url")) and (

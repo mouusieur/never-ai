@@ -972,9 +972,9 @@
           <div id="topbarTitle" class="topbar-title">Never-AI</div>
         </div>
         <div class="topbar-right">
-          <button id="engineBadge" class="engine-pill" onclick="switchView('model')" title="Configurer le moteur ou entraîner Never-AI">
+          <button id="engineBadge" class="engine-pill" onclick="switchView('model')" title="Modèle Never-AI synchronisé avec GitHub">
             <span class="live-dot"></span>
-            <span id="engineBadgeText">Never-AI · Natif</span>
+            <span id="engineBadgeText">Never-AI · GitHub</span>
           </button>
           <button class="icon-btn" onclick="exportCurrentThread()" title="Exporter la discussion (.md)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1124,65 +1124,6 @@
               <button class="btn btn-white" onclick="runSocialIngestion(true)">Absorber le texte collé</button>
             </div>
           </div>
-
-          <!-- ACTIVE TEXT ENGINE (NATIVE / WEBGPU / API / OLLAMA) -->
-          <div class="card">
-            <div class="card-head">
-              <div>
-                <div class="card-title">Moteur d'exécution</div>
-                <div class="card-desc">Utilisez le réseau natif <code>ChronoMorph-LM</code> ou un moteur d'appui (qui distille ses réponses dans Never-AI).</div>
-              </div>
-            </div>
-
-            <div class="engine-grid">
-              <div id="optEngineNative" class="engine-option selected" onclick="selectEngineMode('native')">
-                <strong>ChronoMorph-LM (Natif)</strong>
-                <span>Votre propre réseau neuronal local évolutif. Zéro dépendance externe.</span>
-              </div>
-              <div id="optEngineWebgpu" class="engine-option" onclick="selectEngineMode('webgpu')">
-                <strong>WebGPU Navigateur (Local)</strong>
-                <span>Exécute Qwen2.5-1.5B ou Llama-3.2-1B directement sur votre GPU Chrome.</span>
-              </div>
-              <div id="optEngineApi" class="engine-option" onclick="selectEngineMode('turbo_api')">
-                <strong>API Externe / Ollama Local</strong>
-                <span>Llama-3.3-70B (Groq gratuit / OpenRouter), Mistral ou Ollama (`127.0.0.1`).</span>
-              </div>
-            </div>
-
-            <!-- WebGPU Subpanel -->
-            <div id="panelWebgpu" class="hidden" style="display:flex;flex-direction:column;gap:8px;padding-top:6px;border-top:1px solid var(--border);">
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <select id="selWebGpuModel" class="field" style="flex:1;min-width:220px;">
-                  <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Qwen2.5-1.5B (~1.0 Go une seule fois en Wi-Fi)</option>
-                  <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B (~700 Mo)</option>
-                </select>
-                <button id="btnActivateWebGpu" class="btn btn-white" onclick="activateBrowserWebGpu()">Charger sur WebGPU</button>
-              </div>
-              <div id="webGpuProgressBox" class="status-note"></div>
-            </div>
-
-            <!-- API / Ollama Subpanel -->
-            <div id="panelApi" class="hidden" style="display:flex;flex-direction:column;gap:8px;padding-top:6px;border-top:1px solid var(--border);">
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
-                <select id="selApiPreset" class="field" onchange="applyCortexPreset(this.value)">
-                  <option value="groq">Groq (Llama-3.3-70B · ~0,01 Mo/msg)</option>
-                  <option value="openrouter">OpenRouter (Hermes-3 / Llama-70B)</option>
-                  <option value="mistral">Mistral AI</option>
-                  <option value="ollama">Ollama Local (127.0.0.1:11434)</option>
-                </select>
-                <input id="inpCortexModel" class="field" value="llama-3.3-70b-versatile" placeholder="Modèle" />
-                <input id="inpCortexBaseUrl" class="field" value="https://api.groq.com/openai/v1" placeholder="URL API" />
-                <input id="inpCortexApiKey" type="password" class="field" placeholder="Clé API (vide pour Ollama local)" />
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-                <label style="font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;cursor:pointer;">
-                  <input id="chkDistillCortex" type="checkbox" checked /> Distiller chaque échange dans ChronoMorph-LM
-                </label>
-                <button class="btn btn-white" onclick="saveAndActivateTurboApi()">Activer ce moteur</button>
-              </div>
-              <div id="turboApiFeedback" class="status-note"></div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1279,13 +1220,6 @@
 
   <script>
     /* ---------------- STATE ---------------- */
-    const CORTEX_PRESETS = {
-      groq: { baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
-      openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'nousresearch/hermes-3-llama-3.1-405b:free' },
-      mistral: { baseUrl: 'https://api.mistral.ai/v1', model: 'mistral-small-latest' },
-      ollama: { baseUrl: 'http://127.0.0.1:11434/v1', model: 'qwen2.5:3b' }
-    };
-
     let currentUser = (() => {
       try { return JSON.parse(localStorage.getItem('never_ai_user_v3') || 'null'); } catch (_) { return null; }
     })();
@@ -1296,13 +1230,6 @@
     let bgGrowthActive = false;
     let activeStreamCtrl = null;
     let deferredPwaPrompt = null;
-    let webLlmEngine = null;
-    let webLlmLoadedModel = null;
-
-    let browserCortexState = (() => {
-      try { return JSON.parse(localStorage.getItem('never_ai_super_cortex_v2') || '{"mode":"native"}'); }
-      catch (_) { return { mode: 'native' }; }
-    })();
 
     const SMALL_N_SVG = `<svg width="15" height="15" viewBox="0 0 512 512" fill="none"><path d="M96 84H162V428H96V84Z" fill="#FFF"/><path d="M350 84H416V428H350V84Z" fill="#FFF"/><path d="M96 84H188L416 428H324L96 84Z" fill="#FFF"/></svg>`;
 
@@ -1715,43 +1642,40 @@
       activeStreamCtrl = new AbortController();
 
       try {
-        const handledClient = await maybeStreamClientCortex({ text, owner, botMsg, signal: activeStreamCtrl.signal });
-        if (!handledClient) {
-          const res = await fetch('/api/chat/stream', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              message: text,
-              max_new_tokens: 180,
-              temperature: 0.45,
-              thread_id: currentThreadId,
-              owner,
-              deep_think: deepThinkActive,
-              web_search: webSearchActive
-            }),
-            signal: activeStreamCtrl.signal
-          });
-          const reader = res.body.getReader();
-          const dec = new TextDecoder();
-          let buf = '';
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buf += dec.decode(value, { stream: true });
-            const parts = buf.split('\n\n');
-            buf = parts.pop() || '';
-            for (const p of parts) {
-              if (!p.startsWith('data: ')) continue;
-              const ev = JSON.parse(p.slice(6));
-              if (ev.type === 'think_delta') { botMsg.thoughts[0] += ev.text; renderChat(); }
-              else if (ev.type === 'web_sources') { botMsg.web_sources = ev.sources || []; renderChat(); }
-              else if (ev.type === 'answer_delta') { botMsg.content += ev.text; renderChat(); }
-              else if (ev.type === 'answer_replace') { botMsg.content = ev.text; renderChat(); }
-              else if (ev.type === 'done' && ev.result) {
-                botMsg.content = ev.result.visible_answer || botMsg.content;
-                botMsg.thoughts = ev.result.thoughts || botMsg.thoughts;
-                botMsg.web_sources = ev.result.web_sources || botMsg.web_sources || [];
-              }
+        const res = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            message: text,
+            max_new_tokens: 180,
+            temperature: 0.45,
+            thread_id: currentThreadId,
+            owner,
+            deep_think: deepThinkActive,
+            web_search: webSearchActive
+          }),
+          signal: activeStreamCtrl.signal
+        });
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split('\n\n');
+          buf = parts.pop() || '';
+          for (const p of parts) {
+            if (!p.startsWith('data: ')) continue;
+            const ev = JSON.parse(p.slice(6));
+            if (ev.type === 'think_delta') { botMsg.thoughts[0] += ev.text; renderChat(); }
+            else if (ev.type === 'web_sources') { botMsg.web_sources = ev.sources || []; renderChat(); }
+            else if (ev.type === 'answer_delta') { botMsg.content += ev.text; renderChat(); }
+            else if (ev.type === 'answer_replace') { botMsg.content = ev.text; renderChat(); }
+            else if (ev.type === 'done' && ev.result) {
+              botMsg.content = ev.result.visible_answer || botMsg.content;
+              botMsg.thoughts = ev.result.thoughts || botMsg.thoughts;
+              botMsg.web_sources = ev.result.web_sources || botMsg.web_sources || [];
             }
           }
         }
@@ -1766,202 +1690,6 @@
         renderChat();
         loadThreads();
       }
-    }
-
-    /* ---------------- MODEL, ENGINES & DISTILLATION ---------------- */
-    function saveCortexState() {
-      localStorage.setItem('never_ai_super_cortex_v2', JSON.stringify(browserCortexState));
-      syncEngineBadge();
-    }
-
-    function syncEngineBadge() {
-      const mode = browserCortexState.mode || 'native';
-      const txt = document.getElementById('engineBadgeText');
-      if (mode === 'webgpu' && webLlmEngine) {
-        txt.textContent = 'Never-AI · WebGPU';
-      } else if (mode === 'turbo_api' && (browserCortexState.apiKey || (browserCortexState.baseUrl || '').includes('127.0.0.1'))) {
-        const m = (browserCortexState.model || 'API').split('/').pop().slice(0, 14);
-        txt.textContent = 'Never-AI · ' + m;
-      } else {
-        txt.textContent = 'Never-AI · Natif';
-      }
-      for (const [k, id] of [['native', 'optEngineNative'], ['webgpu', 'optEngineWebgpu'], ['turbo_api', 'optEngineApi']]) {
-        const el = document.getElementById(id);
-        if (el) el.classList.toggle('selected', mode === k);
-      }
-      document.getElementById('panelWebgpu').classList.toggle('hidden', mode !== 'webgpu');
-      document.getElementById('panelApi').classList.toggle('hidden', mode !== 'turbo_api');
-    }
-
-    async function selectEngineMode(mode) {
-      browserCortexState.mode = mode;
-      saveCortexState();
-      if (mode === 'native') {
-        await fetch('/api/cortex/config', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ engine: 'chronomorph_native' })
-        }).catch(() => {});
-        toast('Moteur natif ChronoMorph-LM actif');
-      }
-    }
-
-    function applyCortexPreset(p) {
-      const cfg = CORTEX_PRESETS[p];
-      if (!cfg) return;
-      document.getElementById('inpCortexBaseUrl').value = cfg.baseUrl;
-      document.getElementById('inpCortexModel').value = cfg.model;
-    }
-
-    async function activateBrowserWebGpu() {
-      const modelId = document.getElementById('selWebGpuModel').value;
-      const prog = document.getElementById('webGpuProgressBox');
-      if (!navigator.gpu) {
-        prog.textContent = 'WebGPU non détecté sur ce navigateur (utilisez Chrome / Edge récent).';
-        return;
-      }
-      const btn = document.getElementById('btnActivateWebGpu');
-      btn.disabled = true;
-      prog.textContent = 'Initialisation WebGPU…';
-      try {
-        const webllm = await import('https://esm.run/@mlc-ai/web-llm');
-        webLlmEngine = await webllm.CreateMLCEngine(modelId, {
-          initProgressCallback: (r) => {
-            const pct = r.progress ? Math.round(r.progress * 100) + '% — ' : '';
-            prog.textContent = pct + (r.text || 'Chargement…');
-          }
-        });
-        webLlmLoadedModel = modelId;
-        browserCortexState.mode = 'webgpu';
-        saveCortexState();
-        prog.textContent = 'Prêt sur votre GPU.';
-        toast('WebGPU activé');
-      } catch (e) {
-        prog.textContent = 'Erreur : ' + (e.message || e);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function saveAndActivateTurboApi() {
-      const preset = document.getElementById('selApiPreset').value;
-      const baseUrl = document.getElementById('inpCortexBaseUrl').value.trim();
-      const model = document.getElementById('inpCortexModel').value.trim();
-      const apiKey = document.getElementById('inpCortexApiKey').value.trim();
-      const distill = document.getElementById('chkDistillCortex').checked;
-      const fb = document.getElementById('turboApiFeedback');
-      const isLocal = baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost');
-      if (!apiKey && !isLocal) {
-        fb.textContent = 'Clé API requise (ou choisissez Ollama Local).';
-        return;
-      }
-      browserCortexState = { mode: 'turbo_api', preset, baseUrl, model, apiKey, distill };
-      saveCortexState();
-      await fetch('/api/cortex/config', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          engine: isLocal ? 'ollama_local' : 'openai_compatible',
-          provider_preset: preset,
-          base_url: baseUrl,
-          api_key: apiKey,
-          model,
-          distill_to_chronomorph: distill
-        })
-      }).catch(() => {});
-      fb.textContent = 'Moteur activé : ' + model;
-      toast('Moteur actif : ' + model);
-    }
-
-    async function maybeStreamClientCortex({ text, owner, botMsg, signal }) {
-      const mode = browserCortexState.mode || 'native';
-      const canWebGpu = mode === 'webgpu' && webLlmEngine;
-      const canApi = mode === 'turbo_api' && browserCortexState.apiKey && !(browserCortexState.baseUrl || '').includes('127.0.0.1');
-      if (!canWebGpu && !canApi) return false;
-
-      let webContext = '';
-      const cleanQ = text.replace(/^\/web\s+/i, '').trim();
-      if (webSearchActive || /^\/web\s+/i.test(text)) {
-        try {
-          const wr = await fetch('/api/plugins/invoke', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ plugin: 'web_search_engine', params: { query: cleanQ } }),
-            signal
-          });
-          const wd = await wr.json();
-          if (wd.ok && wd.results && wd.results.length) {
-            botMsg.web_sources = wd.results;
-            renderChat();
-            webContext = wd.results.slice(0, 5).map(r => `- ${r.title}: ${r.snippet} (${r.url})`).join('\n');
-          }
-        } catch (_) {}
-      }
-
-      const hist = currentMessages.slice(0, -2).slice(-8)
-        .filter(m => m.content && m.content.trim())
-        .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content.slice(0, 2000) }));
-      const messages = [
-        { role: 'system', content: 'Ton nom est Never-AI.' + (webContext ? '\n\n' + webContext : '') },
-        ...hist,
-        { role: 'user', content: cleanQ }
-      ];
-
-      let label = 'WebGPU';
-      if (canWebGpu) {
-        const chunks = await webLlmEngine.chat.completions.create({ messages, temperature: 0.65, max_tokens: 900, stream: true });
-        for await (const c of chunks) {
-          if (signal.aborted) break;
-          const d = c.choices?.[0]?.delta?.content || '';
-          if (d) { botMsg.content += d; renderChat(); }
-        }
-      } else {
-        label = browserCortexState.model || 'API';
-        const url = (browserCortexState.baseUrl || 'https://api.groq.com/openai/v1').replace(/\/+$/, '') + '/chat/completions';
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + browserCortexState.apiKey },
-          body: JSON.stringify({ model: browserCortexState.model, messages, temperature: 0.65, max_tokens: 1024, stream: true }),
-          signal
-        });
-        if (!resp.ok) throw new Error('API HTTP ' + resp.status);
-        const reader = resp.body.getReader();
-        const dec = new TextDecoder();
-        let buf = '';
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, { stream: true });
-          const lines = buf.split('\n');
-          buf = lines.pop() || '';
-          for (const ln of lines) {
-            const t = ln.trim();
-            if (!t.startsWith('data:')) continue;
-            const raw = t.slice(5).trim();
-            if (raw === '[DONE]') break;
-            try {
-              const d = JSON.parse(raw).choices?.[0]?.delta?.content || '';
-              if (d) { botMsg.content += d; renderChat(); }
-            } catch (_) {}
-          }
-        }
-      }
-
-      if (botMsg.content.trim()) {
-        fetch('/api/cortex/distill', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            thread_id: currentThreadId,
-            owner,
-            user_message: text,
-            assistant_reply: botMsg.content,
-            engine_label: label,
-            web_sources: botMsg.web_sources || []
-          })
-        }).catch(() => {});
-      }
-      return true;
     }
 
     /* ---------------- TRAINING, X STREAM & GLOBAL BRAIN ---------------- */
@@ -2041,8 +1769,6 @@
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.detail || 'Erreur import');
-        browserCortexState.mode = 'native';
-        saveCortexState();
         fb.textContent = `Cerveau ${d.stage_name} (vocab ${d.vocab_size}) activé à chaud.`;
         refreshStatus();
         toast('Cerveau importé');
@@ -2058,6 +1784,7 @@
         if (d.global_brain_present) {
           const lin = d.lineage || {};
           document.getElementById('globalBrainTag').textContent = `${d.release_tag || 'latest'} · ${d.global_brain_mb} Mo`;
+          document.getElementById('engineBadgeText').textContent = `Never-AI · GitHub (${d.release_tag || 'latest'})`;
           const extra = lin.contributions_count ? ` · ${lin.contributions_count} contributions cumulées` : '';
           document.getElementById('globalBrainDesc').textContent =
             `Modèle mondial actif sur GitHub (${d.global_brain_mb} Mo${extra}). Tokens locaux prêts à contribuer : ${(d.unsynced_local_tokens || 0).toLocaleString()}.`;
@@ -2169,10 +1896,11 @@
         currentUser = { handle: 'local', display_name: 'Session locale' };
         localStorage.setItem('never_ai_user_v3', JSON.stringify(currentUser));
       }
+      localStorage.removeItem('never_ai_super_cortex_v2');
       syncProfileUI();
-      syncEngineBadge();
       renderChat();
       loadThreads();
+      refreshGlobalBrainStatus();
       setInterval(() => {
         if (!document.getElementById('view-model').classList.contains('hidden')) refreshStatus();
       }, 4000);
