@@ -113,13 +113,13 @@ class NeverAIEngine:
         self.dataset = ContinualDatasetAndReplay(self.tokenizer, seq_len=self.seq_len)
         self.dataset.load_corpora(train_docs, val_docs)
 
-        is_mature_ckpt = bool(ckpts) and self.model.cfg.d_model > 256
+        is_mature_ckpt = bool(ckpts) and (self.total_tokens_trained >= 15_000 or self.model.cfg.d_model > 256)
         self.optimizer = CompositeMuonOptimizer(
             self.model,
-            muon_lr=2.2e-3 if is_mature_ckpt else 7.5e-3,
-            adamw_lr=6.0e-4 if is_mature_ckpt else 2.2e-3,
+            muon_lr=4.5e-4 if is_mature_ckpt else 7.5e-3,
+            adamw_lr=1.5e-4 if is_mature_ckpt else 2.2e-3,
             weight_decay=0.01,
-            warmup_steps=20,
+            warmup_steps=8 if is_mature_ckpt else 20,
         )
         self.wsm = WSMCheckpointMerger(max_snapshots=6)
         self.wsm.record_snapshot(self.model)
@@ -683,18 +683,53 @@ class NeverAIEngine:
         snap["bg_steps_session"] = self._bg_steps_session
         return snap
 
+    @staticmethod
+    def _concat_aligned_batches(
+        t_ids: torch.Tensor,
+        t_tgt: torch.Tensor,
+        t_msk: torch.Tensor,
+        rep: Any,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Align dynamically trimmed sequence widths (`PAD_ID = 0`) before batch concatenation."""
+        import torch.nn.functional as F
+
+        w1 = int(t_ids.shape[1])
+        w2 = int(rep.input_ids.shape[1])
+        if w1 < w2:
+            d = w2 - w1
+            t_ids = F.pad(t_ids, (0, d), value=0)
+            t_tgt = F.pad(t_tgt, (0, d), value=0)
+            t_msk = F.pad(t_msk, (0, d), value=0.0)
+            return (
+                torch.cat([t_ids, rep.input_ids], dim=0),
+                torch.cat([t_tgt, rep.targets], dim=0),
+                torch.cat([t_msk, rep.loss_mask], dim=0),
+            )
+        if w2 < w1:
+            d = w1 - w2
+            r_ids = F.pad(rep.input_ids, (0, d), value=0)
+            r_tgt = F.pad(rep.targets, (0, d), value=0)
+            r_msk = F.pad(rep.loss_mask, (0, d), value=0.0)
+            return (
+                torch.cat([t_ids, r_ids], dim=0),
+                torch.cat([t_tgt, r_tgt], dim=0),
+                torch.cat([t_msk, r_msk], dim=0),
+            )
+        return (
+            torch.cat([t_ids, rep.input_ids], dim=0),
+            torch.cat([t_tgt, rep.targets], dim=0),
+            torch.cat([t_msk, rep.loss_mask], dim=0),
+        )
+
     def learn_dialogue_exchange(
         self,
         question: str,
-        thought: str,
-        answer: str,
+        thought: str = "",
+        answer: str = "",
         priority: float = 2.5,
     ) -> dict[str, Any]:
-        """Inject a dialogue exchange directly into the Continual Replay Reservoir & EvolveMem."""
-        doc = (
-            f"{BOS_TOKEN}{USER_TOKEN}{question.strip()}{NEVER_TOKEN}"
-            f"{THINK_START}{thought.strip()}{THINK_END}{answer.strip()}{EOS_TOKEN}"
-        )
+        """Inject a clean single-turn dialogue exchange directly into the Continual Replay Reservoir."""
+        doc = f"{BOS_TOKEN}{USER_TOKEN}{question.strip()}{NEVER_TOKEN}{answer.strip()}{EOS_TOKEN}"
         ids = self.tokenizer.encode(doc)
         mask = self.tokenizer.build_target_loss_mask(ids)
         L = self.seq_len + 1
@@ -714,8 +749,9 @@ class NeverAIEngine:
         return {"ok": True, "replay_size": len(self.dataset.replay_reservoir)}
 
     def _run_single_micro_step(self, batch_size: int = 2) -> dict[str, float]:
-        """Single fast (~0.4s) training micro-step for smooth responsive Continuous Growth."""
+        """Single fast (~0.2s) training micro-step for smooth responsive Continuous Growth."""
         t0 = time.perf_counter()
+        use_titans_grad = self.device.type == "cuda"
         with self.lock:
             self.model.train()
             batch = self.dataset.sample_batch(
@@ -729,7 +765,7 @@ class NeverAIEngine:
                 batch.input_ids,
                 targets=batch.targets,
                 loss_mask=batch.loss_mask,
-                update_titans=True,
+                update_titans=use_titans_grad,
             )
             assert out.loss is not None
             out.loss.backward()
@@ -775,6 +811,7 @@ class NeverAIEngine:
     ) -> dict[str, Any]:
         t0 = time.perf_counter()
         losses: list[float] = []
+        use_titans_grad = self.device.type == "cuda"
 
         for step_idx in range(1, num_steps + 1):
             with self.lock:
@@ -790,7 +827,7 @@ class NeverAIEngine:
                     batch.input_ids,
                     targets=batch.targets,
                     loss_mask=batch.loss_mask,
-                    update_titans=True,
+                    update_titans=use_titans_grad,
                 )
                 assert out.loss is not None
                 out.loss.backward()
@@ -1076,15 +1113,11 @@ class NeverAIEngine:
             )
 
             losses: list[float] = []
-            doc = f"{BOS_TOKEN}{USER_TOKEN}{q_clean}{NEVER_TOKEN}{THINK_START}{th_clean}{THINK_END}{a_clean}{EOS_TOKEN}"
+            doc = f"{BOS_TOKEN}{USER_TOKEN}{q_clean}{NEVER_TOKEN}{a_clean}{EOS_TOKEN}"
             ids = self.tokenizer.encode(doc)
             mask = self.tokenizer.build_target_loss_mask(ids)
             L = self.seq_len + 1
-            if len(ids) < L:
-                pad_n = L - len(ids)
-                ids = ids + [0] * pad_n
-                mask = mask + [0.0] * pad_n
-            else:
+            if len(ids) > L:
                 ids = ids[-L:]
                 mask = mask[-L:]
 
@@ -1092,14 +1125,13 @@ class NeverAIEngine:
             t_tgt = torch.tensor([ids[1:]], dtype=torch.long, device=self.device)
             t_msk = torch.tensor([mask[1:]], dtype=torch.float32, device=self.device)
 
+            use_titans_grad = self.device.type == "cuda"
             self.model.train()
             for _ in range(max(1, train_steps)):
                 rep = self.dataset.sample_batch(batch_size=2, split="train", replay_ratio=0.5, device=self.device)
-                inp = torch.cat([t_ids, rep.input_ids], dim=0)
-                tgt = torch.cat([t_tgt, rep.targets], dim=0)
-                msk = torch.cat([t_msk, rep.loss_mask], dim=0)
+                inp, tgt, msk = self._concat_aligned_batches(t_ids, t_tgt, t_msk, rep)
                 self.optimizer.zero_grad()
-                out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=True)
+                out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=use_titans_grad)
                 assert out.loss is not None
                 out.loss.backward()
                 self.optimizer.step(self.model)
@@ -1154,8 +1186,8 @@ class NeverAIEngine:
         return list(t.get("messages", []))[-8:]
 
     def _assimilate_turn_async(self, question: str, answer: str, source: str = "discussion") -> None:
-        """Non-blocking online synaptic micro-update right after a chat or web search turn."""
-        if not question.strip() or not answer.strip() or "```svg" in answer:
+        """Non-blocking online synaptic micro-update exclusively for verified external knowledge (e.g. web search)."""
+        if source != "recherche web" or not question.strip() or not answer.strip() or "```svg" in answer:
             return
 
         def _bg_assimilate() -> None:
@@ -1163,35 +1195,27 @@ class NeverAIEngine:
                 return
             try:
                 t0 = time.perf_counter()
-                doc = (
-                    f"{BOS_TOKEN}{USER_TOKEN}{question.strip()[:240]}{NEVER_TOKEN}"
-                    f"{THINK_START}Assimilation conversationnelle en direct.{THINK_END}"
-                    f"{answer.strip()[:480]}{EOS_TOKEN}"
-                )
+                doc = f"{BOS_TOKEN}{USER_TOKEN}{question.strip()[:240]}{NEVER_TOKEN}{answer.strip()[:480]}{EOS_TOKEN}"
                 ids = self.tokenizer.encode(doc)
                 mask = self.tokenizer.build_target_loss_mask(ids)
                 L = self.seq_len + 1
-                if len(ids) < L:
-                    pad_n = L - len(ids)
-                    ids = ids + [0] * pad_n
-                    mask = mask + [0.0] * pad_n
-                else:
+                if len(ids) > L:
                     ids = ids[:L]
                     mask = mask[:L]
 
+                use_titans_grad = self.device.type == "cuda"
                 with self.lock:
-                    self.dataset.push_to_replay(ids, mask, surprise=2.2)
+                    pad_n = max(0, L - len(ids))
+                    self.dataset.push_to_replay(ids + [0] * pad_n, mask + [0.0] * pad_n, surprise=2.2)
                     t_ids = torch.tensor([ids[:-1]], dtype=torch.long, device=self.device)
                     t_tgt = torch.tensor([ids[1:]], dtype=torch.long, device=self.device)
                     t_msk = torch.tensor([mask[1:]], dtype=torch.float32, device=self.device)
                     rep = self.dataset.sample_batch(batch_size=1, split="train", replay_ratio=0.5, device=self.device)
-                    inp = torch.cat([t_ids, rep.input_ids], dim=0)
-                    tgt = torch.cat([t_tgt, rep.targets], dim=0)
-                    msk = torch.cat([t_msk, rep.loss_mask], dim=0)
+                    inp, tgt, msk = self._concat_aligned_batches(t_ids, t_tgt, t_msk, rep)
 
                     self.model.train()
                     self.optimizer.zero_grad()
-                    out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=True)
+                    out = self.model(inp, targets=tgt, loss_mask=msk, update_titans=use_titans_grad)
                     if out.loss is not None:
                         out.loss.backward()
                         opt_stats = self.optimizer.step(self.model)
@@ -1483,7 +1507,16 @@ class NeverAIEngine:
         losses: list[float] = []
         with self.lock:
             L = self.seq_len + 1
-            for s in seqs:
+            for idx_s, s in enumerate(seqs):
+                clean_mem = re.sub(r"<\|[^|>]+\|>", " ", s).strip()
+                if len(clean_mem) >= 18 and idx_s < 40:
+                    self.memory.store(
+                        key=f"soc_{int(time.time())}_{idx_s}",
+                        content=clean_mem[:320],
+                        category="social_stream",
+                        tags=["social", "x"],
+                        persist=False,
+                    )
                 ids = self.tokenizer.encode(s)
                 msk = self.tokenizer.build_target_loss_mask(ids)
                 if len(ids) < L:
@@ -1495,12 +1528,19 @@ class NeverAIEngine:
                     msk = msk[:L]
                 self.dataset.push_to_replay(ids, msk, surprise=3.0)
 
+            self.memory.save()
             self.dataset.train_sequences.extend(self.dataset._encode_and_chunk_docs(seqs))
+            use_titans_grad = self.device.type == "cuda"
             self.model.train()
             for _ in range(max(1, min(32, train_steps))):
                 batch = self.dataset.sample_batch(batch_size=4, split="train", replay_ratio=0.65, device=self.device)
                 self.optimizer.zero_grad()
-                out = self.model(batch.input_ids, targets=batch.targets, loss_mask=batch.loss_mask, update_titans=True)
+                out = self.model(
+                    batch.input_ids,
+                    targets=batch.targets,
+                    loss_mask=batch.loss_mask,
+                    update_titans=use_titans_grad,
+                )
                 assert out.loss is not None
                 out.loss.backward()
                 self.optimizer.step(self.model)

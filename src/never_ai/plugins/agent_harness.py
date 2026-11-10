@@ -31,6 +31,7 @@ from never_ai.core.special_tokens import (
 from never_ai.core.titans_memory import TitansMemoryState
 from never_ai.core.tokenizer import MorphTokenizer
 from never_ai.data.conversational_universe import match_conversational_intent
+from never_ai.data.social_corpus_fr import retrieve_neural_context
 from never_ai.memory.evolvemem import EvolveMemStore
 from never_ai.plugins.base import PluginRegistry
 from never_ai.plugins.deep_research import (
@@ -104,6 +105,17 @@ class SovereignAgentHarness:
             if tools and tools[0].name == "math_engine" and _MATH_EXPR_RE.search(user_message):
                 active_tools = [t.name for t in tools]
                 ctx_parts.append("Tools: math_engine")
+
+        # Neural Attention Context Grounding (RETRO-style character-ngram retrieval, zero canned bypass)
+        if not active_tools:
+            social_facts = [
+                u.content
+                for u in list(self.memory.units.values())[-120:]
+                if u.category in ("social_stream", "semantic", "episodic")
+            ]
+            neural_ctx = retrieve_neural_context(user_message, extra_facts=social_facts)
+            if neural_ctx:
+                ctx_parts.append(neural_ctx)
 
         # Pure multi-turn history without any behavioral/persona/mood directive!
         hist_chunks: list[str] = []
@@ -483,6 +495,7 @@ class SovereignAgentHarness:
                 stop_token_ids={EOS_ID, CALL_END_ID},
                 titans_states=self.titans_session_states,
                 step_callback=_on_token if on_event is not None else None,
+                tokenizer=self.tokenizer,
             )
             seg_text = self.tokenizer.decode(out_ids, skip_special_tokens=False)
             generated_segments.append(seg_text)
@@ -531,7 +544,7 @@ class SovereignAgentHarness:
             LATENT_EOT,
         ):
             visible = visible.replace(sp_tok, "")
-        visible = visible.strip()
+        visible = visible.replace("\ufffd", "").strip()
 
         # Neuro-Symbolic Cortex Verification for math & anatomy queries
         if not tool_traces:

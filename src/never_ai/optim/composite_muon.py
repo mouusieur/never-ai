@@ -53,7 +53,8 @@ class _FallbackMuon(torch.optim.Optimizer):
                     st["momentum_buffer"] = torch.zeros_like(g)
                 buf = st["momentum_buffer"]
                 buf.mul_(mom).add_(g)
-                u = g.add(buf, alpha=mom).bfloat16()
+                ns_dtype = torch.bfloat16 if g.is_cuda else torch.float32
+                u = g.add(buf, alpha=mom).to(ns_dtype)
                 transposed = u.size(0) > u.size(1)
                 if transposed:
                     u = u.T

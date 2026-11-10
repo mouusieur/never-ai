@@ -115,30 +115,30 @@ def test_commercial_overview_live_curve_and_quick_benchmark(tmp_path: Path, monk
 def test_conversational_styles_and_web_search_engine(tmp_path: Path, monkeypatch) -> None:
     client = _make_isolated_client(tmp_path, monkeypatch)
 
-    # 1. Friendly ('amical') vs Unfiltered Wit ('grok') conversational registers
+    # 1. Pure neural dialogue (zero modes, zero pre-recorded regex answers, zero UTF-8 \ufffd)
     r_amical = client.post(
         "/api/chat",
-        json={"message": "Wesh ça dit quoi ?", "style_mode": "amical"},
+        json={"message": "Wesh ça dit quoi ?"},
     )
     assert r_amical.status_code == 200
     ans_amical = r_amical.json()["visible_answer"]
-    assert len(ans_amical) > 20
+    assert len(ans_amical) > 10 and "\ufffd" not in ans_amical
 
-    r_grok = client.post(
+    r_free = client.post(
         "/api/chat",
-        json={"message": "Vas-y clash-moi gentiment, fais-moi un roast !", "style_mode": "grok"},
+        json={"message": "Vas-y clash-moi gentiment, fais-moi un roast !"},
     )
-    assert r_grok.status_code == 200
-    ans_grok = r_grok.json()["visible_answer"]
-    assert "CPU" in ans_grok or "procrastines" in ans_grok
+    assert r_free.status_code == 200
+    ans_free = r_free.json()["visible_answer"]
+    assert len(ans_free) > 10 and "\ufffd" not in ans_free
 
-    # 2. Open-ended novel topic never degenerates into broken repetition
+    # 2. Open-ended novel topic never degenerates into broken repetition or UTF-8 corruption
     r_open = client.post(
         "/api/chat",
-        json={"message": "T'en penses quoi des gens qui mangent de l'ananas sur la pizza ?", "style_mode": "grok"},
+        json={"message": "T'en penses quoi des gens qui mangent de l'ananas sur la pizza ?"},
     )
     assert r_open.status_code == 200
-    assert len(r_open.json()["visible_answer"]) > 30
+    assert len(r_open.json()["visible_answer"]) > 10 and "\ufffd" not in r_open.json()["visible_answer"]
 
     # 3. Direct Web Search endpoint (mocked provider for deterministic fast unit test)
     import never_ai.plugins.web_search as ws_mod

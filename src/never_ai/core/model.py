@@ -14,6 +14,7 @@ from never_ai.core.config import ChronoMorphConfig
 from never_ai.core.special_tokens import (
     CALL_END_ID,
     CALL_START_ID,
+    EOS_ID,
     LATENT_BOT_ID,
     LATENT_EOT_ID,
     PAD_ID,
@@ -566,6 +567,7 @@ class ChronoMorphLM(nn.Module):
         titans_states: list[TitansMemoryState | None] | None = None,
         latent_steps_on_bot: int = 3,
         step_callback: Any | None = None,
+        tokenizer: Any | None = None,
     ) -> tuple[list[int], list[TitansMemoryState | None]]:
         """
         Autoregressive generation with:
@@ -632,18 +634,40 @@ class ChronoMorphLM(nn.Module):
                         if (win[idx_g], win[idx_g + 1]) == bi and win[idx_g + 2] >= 16:
                             step_logits[:, win[idx_g + 2]] = -float("inf")
 
-            # 3. Sampling with Temperature + Top-K + Min-P + Top-P
-            if temperature <= 1e-5:
+            # 2.5 Orthographic subword guard (prevents glued 22-char gibberish or triple-letter stutters)
+            if tokenizer is not None and generated:
+                top_cands = torch.topk(step_logits[0], min(10, step_logits.size(-1))).indices.tolist()
+                tail_ctx = [t for t in generated[-8:] if t >= 16]
+                for cid in top_cands:
+                    if cid < 16:
+                        continue
+                    frag = tokenizer.decode(tail_ctx + [cid], skip_special_tokens=True)
+                    last_w = frag.rsplit(" ", 1)[-1]
+                    if len(last_w) > 21 or any(
+                        last_w[k] == last_w[k + 1] == last_w[k + 2] and last_w[k].isalpha()
+                        for k in range(max(0, len(last_w) - 3))
+                    ):
+                        step_logits[:, cid] = -float("inf")
+
+            # 3. Entropy-Adaptive Sampling (cools uncertain steps to prevent subword babble + crisp EOS stop)
+            raw_probs = F.softmax(step_logits, dim=-1)
+            if len(generated) >= 10 and EOS_ID in stop_set and float(raw_probs[0, EOS_ID].item()) >= 0.22:
+                next_id = EOS_ID
+            elif temperature <= 1e-5:
                 next_id = int(torch.argmax(step_logits, dim=-1).item())
             else:
-                scaled = step_logits / temperature
+                ent = float(-(raw_probs * (raw_probs + 1e-12).log()).sum().item())
+                eff_temp = temperature * max(0.12, min(1.0, 1.0 - 0.38 * max(0.0, ent - 1.2)))
+                eff_min_p = min(0.42, max(min_p, 0.09 * ent if ent > 1.3 else min_p))
+
+                scaled = step_logits / max(1e-4, eff_temp)
                 if top_k > 0:
                     v, _ = torch.topk(scaled, min(top_k, scaled.size(-1)))
                     scaled[scaled < v[:, [-1]]] = -float("inf")
                 probs = F.softmax(scaled, dim=-1)
-                if min_p > 0.0:
+                if eff_min_p > 0.0:
                     max_prob = probs.max(dim=-1, keepdim=True).values
-                    probs = torch.where(probs >= min_p * max_prob, probs, torch.zeros_like(probs))
+                    probs = torch.where(probs >= eff_min_p * max_prob, probs, torch.zeros_like(probs))
                 if 0.0 < top_p < 1.0:
                     sorted_probs, sorted_idx = torch.sort(probs, descending=True, dim=-1)
                     cum_probs = torch.cumsum(sorted_probs, dim=-1)
