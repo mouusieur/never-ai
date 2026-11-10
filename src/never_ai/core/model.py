@@ -569,10 +569,12 @@ class ChronoMorphLM(nn.Module):
         step_callback: Any | None = None,
         tokenizer: Any | None = None,
         avoid_sequences: list[list[int]] | None = None,
+        cfg_uncond_ids: list[int] | None = None,
+        cfg_scale: float = 0.0,
     ) -> tuple[list[int], list[TitansMemoryState | None]]:
         """
         Autoregressive generation with:
-        - Compressed MLA KV Cache
+        - Compressed MLA KV Cache + Optional Prompt-Guided Contrastive Decoding (CFG / PMI)
         - Online Test-Time Titans Neural Memory updates
         - Repetition Penalty + Top-P / Min-P Nucleus Filtering
         - Structural Special-Token State Machine (prevents orphan <|/think|> or role spoofing)
@@ -594,6 +596,15 @@ class ChronoMorphLM(nn.Module):
         t_states = [s.detach_state() if s is not None else None for s in out.titans_states]
         last_logits = out.logits[:, -1, :]
 
+        use_cfg = bool(cfg_uncond_ids) and cfg_scale > 0.0
+        uncond_kvs = None
+        last_uncond_logits = None
+        if use_cfg:
+            u_inp = torch.tensor([cfg_uncond_ids], dtype=torch.long, device=device)
+            u_out = self.forward(u_inp, kv_caches=None, use_cache=True, update_titans=False)
+            uncond_kvs = u_out.kv_caches
+            last_uncond_logits = u_out.logits[:, -1, :]
+
         generated: list[int] = []
         stop_set = stop_token_ids or set()
         # Protocol boundary IDs that must never be emitted by assistant speech
@@ -613,8 +624,15 @@ class ChronoMorphLM(nn.Module):
 
         for _ in range(max_new_tokens):
             step_logits = last_logits.clone()
+            if use_cfg and last_uncond_logits is not None:
+                c_probs = F.softmax(step_logits, dim=-1)
+                plausible = c_probs >= 0.05 * c_probs.max(dim=-1, keepdim=True).values
+                guided = step_logits + cfg_scale * (step_logits - last_uncond_logits)
+                step_logits = torch.where(plausible, guided, step_logits)
 
             # 1. Structural special-token state guard
+            if len(generated) < 3 and EOS_ID < step_logits.size(-1):
+                step_logits[:, EOS_ID] = -float("inf")
             for fid in forbidden_role_ids:
                 if fid < step_logits.size(-1):
                     step_logits[:, fid] = -float("inf")
@@ -750,6 +768,10 @@ class ChronoMorphLM(nn.Module):
             kvs = step_out.kv_caches
             t_states = [s.detach_state() if s is not None else None for s in step_out.titans_states]
             last_logits = step_out.logits[:, -1, :]
+            if use_cfg and uncond_kvs is not None:
+                u_step = self.forward(next_inp, kv_caches=uncond_kvs, use_cache=True, update_titans=False)
+                uncond_kvs = u_step.kv_caches
+                last_uncond_logits = u_step.logits[:, -1, :]
 
         if was_training:
             self.train()

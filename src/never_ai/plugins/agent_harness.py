@@ -92,27 +92,31 @@ class SovereignAgentHarness:
         self.titans_session_states = None
 
     @staticmethod
-    def _is_short_contextual_reaction(user_message: str) -> bool:
+    def _needs_prior_turn_window(user_message: str) -> bool:
         msg = re.sub(r"[?!.,;:]+$", "", user_message.strip().lower()).strip()
         words = re.findall(r"[a-zà-öø-ÿ0-9']+", msg)
-        if not words or len(words) > 6:
+        if not words or len(words) > 7:
             return False
-        # Standalone greetings or explicit standalone questions don't need prior user topic
-        standalone_starts = (
-            "salut", "coucou", "yo", "wesh", "bonjour", "bonsoir", "hey",
-            "merci", "au revoir", "bye", "ciao", "raconte", "donne", "explique l'",
-            "c'est quoi ", "quelle est ", "quel est ", "qui est ", "tu connais ",
-            "t'es ", "tu es ", "tu préfères ", "tu preferes ", "j'ai mal", "il pleut",
-            "suce ", "je t'aime", "le caca",
+        # Messages that name their own explicit topic (blague, baise, suce, lune, recette...) are standalone!
+        explicit_topic_words = (
+            "blague", "vanne", "baise", "suce", "mange", "amour", "porno",
+            "recette", "histoire", "entropie", "lune", "crane", "crâne", "tête",
+            "clavier", "chat", "paris", "marseille", "café", "thé", "interdit",
+            "interdite", "interdites", "salut", "coucou", "yo", "wesh", "bonjour",
+            "quoicoubeh", "merci", "pardon", "my bad",
         )
-        if any(msg.startswith(s) for s in standalone_starts):
+        if any(tw in msg for tw in explicit_topic_words):
             return False
-        reaction_cues = (
-            "et toi", "pas grand chose", "rien", "pas drole", "pas drôle", "nul",
-            "plus rapide", "plus simple", "plus court", "sucré", "salé",
-            "pas compris", "pourquoi", "comment ça", "c'est-à-dire", "et ", "déjà",
+        elliptical_cues = (
+            "vas y", "vas-y", "si allez", "mais si", "decris", "décris",
+            "continue", "la suite", "un exemple", "exemple concret",
+            "tombe dedans", "y vivre", "marche plus", "un dilemme",
+            "premier client", "et toi", "pas grand chose", "pourquoi",
+            "comment ça", "c'est-à-dire", "développe", "précise",
+            "ça ma fait", "ça m'a fait", "donc refait", "donc refais",
+            "pas drole", "pas drôle", "déjà bu", "deja bu",
         )
-        return any(c in msg for c in reaction_cues)
+        return any(c in msg for c in elliptical_cues)
 
     def build_prompt(
         self,
@@ -129,19 +133,30 @@ class SovereignAgentHarness:
                 active_tools = [t.name for t in tools]
                 ctx_parts.append("Tools: math_engine")
 
-        recent_user_texts = [
-            str(t.get("content") or "").strip()
-            for t in (recent_history or [])[-6:]
-            if t.get("role") == "user" and str(t.get("content") or "").strip()
-        ]
-
-        # Pure neural generation: NEVER inject pre-written answers into <|context|>!
-        # Only pass the user's own previous turn topic on short conversational reactions.
-        if not active_tools and recent_user_texts and self._is_short_contextual_reaction(user_message):
-            ctx_parts.append(recent_user_texts[-1][:85])
+        # Native 2-turn conversational continuity ONLY on genuinely elliptical follow-ups!
+        prior_turn_str = ""
+        if not active_tools and recent_history and len(recent_history) >= 2 and self._needs_prior_turn_window(user_message):
+            # Walk back to the nearest topic-establishing exchange (skipping chained elliptical follow-ups)
+            pairs_hist: list[tuple[str, str]] = []
+            msgs = list(recent_history[-8:])
+            for idx_m in range(len(msgs) - 1):
+                if msgs[idx_m].get("role") == "user" and msgs[idx_m + 1].get("role") in ("never", "assistant"):
+                    u_t = re.sub(r"\s+", " ", str(msgs[idx_m].get("content") or "")).strip()
+                    a_t = re.sub(r"\s+", " ", str(msgs[idx_m + 1].get("content") or "")).strip()
+                    if u_t and a_t:
+                        pairs_hist.append((u_t[:110], a_t[:160]))
+            chosen_pair = None
+            for u_t, a_t in reversed(pairs_hist):
+                if not self._needs_prior_turn_window(u_t):
+                    chosen_pair = (u_t, a_t)
+                    break
+            if chosen_pair is None and pairs_hist:
+                chosen_pair = pairs_hist[-1]
+            if chosen_pair is not None:
+                prior_turn_str = f"{USER_TOKEN}{chosen_pair[0]}{NEVER_TOKEN}{chosen_pair[1]}"
 
         ctx_block = f"{CONTEXT_TOKEN}{' // '.join(ctx_parts)}" if ctx_parts else ""
-        prompt = f"{BOS_TOKEN}{ctx_block}{USER_TOKEN}{user_message}{NEVER_TOKEN}"
+        prompt = f"{BOS_TOKEN}{ctx_block}{prior_turn_str}{USER_TOKEN}{user_message}{NEVER_TOKEN}"
         return prompt, active_tools
 
     def _try_symbolic_or_episodic_skill(
@@ -331,23 +346,9 @@ class SovereignAgentHarness:
                     "visible_answer": f"Lors de mon tour précédent, je disais :\n> {last_assistant}",
                 }
 
-        # 7. Exact recall of Human-Taught Corrections (RLHF / Interactive Teaching)
-        norm_q = re.sub(r"\W+", " ", msg_low).strip()
-        for u in reversed(list(self.memory.units.values())):
-            if u.category == "human_correction" and f"qnorm:{norm_q}" in u.tags:
-                return {
-                    "thoughts": ["Application prioritaire d'une correction enseignée et consolidée par l'utilisateur."],
-                    "tool_traces": [
-                        {
-                            "call": json.dumps({"plugin": "memory_nexus", "action": "recall_correction", "id": u.id}),
-                            "result": {"ok": True, "verified_by_user": True},
-                        }
-                    ],
-                    "routed_tools": ["memory_nexus"],
-                    "visible_answer": u.content,
-                }
-
-        # 8. Omega 16-Plugin Router (Web Search, SVG Plotter, Stats/OLS, CODATA/Units, AST Audit, Crypto, Logic/SAT, Tasks, Benchmark, Local RAG)
+        # 7. Omega 16-Plugin Router (Web Search, SVG Plotter, Stats/OLS, CODATA/Units, AST Audit, Crypto, Logic/SAT, Tasks, Benchmark, Local RAG)
+        # Note: Manual human_correction verbatim recall is intentionally disabled so Never-AI
+        # never parrots dictated strings back; she learns organically from user prompts via SelfForgeEngine!
         omega_hit = route_omega_skill(
             user_message,
             self.registry,

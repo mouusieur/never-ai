@@ -1,10 +1,11 @@
-"""Train `ChronoMorph-Core v3.6` Compositional Spontaneous French Brain (>2.0M tokens, Zero Canned Copy)."""
+"""Train `ChronoMorph-Forge v3.7` Open-World & Multi-Turn French Brain (>3.1M tokens, Length-Bucketed)."""
 
 from __future__ import annotations
 
 import json
 import math
 from pathlib import Path
+import random
 import time
 import zipfile
 
@@ -18,11 +19,11 @@ from never_ai.core.special_tokens import (
     EOS_ID,
     NEVER_ID,
     NEVER_TOKEN,
+    USER_ID,
     USER_TOKEN,
 )
 from never_ai.core.tokenizer import MorphTokenizer
-from never_ai.data.curriculum import synthesize_bilingual_curriculum
-from never_ai.data.natural_dialogue_fr import format_natural_french_sequences
+from never_ai.data.natural_dialogue_fr import build_open_french_sequences
 from never_ai.optim.composite_muon import partition_muon_adamw_parameters
 from never_ai.vault.manager import VaultManager
 
@@ -30,7 +31,7 @@ from never_ai.vault.manager import VaultManager
 class FastMuon3(torch.optim.Optimizer):
     """3-step Newton-Schulz Spectral Muon for high-throughput CPU training."""
 
-    def __init__(self, params, lr: float = 0.022, wd: float = 0.015, mom: float = 0.95) -> None:
+    def __init__(self, params, lr: float = 0.024, wd: float = 0.012, mom: float = 0.95) -> None:
         super().__init__(params, dict(lr=lr, wd=wd, mom=mom))
 
     @torch.no_grad()
@@ -59,69 +60,104 @@ class FastMuon3(torch.optim.Optimizer):
                 p.add_(u, alpha=-lr * 0.2 * math.sqrt(max(p.size(0), p.size(1))))
 
 
+def _build_multiturn_mask(inp: list[int], tgt: list[int]) -> list[float]:
+    """Assign 1.0 on final assistant turn, 0.50 on first assistant turn, 0.22 on user prompt tokens."""
+    T = len(inp)
+    nv_positions = [i for i, tid in enumerate(inp) if tid == NEVER_ID]
+    last_nv = nv_positions[-1] if nv_positions else T
+    in_assistant = False
+    mask: list[float] = []
+    for i in range(T):
+        tok_in = inp[i]
+        tok_tg = tgt[i]
+        if tok_in == NEVER_ID:
+            in_assistant = True
+        elif tok_in == USER_ID:
+            in_assistant = False
+        if tok_tg == 0:
+            mask.append(0.0)
+        elif i >= last_nv and in_assistant:
+            mask.append(1.0)
+        elif in_assistant:
+            mask.append(0.50)
+        else:
+            mask.append(0.22)
+    return mask
+
+
 def main() -> None:
     torch.set_num_threads(2)
     t_start = time.perf_counter()
 
-    tr_seqs, va_seqs = format_natural_french_sequences(seed=42)
-    extra_tr, _ = synthesize_bilingual_curriculum(seed=101, scale_factor=1)
-    # Deduplicate while preserving rich natural dialogue dominance
-    seen = set(va_seqs)
-    train_docs: list[str] = []
-    for s in tr_seqs + extra_tr:
-        if s not in seen:
-            seen.add(s)
-            train_docs.append(s)
+    tr_seqs, va_seqs = build_open_french_sequences(seed=42)
+    print(f"[Corpus] Train sequences: {len(tr_seqs):,} | Val sequences: {len(va_seqs):,}")
 
-    print(f"[Corpus] Unique train sequences: {len(train_docs)} | Val sequences: {len(va_seqs)}")
-
-    tok = MorphTokenizer.train_from_iterator(train_docs + va_seqs, vocab_size=2048, min_frequency=2)
+    tok = MorphTokenizer.train_from_iterator(tr_seqs + va_seqs, vocab_size=3072, min_frequency=2)
     print(f"[Tokenizer] Trained BPE vocab_size={tok.vocab_size}")
 
-    seq_len = 76
+    # Length buckets eliminate >50% zero-padding FLOP waste!
+    bucket_specs = [(48, 44), (76, 32), (112, 24)]
+    buckets_x: list[torch.Tensor] = []
+    buckets_y: list[torch.Tensor] = []
+    buckets_m: list[torch.Tensor] = []
 
-    def _encode_split(docs: list[str]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
-        xs, ys, ms = [], [], []
-        non_pad = 0
-        for doc in docs:
-            ids = tok.encode(doc, add_bos=False, add_eos=False)
-            if NEVER_ID not in ids:
-                continue
-            if len(ids) > seq_len + 1:
-                continue
-            nv_pos = ids.index(NEVER_ID)
-            pad_len = (seq_len + 1) - len(ids)
-            full = ids + [0] * pad_len
-            inp = full[:-1]
-            tgt = full[1:]
-            # 0.20 LM weight on user prompt tokens + 1.0 SFT weight on assistant tokens!
-            msk = []
-            for idx_t in range(seq_len):
-                if tgt[idx_t] == 0:
-                    msk.append(0.0)
-                elif idx_t >= nv_pos:
-                    msk.append(1.0)
-                else:
-                    msk.append(0.20)
-            if sum(1 for idx_t in range(nv_pos, seq_len) if tgt[idx_t] != 0) >= 4:
-                xs.append(inp)
-                ys.append(tgt)
-                ms.append(msk)
-                non_pad += len(ids) - 1
-        return (
-            torch.tensor(xs, dtype=torch.long),
-            torch.tensor(ys, dtype=torch.long),
-            torch.tensor(ms, dtype=torch.float32),
-            non_pad,
-        )
+    raw_by_b: dict[int, tuple[list[list[int]], list[list[int]], list[list[float]]]] = {
+        b_len: ([], [], []) for b_len, _ in bucket_specs
+    }
+    uniq_toks = 0
+    for doc in tr_seqs:
+        ids = tok.encode(doc, add_bos=False, add_eos=False)
+        if NEVER_ID not in ids or len(ids) < 6:
+            continue
+        target_b = None
+        for b_len, _ in bucket_specs:
+            if len(ids) <= b_len + 1:
+                target_b = b_len
+                break
+        if target_b is None:
+            continue
+        full = ids + [0] * ((target_b + 1) - len(ids))
+        inp = full[:-1]
+        tgt = full[1:]
+        msk = _build_multiturn_mask(inp, tgt)
+        if sum(msk) >= 4.0:
+            raw_by_b[target_b][0].append(inp)
+            raw_by_b[target_b][1].append(tgt)
+            raw_by_b[target_b][2].append(msk)
+            uniq_toks += len(ids) - 1
 
-    X_tr, Y_tr, M_tr, uniq_toks = _encode_split(train_docs)
-    X_va, Y_va, M_va, _ = _encode_split(va_seqs)
-    print(f"[Tensor] Train={tuple(X_tr.shape)} ({uniq_toks:,} unique tokens) | Val={tuple(X_va.shape)}")
+    bucket_bs: list[int] = []
+    bucket_weights: list[float] = []
+    for b_len, b_sz in bucket_specs:
+        xs, ys, ms = raw_by_b[b_len]
+        if len(xs) >= b_sz:
+            buckets_x.append(torch.tensor(xs, dtype=torch.long))
+            buckets_y.append(torch.tensor(ys, dtype=torch.long))
+            buckets_m.append(torch.tensor(ms, dtype=torch.float32))
+            bucket_bs.append(b_sz)
+            bucket_weights.append(float(len(xs)))
+            print(f"  Bucket T={b_len:3d} (B={b_sz}): {len(xs):,} sequences")
+    print(f"[Corpus] Total active unique tokens encoded: {uniq_toks:,}")
+
+    # Encode validation split at T=96
+    va_T = 96
+    vx, vy, vm = [], [], []
+    for doc in va_seqs:
+        ids = tok.encode(doc, add_bos=False, add_eos=False)
+        if NEVER_ID not in ids or len(ids) > va_T + 1:
+            continue
+        full = ids + [0] * ((va_T + 1) - len(ids))
+        inp, tgt = full[:-1], full[1:]
+        vx.append(inp)
+        vy.append(tgt)
+        vm.append(_build_multiturn_mask(inp, tgt))
+    X_va = torch.tensor(vx, dtype=torch.long)
+    Y_va = torch.tensor(vy, dtype=torch.long)
+    M_va = torch.tensor(vm, dtype=torch.float32)
 
     cfg = ChronoMorphConfig(
-        stage_name="ChronoMorph-Core",
-        generation=6,
+        stage_name="ChronoMorph-Forge",
+        generation=7,
         vocab_size=tok.vocab_size,
         max_seq_len=256,
         n_layers=6,
@@ -138,21 +174,21 @@ def main() -> None:
     )
     model = ChronoMorphLM(cfg)
     p_counts = model.count_parameters()
-    print(f"[Model] ChronoMorph-Core v3.6 params: {p_counts['total_params']:,}")
+    print(f"[Model] ChronoMorph-Forge v3.7 params: {p_counts['total_params']:,}")
 
     muon_p, adam_p = partition_muon_adamw_parameters(model)
-    base_muon_lr = 0.022
-    base_adam_lr = 0.006
-    opt_muon = FastMuon3(muon_p, lr=base_muon_lr, wd=0.015)
-    opt_adam = torch.optim.AdamW(adam_p, lr=base_adam_lr, weight_decay=0.015)
+    base_muon_lr = 0.024
+    base_adam_lr = 0.0065
+    opt_muon = FastMuon3(muon_p, lr=base_muon_lr, wd=0.012)
+    opt_adam = torch.optim.AdamW(adam_p, lr=base_adam_lr, weight_decay=0.012)
 
-    total_steps = 960
-    batch_size = 32
-    warmup = 40
-    wsm_start = total_steps - 160
+    total_steps = 1420
+    warmup = 45
+    wsm_start = total_steps - 200
     wsm_sd: dict[str, torch.Tensor] | None = None
     wsm_count = 0
 
+    rng = random.Random(42)
     total_tokens_seen = 0
     t_loop = time.perf_counter()
     telem_path = Path("logs/training_telemetry.jsonl")
@@ -167,14 +203,17 @@ def main() -> None:
             mult = step / warmup
         else:
             prog = (step - warmup) / max(1, total_steps - warmup)
-            mult = 0.10 + 0.90 * 0.5 * (1.0 + math.cos(math.pi * prog))
+            mult = 0.08 + 0.92 * 0.5 * (1.0 + math.cos(math.pi * prog))
         for g in opt_muon.param_groups:
             g["lr"] = base_muon_lr * mult
         for g in opt_adam.param_groups:
             g["lr"] = base_adam_lr * mult
 
-        idx = torch.randint(0, X_tr.size(0), (batch_size,))
-        bx, by, bm = X_tr[idx], Y_tr[idx], M_tr[idx]
+        b_idx = rng.choices(range(len(buckets_x)), weights=bucket_weights, k=1)[0]
+        Xb, Yb, Mb = buckets_x[b_idx], buckets_y[b_idx], buckets_m[b_idx]
+        bsz = bucket_bs[b_idx]
+        ridx = torch.randint(0, Xb.size(0), (bsz,))
+        bx, by, bm = Xb[ridx], Yb[ridx], Mb[ridx]
 
         out = model(bx, targets=by, loss_mask=bm, update_titans=False)
         out.loss.backward()
@@ -201,7 +240,7 @@ def main() -> None:
                         else:
                             wsm_sd[k] = v.detach().clone()
 
-        if step % 120 == 0 or step == total_steps:
+        if step % 160 == 0 or step == total_steps:
             model.eval()
             with torch.no_grad():
                 vo = model(X_va, targets=Y_va, loss_mask=M_va, update_titans=False)
@@ -217,11 +256,13 @@ def main() -> None:
                 tf.write(
                     json.dumps(
                         {
+                            "type": "train_step",
                             "step": step,
                             "ce_loss": round(last_tr_ce, 4),
                             "val_ce_loss": round(last_val_ce, 4),
                             "tokens_trained": total_tokens_seen,
                             "tok_per_sec": round(tps, 1),
+                            "source": "forge v3.7",
                             "timestamp": round(time.time(), 2),
                         }
                     )
@@ -234,7 +275,7 @@ def main() -> None:
         with torch.no_grad():
             vo = model(X_va, targets=Y_va, loss_mask=M_va, update_titans=False)
             last_val_ce = float(vo.ce_loss)
-        print(f"[WSM Merged] Final val_ce={last_val_ce:.4f}")
+        print(f"[WSM Merged] Final val_ce={last_val_ce:.4f} | total_tokens={total_tokens_seen:,}")
 
     vault = VaultManager("checkpoints")
     vault.save_checkpoint(
@@ -245,12 +286,11 @@ def main() -> None:
             "total_tokens_trained": total_tokens_seen,
             "final_ce_loss": round(last_tr_ce, 4),
             "val_ce_loss": round(last_val_ce, 4),
-            "version": "3.6.0",
+            "version": "3.7.0",
         },
         consolidated_state_dict=model.state_dict(),
     )
 
-    # Pack float16 seed brain archive
     sd_fp16 = {
         k: (v.to(torch.float16) if v.is_floating_point() else v)
         for k, v in model.state_dict().items()
@@ -269,38 +309,6 @@ def main() -> None:
         f"[Done] Saved checkpoints/latest & {zip_path} ({zip_path.stat().st_size / 1048576:.2f} MiB) "
         f"in {time.perf_counter() - t_start:.1f}s!"
     )
-
-    # Smoke-test unseen prompts directly on raw neural decoder
-    model.eval()
-    probes = [
-        "yo bg",
-        "rien pas grand chose et toi",
-        "on dirait des phrases préenregistrées",
-        "suce ma grosse bite",
-        "ok my bad",
-        "cetait pas drole",
-        "adadadada",
-        "je t'aime",
-        "j'ai mal au crane depuis ce matin",
-        "mon chat vient de faire tomber mon verre d'eau sur mon clavier",
-        "tu préfères paris ou marseille ?",
-        "il pleut encore j'en ai marre",
-        "t'es plutôt café ou thé ?",
-        "recette de gâteau au chocolat",
-    ]
-    print("\n=== PURE NEURAL GENERATION SMOKE TEST (ZERO <|context|>) ===")
-    for p in probes:
-        p_ids = tok.encode(f"{BOS_TOKEN}{USER_TOKEN}{p}{NEVER_TOKEN}", add_bos=False, add_eos=False)
-        out_ids, _ = model.generate(
-            p_ids,
-            max_new_tokens=64,
-            temperature=0.55,
-            top_k=28,
-            top_p=0.86,
-            stop_token_ids={EOS_ID},
-            tokenizer=tok,
-        )
-        print(f"U: {p}\nA: {tok.decode(out_ids, skip_special_tokens=True)}\n---")
 
 
 if __name__ == "__main__":

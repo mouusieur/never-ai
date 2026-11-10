@@ -34,6 +34,7 @@ from never_ai.evolution.seal_and_grpo import (
     ImmutableEvalHarness,
     SEALConsolidator,
 )
+from never_ai.evolution.self_forge import SelfForgeEngine
 from never_ai.memory.conversations import ConversationStore, LocalIdentityVault
 from never_ai.memory.evolvemem import EvolveMemStore
 from never_ai.morphogenesis.operators import (
@@ -137,6 +138,16 @@ class NeverAIEngine:
             workspace_root=".",
         )
         self.grpo = GRPOReasoningTrainer(self.tokenizer, self.registry, group_size=4, lr=1e-4)
+        self.self_forge = SelfForgeEngine(
+            storage_path=self.memory.storage_path.parent / "prompt_forge.jsonl",
+        )
+        # Purge any legacy verbatim human_correction parrot entries
+        stale_corrs = [uid for uid, u in self.memory.units.items() if u.category == "human_correction"]
+        if stale_corrs:
+            for uid in stale_corrs:
+                del self.memory.units[uid]
+            self.memory.save()
+
         self.harness = SovereignAgentHarness(
             self.model, self.tokenizer, self.registry, self.memory
         )
@@ -1103,17 +1114,12 @@ class NeverAIEngine:
         norm_q = re.sub(r"\W+", " ", q_clean.lower()).strip()
 
         with self.lock:
-            self.memory.store(
-                key=f"corr_{abs(hash(norm_q)) % 1_000_000}",
-                content=a_clean,
-                category="human_correction",
-                tags=[f"qnorm:{norm_q}", owner, "human_feedback"],
-            )
+            self.self_forge.observe_prompt(q_clean, surprise=2.5)
             self.learn_dialogue_exchange(
                 question=q_clean,
                 thought=th_clean,
                 answer=a_clean,
-                priority=4.0,
+                priority=1.5,
             )
 
             losses: list[float] = []
@@ -1192,17 +1198,58 @@ class NeverAIEngine:
         return list(t.get("messages", []))[-8:]
 
     def _assimilate_turn_async(self, question: str, answer: str, source: str = "discussion") -> None:
-        """Store verified external web knowledge in EvolveMem without running noisy unsupervised gradient steps."""
-        if source != "recherche web" or not question.strip() or not answer.strip() or "```svg" in answer:
+        """
+        Autonomous Prompt-Driven Self-Forging:
+        - For web search: stores verified summary in EvolveMem without noisy raw-markdown gradient steps.
+        - For human discussions: measures epistemic prompt surprise, absorbs the human's prompt into
+          `SelfForgeEngine`, and periodically runs Contrastive Best-of-K plasticity (with CE_floor=1.45
+          anti-parrot homeostasis + 80% core replay so Never-AI evolves without parroting!).
+        """
+        q_clean = question.strip()
+        if not q_clean:
+            return
+        if source == "recherche web":
+            if answer.strip() and "```svg" not in answer:
+                try:
+                    with self.lock:
+                        self.memory.store(
+                            key=f"web_{int(time.time())}",
+                            content=f"{q_clean[:120]} -> {answer.strip()[:220]}",
+                            category="semantic",
+                            tags=["web"],
+                        )
+                except Exception:  # noqa: BLE001
+                    pass
+            return
+
+        if source != "discussion" or self._active_chats > 0:
             return
         try:
             with self.lock:
-                self.memory.store(
-                    key=f"web_{int(time.time())}",
-                    content=f"{question.strip()[:120]} -> {answer.strip()[:220]}",
-                    category="semantic",
-                    tags=["web"],
+                surprise = self.self_forge.compute_prompt_surprise(
+                    self.model, self.tokenizer, q_clean, self.device
                 )
+                self.self_forge.observe_prompt(q_clean, surprise=surprise)
+                if self.self_forge.prompts_observed % 3 == 0 or surprise >= 2.9:
+                    forge_res = self.self_forge.forge_from_prompts(
+                        model=self.model,
+                        tokenizer=self.tokenizer,
+                        dataset=self.dataset,
+                        device=self.device,
+                        seq_len=min(self.seq_len, 96),
+                    )
+                    if forge_res.get("forged"):
+                        self.total_tokens_trained += int(forge_res.get("tokens", 0))
+                        self._append_telemetry(
+                            {
+                                "type": "train_step",
+                                "timestamp": round(time.time(), 2),
+                                "ce_loss": forge_res["batch_ce"],
+                                "source": "auto-forge prompts",
+                                "tok_per_sec": 0.0,
+                            }
+                        )
+                        self._refresh_status_cache()
         except Exception:  # noqa: BLE001
             pass
 

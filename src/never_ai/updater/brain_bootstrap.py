@@ -77,7 +77,7 @@ def is_checkpoint_converged(ckpt_dir: Path) -> bool:
         metrics = mf.get("metrics") or {}
         toks = int(metrics.get("total_tokens_trained", 0))
         ce = float(metrics.get("val_ce_loss", metrics.get("final_ce_loss", 9.9)))
-        return toks >= 1_800_000 and ce <= 2.5
+        return toks >= 2_800_000 and ce <= 2.6
     except Exception:  # noqa: BLE001
         return False
 

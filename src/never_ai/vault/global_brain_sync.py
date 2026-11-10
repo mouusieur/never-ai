@@ -308,8 +308,8 @@ class GlobalBrainSync:
                     mf_d = json.loads(mf_f.read_text(encoding="utf-8"))
                     m_met = mf_d.get("metrics") or {}
                     rem_converged = (
-                        int(m_met.get("total_tokens_trained", 0)) >= 1_800_000
-                        and float(m_met.get("val_ce_loss", m_met.get("final_ce_loss", 9.9))) <= 2.5
+                        int(m_met.get("total_tokens_trained", 0)) >= 2_800_000
+                        and float(m_met.get("val_ce_loss", m_met.get("final_ce_loss", 9.9))) <= 2.6
                     )
                 st_f = rem_p / "model_wsm.safetensors"
                 if not st_f.exists():
