@@ -26,9 +26,8 @@ from never_ai.core.special_tokens import (
     USER_TOKEN,
 )
 from never_ai.core.tokenizer import MorphTokenizer
-from never_ai.cortex.mood_engine import LimbicMoodEngine
 from never_ai.data.curriculum import ContinualDatasetAndReplay, synthesize_bilingual_curriculum
-from never_ai.data.social_persona_corpus import synthesize_social_mood_corpus
+from never_ai.data.social_stream import SocialStreamHarvester
 from never_ai.data.omega_domains import OMEGA_DOMAIN_KNOWLEDGE
 from never_ai.evolution.seal_and_grpo import (
     GRPOReasoningTrainer,
@@ -79,7 +78,7 @@ class NeverAIEngine:
         self.identities = LocalIdentityVault(mem_dir / "identities.json")
         self.conversations = ConversationStore(mem_dir / "conversations.json")
         self.cortex = SuperCortexManager(mem_dir / "cortex_config.json")
-        self.mood = LimbicMoodEngine(mem_dir / "limbic_mood.json")
+        self.social = SocialStreamHarvester()
         self.telemetry_path = Path(telemetry_path)
         self.telemetry_path.parent.mkdir(parents=True, exist_ok=True)
         self.seq_len = seq_len
@@ -94,9 +93,6 @@ class NeverAIEngine:
 
         ckpts = self.vault.list_checkpoints()
         train_docs, val_docs = synthesize_bilingual_curriculum(seed=42, scale_factor=2)
-        soc_train, soc_val = synthesize_social_mood_corpus(seed=42, scale_factor=2)
-        train_docs = train_docs + soc_train
-        val_docs = val_docs + soc_val
 
         if ckpts:
             latest_tag = self._select_latest_tag([c.get("folder", c["tag"]) for c in ckpts])
@@ -138,8 +134,6 @@ class NeverAIEngine:
         self.harness = SovereignAgentHarness(
             self.model, self.tokenizer, self.registry, self.memory
         )
-        if ckpts:
-            self.harness.pure_neural_dialogue = bool(manifest.get("metrics", {}).get("colab_gpu_trained"))
         self._seed_omega_domains_if_needed()
 
         self.telemetry_history: list[dict[str, Any]] = self._load_recent_telemetry()
@@ -685,7 +679,6 @@ class NeverAIEngine:
         snap["background_training"] = self._bg_running
         snap["auto_morphogenesis"] = self._auto_morphogenesis
         snap["bg_steps_session"] = self._bg_steps_session
-        snap["mood"] = self.mood.public_status()
         return snap
 
     def learn_dialogue_exchange(
@@ -1236,11 +1229,10 @@ class NeverAIEngine:
         recent_hist: list[dict[str, Any]],
         style_mode: str = "normal",
         web_search: bool = False,
-        temperature: float = 0.6,
-        active_mood: dict[str, Any] | None = None,
+        temperature: float = 0.7,
         on_event: Any = None,
     ) -> dict[str, Any]:
-        """Execute a turn using the active Foundation / 70B Super-Cortex + Sovereign Tools & Memory."""
+        """Execute a turn using the active Super-Cortex with ZERO behavioral directive."""
         mem_hits = self.memory.search(message, top_k=4)
         mem_texts = [f"{m['key']}: {m['content']}" for m in mem_hits if m.get("content")]
 
@@ -1264,8 +1256,7 @@ class NeverAIEngine:
             style_mode=style_mode,
             memories=mem_texts,
             web_context=web_ctx,
-            mood_guide=(active_mood or {}).get("prompt_guide", ""),
-            temperature=max(0.35, float(temperature)),
+            temperature=max(0.45, float(temperature)),
         ):
             chunks.append(delta)
             if on_event is not None:
@@ -1279,7 +1270,7 @@ class NeverAIEngine:
 
         return {
             "visible_answer": full_ans,
-            "thoughts": [f"Génération neuronale fluide via Super-Cortex ({self.cortex.config.get('engine')} · {self.cortex.config.get('model')})."],
+            "thoughts": [f"Génération libre sans directive ({self.cortex.config.get('engine')} · {self.cortex.config.get('model')})."],
             "tool_traces": [],
             "routed_tools": ["web_search_engine"] if web_sources else [],
             "raw_generation": full_ans,
@@ -1289,7 +1280,6 @@ class NeverAIEngine:
             "web_sources": web_sources,
             "persona": "polymathe",
             "style_mode": style_mode,
-            "mood": active_mood or self.mood.public_status(),
             "deep_think": False,
         }
 
@@ -1297,18 +1287,16 @@ class NeverAIEngine:
         self,
         message: str,
         max_new_tokens: int = 160,
-        temperature: float = 0.2,
+        temperature: float = 0.35,
         thread_id: str | None = None,
         owner: str = "local",
         deep_think: bool = False,
         persona: str = "polymathe",
         style_mode: str = "normal",
         web_search: bool = False,
-        mood_mode: str | None = None,
     ) -> dict[str, Any]:
         self._active_chats += 1
         try:
-            active_mood = self.mood.evolve_on_message(message, override_mode=mood_mode)
             recent_hist = self._get_recent_thread_messages(thread_id)
             if self.cortex.is_server_llm_active():
                 try:
@@ -1318,7 +1306,6 @@ class NeverAIEngine:
                         style_mode=style_mode,
                         web_search=web_search,
                         temperature=temperature,
-                        active_mood=active_mood,
                     )
                     if thread_id:
                         with self.lock:
@@ -1335,8 +1322,7 @@ class NeverAIEngine:
                 except Exception:  # noqa: BLE001
                     pass
             with self.lock:
-                if not recent_hist:
-                    self.harness.reset_session_fast_weights()
+                # Persistent Titans fast-weights stay alive across conversations so emergent internal state evolves naturally!
                 result = self.harness.run_turn(
                     message,
                     max_new_tokens=max_new_tokens,
@@ -1347,9 +1333,7 @@ class NeverAIEngine:
                     persona=persona,
                     style_mode=style_mode,
                     web_search=web_search,
-                    mood_id=active_mood["current_mood"] if (style_mode == "social" or (mood_mode and mood_mode != "auto")) else None,
                 )
-                result["mood"] = active_mood
                 learned = result.pop("learned_pair", None)
                 if learned:
                     self.learn_dialogue_exchange(*learned, priority=3.0)
@@ -1371,14 +1355,13 @@ class NeverAIEngine:
         self,
         message: str,
         max_new_tokens: int = 160,
-        temperature: float = 0.2,
+        temperature: float = 0.35,
         thread_id: str | None = None,
         owner: str = "local",
         deep_think: bool = False,
         persona: str = "polymathe",
         style_mode: str = "normal",
         web_search: bool = False,
-        mood_mode: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Stream live SSE events (`think_delta`, `tool_call`, `web_sources`, `answer_delta`, `done`)."""
         q: queue.Queue[dict[str, Any] | None] = queue.Queue()
@@ -1388,8 +1371,6 @@ class NeverAIEngine:
             self._active_chats += 1
             res_for_assim: dict[str, Any] | None = None
             try:
-                active_mood = self.mood.evolve_on_message(message, override_mode=mood_mode)
-                q.put({"type": "mood", "mood": active_mood})
                 recent_hist = self._get_recent_thread_messages(thread_id)
                 if self.cortex.is_server_llm_active():
                     try:
@@ -1399,7 +1380,6 @@ class NeverAIEngine:
                             style_mode=style_mode,
                             web_search=web_search,
                             temperature=temperature,
-                            active_mood=active_mood,
                             on_event=lambda ev: (False if aborted_flag.is_set() else (q.put(ev) or True)),
                         )
                         with self.lock:
@@ -1419,8 +1399,6 @@ class NeverAIEngine:
                     except Exception as cortex_exc:  # noqa: BLE001
                         q.put({"type": "think_delta", "text": f"[Fallback local : {cortex_exc}]\n"})
                 with self.lock:
-                    if not recent_hist:
-                        self.harness.reset_session_fast_weights()
                     res = self.harness.run_turn(
                         message,
                         max_new_tokens=max_new_tokens,
@@ -1431,10 +1409,8 @@ class NeverAIEngine:
                         persona=persona,
                         style_mode=style_mode,
                         web_search=web_search,
-                        mood_id=active_mood["current_mood"] if (style_mode == "social" or (mood_mode and mood_mode != "auto")) else None,
                         on_event=lambda ev: (False if aborted_flag.is_set() else (q.put(ev) or True)),
                     )
-                    res["mood"] = active_mood
                     learned = res.pop("learned_pair", None)
                     if learned:
                         self.learn_dialogue_exchange(*learned, priority=3.0)
@@ -1470,6 +1446,75 @@ class NeverAIEngine:
         finally:
             aborted_flag.set()
 
+    def ingest_social_stream(
+        self,
+        x_query: str = "lang:fr",
+        raw_text: str = "",
+        train_steps: int = 8,
+    ) -> dict[str, Any]:
+        """Harvest raw social posts/threads (X / microblogging / Reddit FR or pasted X dump) and train directly."""
+        seqs: list[str] = []
+        samples: list[str] = []
+        counts: dict[str, int] = {"pasted_x": 0, "x_mirrors": 0, "microblog_fr": 0, "reddit_fr": 0}
+
+        if raw_text.strip():
+            parsed = self.social.parse_raw_x_dump_or_text(raw_text)
+            counts["pasted_x"] = len(parsed)
+            seqs.extend(self.social.to_raw_training_sequences(parsed))
+            samples.extend(p if r is None else f"{p} → {r}" for p, r in parsed[:5])
+
+        if not raw_text.strip() or x_query.strip():
+            bundle = self.social.harvest_live_bundle(x_query=x_query or "lang:fr", max_per_source=30)
+            for k in ("x_mirrors", "microblog_fr", "reddit_fr"):
+                counts[k] = bundle["counts"].get(k, 0)
+            seqs.extend(bundle["sequences"])
+            if len(samples) < 5:
+                samples.extend(bundle["samples"][: 5 - len(samples)])
+
+        if not seqs:
+            return {
+                "ok": False,
+                "counts": counts,
+                "message": "Aucun post récupéré (réseau restreint ou texte vide). Collez directement des posts/threads X ou lancez le Super-Trainer Colab !",
+            }
+
+        losses: list[float] = []
+        with self.lock:
+            L = self.seq_len + 1
+            for s in seqs:
+                ids = self.tokenizer.encode(s)
+                msk = self.tokenizer.build_target_loss_mask(ids)
+                if len(ids) < L:
+                    pad_n = L - len(ids)
+                    ids = ids + [0] * pad_n
+                    msk = msk + [0.0] * pad_n
+                else:
+                    ids = ids[:L]
+                    msk = msk[:L]
+                self.dataset.push_to_replay(ids, msk, surprise=3.0)
+
+            self.dataset.train_sequences.extend(self.dataset._encode_and_chunk_docs(seqs))
+            self.model.train()
+            for _ in range(max(1, min(32, train_steps))):
+                batch = self.dataset.sample_batch(batch_size=4, split="train", replay_ratio=0.65, device=self.device)
+                self.optimizer.zero_grad()
+                out = self.model(batch.input_ids, targets=batch.targets, loss_mask=batch.loss_mask, update_titans=True)
+                assert out.loss is not None
+                out.loss.backward()
+                self.optimizer.step(self.model)
+                self.model.update_moe_biases()
+                self.total_tokens_trained += int(batch.input_ids.numel())
+                losses.append(round(float(out.ce_loss), 4))
+            self._refresh_status_cache()
+
+        return {
+            "ok": True,
+            "sequences_ingested": len(seqs),
+            "counts": counts,
+            "losses": losses,
+            "samples": samples[:5],
+        }
+
     def import_brain_zip_bytes(self, zip_bytes: bytes) -> dict[str, Any]:
         """Hot-swap the live ChronoMorph-LM checkpoint from a Colab-trained `never-ai-brain-*.zip`!"""
         import io
@@ -1502,9 +1547,8 @@ class NeverAIEngine:
             self.model = model
             self.tokenizer = tokenizer
             train_docs, val_docs = synthesize_bilingual_curriculum(seed=42, scale_factor=2)
-            soc_train, soc_val = synthesize_social_mood_corpus(seed=42, scale_factor=2)
             self.dataset = ContinualDatasetAndReplay(self.tokenizer, seq_len=self.seq_len)
-            self.dataset.load_corpora(train_docs + soc_train, val_docs + soc_val)
+            self.dataset.load_corpora(train_docs, val_docs)
             self.optimizer = CompositeMuonOptimizer(
                 self.model,
                 muon_lr=2.2e-3,
@@ -1522,7 +1566,6 @@ class NeverAIEngine:
                 workspace_root=".",
             )
             self.harness = SovereignAgentHarness(self.model, self.tokenizer, self.registry, self.memory)
-            self.harness.pure_neural_dialogue = bool(manifest.get("metrics", {}).get("colab_gpu_trained"))
             self._refresh_status_cache()
 
         return {

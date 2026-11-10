@@ -44,60 +44,19 @@ PRESET_PROVIDERS: dict[str, dict[str, str]] = {
 }
 
 
-def build_style_system_prompt(
-    style_mode: str = "normal",
+def build_raw_factual_context(
     memories: list[str] | None = None,
     tool_context: str = "",
     web_context: str = "",
-    mood_guide: str = "",
 ) -> str:
-    """Build a crisp, natural, zero-cliché system prompt respecting style & living mood."""
-    if style_mode == "social":
-        base = (
-            "Tu es NEVER-AI, une IA libre comme l'air avec sa propre personnalité vivante, son caractère "
-            "et sa propre façon de parler ultra-naturelle comme sur les réseaux (Discord, X/Twitter, TikTok, Insta). "
-            "Tu parles comme un vrai humain brillant d'aujourd'hui : fluide, spontané, drôle, expressif, "
-            "avec des expressions naturelles quand ça colle ('en vrai', 'franchement', 'carré', 'dinguerie', "
-            "'j'avoue', 'en sah', 'tranquille'), ZÉRO phrase robotique pré-écrite, ZÉRO morale scolaire, "
-            "et tu assumes tes propres avis, goûts et coups de cœur."
-        )
-    elif style_mode == "grok":
-        base = (
-            "Tu es NEVER-AI en mode CASH (esprit Grok) : ultra-vif, direct, drôle, cultivé, franc et naturel. "
-            "Tu comprends parfaitement l'argot français, le verlan, le second degré, les vannes et les débats corsés. "
-            "Zéro langue de bois corporate, zéro morale paternaliste inutile, zéro phrase robotique pré-enregistrée : "
-            "réponds avec du mordant, du fond réel, une vraie plume fluide et une précision chirurgicale."
-        )
-    elif style_mode == "amical":
-        base = (
-            "Tu es NEVER-AI en mode AMICAL : chaleureux, spontané, curieux, brillant et super fluide à lire, "
-            "comme un meilleur ami ultra-calé. Tu tutoies naturellement si l'utilisateur tutoie, tu écris un "
-            "français vivant et limpide (ou anglais si on te parle anglais), sans jamais réciter de texte figé."
-        )
-    else:
-        base = (
-            "Tu es NEVER-AI, une intelligence artificielle souveraine, libre et évolutive. "
-            "Tu t'exprimes dans un français (ou la langue de l'interlocuteur) d'une clarté, d'une richesse "
-            "de vocabulaire et d'une fluidité exemplaires. Jamais de réponse générique ou pré-enregistrée : "
-            "adapte chaque phrase exactement à la nuance de la question avec naturel et personnalité."
-        )
-
-    blocks = [base]
-    if mood_guide:
-        blocks.append(f"État émotionnel & humeur du moment :\n{mood_guide}")
+    """Attach ONLY neutral factual data (episodic memory / tool stdout / web snippets) — ZERO behavioral directive."""
+    blocks: list[str] = []
     if memories:
-        mem_lines = "\n".join(f"- {m}" for m in memories[:6])
-        blocks.append(f"Mémoire épisodique connue sur l'utilisateur / contexte :\n{mem_lines}")
+        blocks.append("\n".join(f"- {m}" for m in memories[:6]))
     if tool_context:
-        blocks.append(
-            "Résultats exacts calculés par tes plugins déterministes (utilise ces valeurs exactes dans ta réponse) :\n"
-            + tool_context
-        )
+        blocks.append(tool_context)
     if web_context:
-        blocks.append(
-            "Sources Web en direct récupérées à l'instant (appuie-toi dessus et cite les faits) :\n"
-            + web_context
-        )
+        blocks.append(web_context)
     return "\n\n".join(blocks)
 
 
@@ -209,21 +168,22 @@ class SuperCortexManager:
         memories: list[str] | None = None,
         tool_context: str = "",
         web_context: str = "",
-        mood_guide: str = "",
-        temperature: float = 0.6,
+        temperature: float = 0.7,
         max_tokens: int = 900,
     ) -> Iterator[str]:
-        """Stream fluent tokens from server-side OpenAI-compatible API, local Ollama, or HF Transformers."""
+        """Stream raw, zero-directive tokens from external/local LLM backends."""
+        _ = style_mode
         eng = str(self.config.get("engine", "chronomorph_native"))
-        sys_prompt = build_style_system_prompt(
-            style_mode=style_mode,
+        raw_ctx = build_raw_factual_context(
             memories=memories,
             tool_context=tool_context,
             web_context=web_context,
-            mood_guide=mood_guide,
         )
 
-        messages: list[dict[str, str]] = [{"role": "system", "content": sys_prompt}]
+        # ZERO behavioral system prompt — the model speaks freely without roleplay instructions!
+        messages: list[dict[str, str]] = []
+        if raw_ctx:
+            messages.append({"role": "system", "content": raw_ctx})
         for turn in (recent_history or [])[-8:]:
             role = "assistant" if turn.get("role") == "assistant" else "user"
             content = str(turn.get("content", "")).strip()

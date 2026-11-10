@@ -85,7 +85,7 @@ class SovereignAgentHarness:
         self.registry = registry
         self.memory = memory
         self.titans_session_states: list[TitansMemoryState | None] | None = None
-        self.pure_neural_dialogue: bool = False
+        self.pure_neural_dialogue: bool = True
 
     def reset_session_fast_weights(self) -> None:
         self.titans_session_states = None
@@ -95,7 +95,6 @@ class SovereignAgentHarness:
         user_message: str,
         use_tool_rag: bool = True,
         recent_history: list[dict[str, Any]] | None = None,
-        mood_id: str | None = None,
     ) -> tuple[str, list[str]]:
         active_tools: list[str] = []
         ctx_parts: list[str] = []
@@ -106,13 +105,21 @@ class SovereignAgentHarness:
                 active_tools = [t.name for t in tools]
                 ctx_parts.append("Tools: math_engine")
 
-        if mood_id and not active_tools:
-            ctx_parts.append(f"Humeur: {mood_id}")
+        # Pure multi-turn history without any behavioral/persona/mood directive!
+        hist_chunks: list[str] = []
+        for turn in (recent_history or [])[-4:]:
+            role = turn.get("role")
+            content = str(turn.get("content") or "").strip()
+            if not content:
+                continue
+            if role == "user":
+                hist_chunks.append(f"{USER_TOKEN}{content[:450]}")
+            else:
+                hist_chunks.append(f"{NEVER_TOKEN}{content[:550]}{EOS_TOKEN}")
 
-        # Keep prompt clean & aligned with training distribution; only attach context if needed
         ctx_block = f"{CONTEXT_TOKEN}{' // '.join(ctx_parts)}" if ctx_parts else ""
-        _ = recent_history
-        prompt = f"{BOS_TOKEN}{ctx_block}{USER_TOKEN}{user_message}{NEVER_TOKEN}"
+        hist_str = "".join(hist_chunks)
+        prompt = f"{BOS_TOKEN}{ctx_block}{hist_str}{USER_TOKEN}{user_message}{NEVER_TOKEN}"
         return prompt, active_tools
 
     def _try_symbolic_or_episodic_skill(
@@ -409,10 +416,12 @@ class SovereignAgentHarness:
                 "deep_think": deep_think,
             }
 
+        if self.titans_session_states is not None and len(self.titans_session_states) != self.model.cfg.n_layers:
+            self.titans_session_states = None
+
         prompt_text, routed_tools = self.build_prompt(
             user_message,
             recent_history=recent_history,
-            mood_id=mood_id,
         )
         running_text = prompt_text
         tool_traces: list[dict[str, Any]] = []
