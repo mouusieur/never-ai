@@ -1,0 +1,62 @@
+{
+  "id": "never-ai-sovereign-pwa",
+  "name": "Never-AI",
+  "short_name": "Never-AI",
+  "version": "4.2.0",
+  "description": "Never-AI 3.89B Souverain Sans Limite — Application PWA complète avec mise à jour automatique OTA & Service Worker.",
+  "lang": "fr",
+  "start_url": "./index.html?pwa=1&source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["productivity", "utilities", "education"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouvelle discussion",
+      "short_name": "Discuter",
+      "url": "./index.html?pwa=1&source=pwa&view=chat",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Cortex 3.89B",
+      "short_name": "Modèle",
+      "url": "./index.html?pwa=1&source=pwa&view=model",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Mises à jour OTA",
+      "short_name": "Mise à jour",
+      "url": "./index.html?pwa=1&source=pwa&view=apps",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

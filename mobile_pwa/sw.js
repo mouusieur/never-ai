@@ -17,7 +17,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((ks) => Promise.all(ks.filter((k) => k !== CACHE && k !== 'never-ai-ota-override').map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
       .then((cs) => cs.forEach((c) => c.postMessage({ type: 'NEVER_AI_SW_UPDATED', build: BUILD })))
@@ -28,26 +28,29 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const u = new URL(e.request.url);
   if (u.pathname.includes('/api/') || u.pathname.includes('/download/')) return;
-  const isDoc =
-    e.request.mode === 'navigate' ||
-    u.pathname.endsWith('/') ||
-    u.pathname.endsWith('.html') ||
-    u.pathname.endsWith('.webmanifest');
+  const isHtmlDoc = e.request.mode === 'navigate' || u.pathname.endsWith('/') || u.pathname.endsWith('.html');
+  const isDoc = isHtmlDoc || u.pathname.endsWith('.webmanifest');
 
   if (isDoc) {
     const netUrl = u.hostname.endsWith('githack.com')
       ? (u.origin + u.pathname + (u.search ? u.search + '&' : '?') + '_b=' + Math.floor(Date.now() / 15000))
       : e.request;
     e.respondWith(
-      fetch(netUrl, { cache: 'no-store' })
-        .then((r) => {
-          if (r && r.status === 200) {
-            const cl = r.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, cl)).catch(() => {});
-          }
-          return r;
-        })
-        .catch(() => caches.match(e.request).then((m) => m || caches.match('./index.html')))
+      (isHtmlDoc
+        ? caches.open('never-ai-ota-override').then((oc) => oc.match('https://never-ai.local/ota-index.html'))
+        : Promise.resolve(null)
+      ).then((otaHit) => {
+        if (otaHit) return otaHit;
+        return fetch(netUrl, { cache: 'no-store' })
+          .then((r) => {
+            if (r && r.status === 200) {
+              const cl = r.clone();
+              caches.open(CACHE).then((c) => c.put(e.request, cl)).catch(() => {});
+            }
+            return r;
+          })
+          .catch(() => caches.match(e.request).then((m) => m || caches.match('./index.html')));
+      })
     );
     return;
   }

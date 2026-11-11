@@ -2520,15 +2520,28 @@
         try {
           if ('caches' in window) {
             const ks = await caches.keys();
-            await Promise.all(ks.map((k) => caches.delete(k)));
+            await Promise.all(ks.filter((k) => k !== 'never-ai-ota-override').map((k) => caches.delete(k)));
+            if (nextSha) {
+              const rawRes = await _rawFetch(
+                'https://api.github.com/repos/mouusieur/never-ai/contents/src/never_ai/server/static/index.html?ref=' + encodeURIComponent(nextSha),
+                { headers: { Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' }
+              );
+              if (rawRes.ok) {
+                const freshHtml = await rawRes.text();
+                const oc = await caches.open('never-ai-ota-override');
+                await oc.put(
+                  'https://never-ai.local/ota-index.html',
+                  new Response(freshHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+                );
+              }
+            }
           }
-          await _rawFetch('./index.html?ota=' + Date.now(), { cache: 'reload' }).catch(() => {});
         } catch (_) {}
         return _jsonResp({
           ok: true,
           updated: true,
           new_commit_short: nextSha ? nextSha.slice(0, 7) : 'latest',
-          message: 'Application PWA mise à jour depuis GitHub Pages — rechargement…',
+          message: 'Application PWA mise à jour en direct depuis GitHub — rechargement…',
         });
       }
 
@@ -3722,7 +3735,7 @@
             if (ad && ad.updated) {
               if ('caches' in window) {
                 const ks = await caches.keys();
-                await Promise.all(ks.map((k) => caches.delete(k)));
+                await Promise.all(ks.filter((k) => k !== 'never-ai-ota-override').map((k) => caches.delete(k)));
               }
               scheduleSafeReload(`Never-AI mis à jour automatiquement (${ad.new_commit_short || shortSha})`);
             }
@@ -3773,7 +3786,7 @@
         }
         if ('caches' in window && updated) {
           const ks = await caches.keys();
-          await Promise.all(ks.map((k) => caches.delete(k)));
+          await Promise.all(ks.filter((k) => k !== 'never-ai-ota-override').map((k) => caches.delete(k)));
         }
         if (swRegistration) await swRegistration.update().catch(() => {});
         if (updated) {
