@@ -383,6 +383,7 @@ def pwa_qr_svg(url: str = Query(default="https://github.com/mouusieur/never-ai")
         return Response(content=fallback, media_type="image/svg+xml")
 
 
+@app.api_route("/NeverAI-PWA.zip", methods=["GET", "HEAD"])
 @app.api_route("/download/NeverAI-PWA.zip", methods=["GET", "HEAD"])
 @app.api_route("/api/download/pwa", methods=["GET", "HEAD"])
 def api_download_pwa_bundle() -> Response:
