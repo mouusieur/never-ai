@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Left Sovereign Pillar -->
+  <path d="M96 84H162V428H96V84Z" fill="#E7E9EA"/>
+  <!-- Right Sovereign Pillar -->
+  <path d="M350 84H416V428H350V84Z" fill="#E7E9EA"/>
+  <!-- Double-Rail Hollow Morphogenetic Bridge (X.com inspired hollow geometric slash) -->
+  <path d="M96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#E7E9EA"/>
+</svg>

@@ -1,0 +1,42 @@
+name: Publish Sprout-MoE Neural Parameters to GitHub Releases
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*-brain*"
+      - "v1.6*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish-brain-weights:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install CPU PyTorch & Never-AI
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -e .
+
+      - name: Train & Package Sprout-MoE Neural Checkpoint (never-ai-brain-sprout-moe.zip)
+        run: |
+          python scripts/build_release_brain.py never-ai-brain-sprout-moe.zip
+          ls -lh never-ai-brain-sprout-moe.zip
+
+      - name: Upload Evolved Global Brain & Lineage to Latest GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REL_TAG=$(gh release view --json tagName -q .tagName || echo "v1.4.2")
+          gh release upload "$REL_TAG" never-ai-brain-sprout-moe.zip global_lineage.json --clobber

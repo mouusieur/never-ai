@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: never-ai-cloud
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NEVER_AI_BOOTSTRAP_GITHUB_BRAIN
+        value: "1"
+      - key: NEVER_AI_CLOUD_AUTO_OTA
+        value: "1"

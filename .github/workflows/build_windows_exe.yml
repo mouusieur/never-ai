@@ -1,0 +1,101 @@
+name: Build NeverAI Windows .exe (Defender-Verified Inno Setup + Portable)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies & PyWebView + PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e . pywebview pyinstaller
+
+      - name: Generate Brand Icon & Bootstrap Seed Brain
+        run: |
+          python scripts/generate_brand_assets.py
+          python -c "import os, sys; from never_ai.engine import NeverAIEngine; e = NeverAIEngine(); e.train_steps(num_steps=16, batch_size=8); sys.stdout.flush(); os._exit(0)"
+
+      - name: Compile Standalone NeverAI.exe via PyInstaller (No UPX + VersionInfo)
+        run: |
+          pyinstaller --noconfirm --clean packaging/windows/never_ai_desktop.spec
+          New-Item -ItemType Directory -Force -Path dist\NeverAI\never_ai_data\checkpoints | Out-Null
+          Copy-Item -Recurse -Force checkpoints\* dist\NeverAI\never_ai_data\checkpoints\
+          $otaJson = @{ commit = "$env:GITHUB_SHA"; branch = "arena/403f5d7f-never-ai" } | ConvertTo-Json
+          Set-Content -Path dist\NeverAI\never_ai_data\ota_manifest.json -Value $otaJson -Encoding UTF8
+
+      - name: Compile Official Inno Setup 6 Installer (NeverAI-Setup-x64.exe)
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            $cmd = Get-Command iscc -ErrorAction SilentlyContinue
+            if ($cmd) { $iscc = $cmd.Source } else {
+              choco install innosetup --no-progress -y
+              $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+            }
+          }
+          & $iscc packaging\windows\never_ai_setup.iss
+
+      - name: Package Clean Portable Archive (NeverAI-Portable-Windows-x64.zip)
+        run: |
+          Compress-Archive -Path dist\NeverAI\* -DestinationPath out_installer\NeverAI-Portable-Windows-x64.zip -Force
+
+      - name: Scan Executables with Microsoft Windows Defender Antivirus (MpCmdRun)
+        run: |
+          $mp = Get-ChildItem "C:\ProgramData\Microsoft\Windows Defender\Platform\*\MpCmdRun.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $mp) { $mp = "C:\Program Files\Windows Defender\MpCmdRun.exe" }
+          Write-Host "Using Microsoft Defender Scanner: $mp"
+          foreach ($target in @(
+            (Resolve-Path "dist\NeverAI\NeverAI.exe").Path,
+            (Resolve-Path "out_installer\NeverAI-Setup-x64.exe").Path,
+            (Resolve-Path "out_installer\NeverAI-Portable-Windows-x64.zip").Path
+          )) {
+            Write-Host "Scanning: $target"
+            & $mp -Scan -ScanType 3 -File $target
+            if ($LASTEXITCODE -ne 0) {
+              throw "Microsoft Defender flagged $target (exit code $LASTEXITCODE)!"
+            }
+          }
+          Write-Host "ALL BINARIES VERIFIED 100% CLEAN BY MICROSOFT DEFENDER (0 THREATS)!" -ForegroundColor Green
+
+      - name: Generate SHA-256 Checksums
+        run: |
+          $h1 = (Get-FileHash out_installer\NeverAI-Setup-x64.exe -Algorithm SHA256).Hash.ToLower()
+          $h2 = (Get-FileHash out_installer\NeverAI-Portable-Windows-x64.zip -Algorithm SHA256).Hash.ToLower()
+          Set-Content -Path out_installer\SHA256SUMS.txt -Value "$h1  NeverAI-Setup-x64.exe`n$h2  NeverAI-Portable-Windows-x64.zip" -Encoding UTF8
+          Get-Content out_installer\SHA256SUMS.txt
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeverAI-Windows-x64-Clean
+          path: out_installer/*
+
+      - name: Publish Defender-Verified Assets to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
+          gh release upload $tag `
+            out_installer\NeverAI-Setup-x64.exe `
+            out_installer\NeverAI-Portable-Windows-x64.zip `
+            out_installer\SHA256SUMS.txt `
+            --clobber

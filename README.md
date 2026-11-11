@@ -1,2 +1,63 @@
-# never-ai
-llm model ai
+# NEVER-AI (`ChronoMorph-LM`)
+
+## ⬇ Télécharger pour Windows 10 / 11 (64-bit) — Vérifié 0 Menace par Microsoft Defender + OTA
+
+[![Télécharger NeverAI-Setup-x64.exe](https://img.shields.io/badge/%E2%AC%87%20Installateur%20Officiel-NeverAI--Setup--x64.exe%20(Inno%20Setup)-FFFFFF?style=for-the-badge&logo=windows&logoColor=black)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup-x64.exe)
+[![Version Portable .zip](https://img.shields.io/badge/%F0%9F%93%A6%20Version%20Portable%20(Z%C3%A9ro%20Alerte%20Chrome)-NeverAI--Portable--Windows--x64.zip-1D9BF0?style=for-the-badge)](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Portable-Windows-x64.zip)
+[![Page GitHub Releases](https://img.shields.io/badge/GitHub%20Releases-v1.4.1%20OTA-10B981?style=for-the-badge&logo=github)](https://github.com/mouusieur/never-ai/releases/latest)
+
+- **Installateur Windows 10/11 (`.exe` Inno Setup 6, sans script PowerShell ni compression UPX, scanné `0 menace` par Microsoft Defender) :** [**`NeverAI-Setup-x64.exe`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Setup-x64.exe) *(Python 3.11 + PyTorch + interface + cerveau déjà inclus — aucun outil externe requis).*
+- **Version Portable `.zip` (recommandée si Chrome affiche « fichier peu couramment téléchargé » sur un `.exe` neuf) :** [**`NeverAI-Portable-Windows-x64.zip`**](https://github.com/mouusieur/never-ai/releases/latest/download/NeverAI-Portable-Windows-x64.zip) *(Décompressez le dossier puis double-cliquez sur **`NeverAI.exe`**).*
+- **📲 Application Android Officielle (`PWA` standard W3C — Zéro `.apk` externe) :** [**Ouvrir NEVER-AI Mobile sur Android**](https://raw.githack.com/mouusieur/never-ai/arena/403f5d7f-never-ai/mobile_pwa/index.html) *(Dans Chrome sur Android : appuyez sur **⋮ → Ajouter à l'écran d'accueil → Installer** pour obtenir l'application plein écran avec icône noire officielle et mises à jour OTA automatiques, dans le strict respect de la sécurité Android).*
+- **Mises à jour à distance automatiques (`OTA` — Zéro Réinstallation) :** Une fois installé **une seule fois** sur votre PC ou Android, Never-AI se met à jour tout seul à distance depuis GitHub au lancement tout en conservant 100 % de vos discussions, comptes et poids neuronaux (`checkpoints/`).
+
+---
+
+## ☁️ Héberger TOUTE l'IA (Python + Paramètres `Sprout-MoE` + 16 Plugins) sur un Service Extérieur pour Android
+
+GitHub stocke le code **et** les paramètres neuronaux pré-entraînés ([`never-ai-brain-sprout-moe.zip` dans GitHub Releases](https://github.com/mouusieur/never-ai/releases/latest)), mais GitHub seul n'exécute pas de serveur Python/PyTorch 24h/24. Grâce au `Dockerfile` et au chargeur automatique `brain_bootstrap.py`, vous pouvez lancer **100 % de la vraie IA Never-AI** sur un service cloud gratuit relié à ce dépôt GitHub, puis l'installer comme **PWA plein écran sur Android** (sans `.apk` externe) :
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mouusieur/never-ai/tree/arena/403f5d7f-never-ai)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/mouusieur/never-ai&branch=arena/403f5d7f-never-ai&builder=dockerfile)
+
+### Option Cloud n°1 (Recommandée — 16 Go de RAM 100 % Gratuit sans carte bancaire) : **Hugging Face Spaces (Docker)**
+1. Créez un Space gratuit sur [huggingface.co/new-space](https://huggingface.co/new-space) → choisissez **SDK : Docker (Blank)** et **CPU Basic (2 vCPU · 16 GB RAM · Free)**.
+2. Importez/poussez ce dépôt GitHub (`Dockerfile` est déjà configuré sur le port `7860` avec `NEVER_AI_BOOTSTRAP_GITHUB_BRAIN=1` : il télécharge automatiquement les paramètres `Sprout-MoE` depuis GitHub Releases au démarrage !).
+3. Sur votre téléphone **Android** (dans Chrome), ouvrez l'URL `https://<votre-pseudo>-<nom-space>.hf.space` puis appuyez sur **Menu ⋮ → Ajouter à l'écran d'accueil → Installer** : vous avez **100 % du vrai Studio Never-AI** (poids PyTorch, 16 plugins, modes Normal/Amical/Cash-Grok, Recherche Web et mises à jour OTA) en plein écran sur Android !
+
+---
+
+**`never-ai`** est un projet d'ingénierie et de recherche visant à construire, entraîner de zéro et faire grandir continuellement un **Modèle de Langage Morphogénétique Souverain (`ChronoMorph-LM`)** couplé à un écosystème modulaire de **Plugins** et d'auto-apprentissage.
+
+## Caractéristiques Architecturales Clés
+
+- **Croissance Structurelle Sans Perte (*Zero-Shock Morphogenesis*) :** Passage progressif de `4.8M` $\to$ `18.5M` $\to$ `68M (MoE)` $\to$ `260M (MoE)` $\to$ `1.1B+ (MoE)` paramètres via des opérateurs préservant exactement la fonction ($f_{\theta_{\text{grown}}}(x) \equiv f_{\theta_{\text{old}}}(x)$) : clonage interpositionnel *Gate-Zero*, mitose symétrique FFN, élargissement résiduel compensé RMSNorm, *upcycling* `DeepSeekMoE` sans perte auxiliaire, et expansion vocabulaire dans l'enveloppe convexe.
+- **Vitesse d'Apprentissage Maximale (`CompositeMuon` + `WSM`) :** Combinaison de l'optimiseur spectral **Muon** (Newton-Schulz à 5 pas sur les matrices cachées 2D) et d'**AdamW**, pilotée par l'ordonnancement perpétuel **Warmup-Stable-Merge (`WSM 1-sqrt`, ICLR 2026)** permettant un entraînement sans fin et une consolidation instantanée sans phase de decay destructive.
+- **Plasticité Tri-Temporelle :**
+  1. *Milliseconde (Inférence)* : **Neural Long-Term Memory (`Titans-MAG`)** mettant à jour un MLP mémoire en direct selon la surprise.
+  2. *Minute/Heure (Sommeil)* : Auto-éditions synthétiques **`SEAL`** + réservoir de replay à 30 % + mémoire hybride auto-évolutive **`EvolveMem`**.
+  3. *Jalon (Morphogenèse)* : Curriculum adaptatif multi-stades bilingue (FR/EN + Code + Math + Raisonnement).
+- **Souveraineté Cognitive, 10 Domaines & 15 Plugins Formels (`v1.0 Omega`) :** Sanctuaire de pensée libre explicite (`<|think|>...<|/think|>`) et mode multi-étapes **`Deep Think`**, 10 domaines polymathiques FR/EN, RAG documentaire local, enseignement humain interactif (`CompositeMuon` en direct), routeur **`ToolRAG`**, **15 plugins souverains** (SymPy, traceur de courbes SVG `plot_svg_engine`, statistiques & régression OLS, constantes CODATA & unités, audit sécurité/complexité AST Python, cryptographie & entropie, logique propositionnelle SAT, sandbox Python, planificateur de tâches, suite de benchmark live) et moteur **`SkillForge`** d'auto-création d'outils vérifiés.
+- **Topologie Hybride Local + Cloud :** Entraînement continu vectorisé `AVX-512` (`fp32`) en local couplé à une synchronisation des checkpoints `safetensors` vers **Google Drive Vault** et worker **Burst GPU Cloud**.
+- **Architecture Double-Expérience (`v1.2 Dual-Horizon`) :** Choix à l'inscription, en mode invité ou à chaud en 1 clic entre :
+  1. **Compte Utilisateur Commercial (`account_type="user"`)** — Chatbot fluide zéro jargon, **courbe d'apprentissage interactive en temps réel** (de `0 %` à la maîtrise actuelle), **comparateur de benchmarks visuel** (*Never-AI* vs *IA Cloud* vs *IA Locale Figée*), vérification live en millisecondes et studio d'outils visuels sans commande.
+  2. **Compte Laboratoire R&D (`account_type="lab"`)** — Console d'ingénierie complète exposant les mues morphogénétiques MoE, portes `Gate-Zero`, loss brute `Muon/WSM`, consolidation `SEAL` et exécuteur JSON des 15 plugins.
+
+## Application Desktop Windows (`.exe`) & Direction Artistique « Monolith Noir »
+
+Inspirée de la radicalité monochrome de la Landing et de l'Auth de `x.com` (`#000000` OLED pur, filets `1px #2F3336`, boutons pilules `#EFF3F4`, *floating labels* animés et monogramme géométrique double-lame `NEVER`), **Never-AI** se compile en exécutable natif Windows sans console noire :
+
+```powershell
+# Sur Windows 10/11 (PowerShell) : génère dist\NeverAI\NeverAI.exe avec icône never_ai.ico
+.\packaging\windows\build_exe.ps1
+```
+
+Ou automatiquement dans le cloud via le workflow GitHub Actions [`.github/workflows/build_windows_exe.yml`](.github/workflows/build_windows_exe.yml) (`Actions -> Build NeverAI Windows .exe -> Run workflow`).
+
+## Documentation de Référence
+
+1. **[`DIRECTIVES.md`](DIRECTIVES.md)** — **Plan Directeur & Les 12 Directives Globales de Travail** (Vision, Audit Matériel, 5 Piliers Scientifiques, Échelle des Stades 0→4, Feuille de Route en 7 Phases).
+2. **[`docs/ARCHITECTURE_CHRONOMORPH.md`](docs/ARCHITECTURE_CHRONOMORPH.md)** — **Spécification Mathématique & Tensorielle** (MLA, Titans-MAG, DeepSeekMoE, Théorèmes d'Invariance Morphogénétique, Muon + WSM).
+3. **[`docs/PLUGIN_AND_EVOLUTION_PROTOCOL.md`](docs/PLUGIN_AND_EVOLUTION_PROTOCOL.md)** — **Protocole des Plugins, `ToolRAG`, `EvolveMem`, `SEAL`, `GRPO` & Garde-Fous Anti-Goodhart**.
+4. **[`docs/BRAND_AND_VISUAL_IDENTITY.md`](docs/BRAND_AND_VISUAL_IDENTITY.md)** — **Charte Graphique « Monolith Noir », Monogramme `NEVER` & Architecture `.exe`**.
+5. **[`docs/MEGA_PLAN_OMEGA.md`](docs/MEGA_PLAN_OMEGA.md)** — **Plan d'Évolution `Never-AI v1.0 Omega`** (10 Domaines Polymathiques, 15 Plugins Déterministes, Deep Think, RAG Local & Enseignement Interactif).

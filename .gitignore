@@ -1,0 +1,47 @@
+# Environnements virtuels & caches Python
+.venv/
+venv/
+.cache/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Checkpoints, poids neuronaux & états d'optimiseurs (synchronisés via Google Drive Vault / hors-Git)
+checkpoints/
+artifacts/
+vault_cache/
+*.safetensors
+!assets/neural_graft/*.safetensors
+*.pt
+*.pth
+*.bin
+*.gguf
+!assets/neural_graft/*.gguf
+*.onnx
+
+# Corpus bruts, shards tokenisés & bases mémoire épisodiques locales
+data/raw/
+data/shards/
+data/replay_buffer/
+memory_store/
+*.mmap
+*.idx
+*.parquet
+*.jsonl.zst
+
+# Logs d'entraînement, télémétrie & frontend build
+logs/
+runs/
+observatory/node_modules/
+observatory/dist/
+/NeverAI-PWA.zip
+.DS_Store
+.env
+ota_manifest.json
