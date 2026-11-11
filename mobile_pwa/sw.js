@@ -1,4 +1,4 @@
-const BUILD = '4.2.1-sovereign';
+const BUILD = '4.2.2-sovereign';
 const CACHE = 'never-ai-monolith-pwa-' + BUILD;
 const SHELL = ['./index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon.ico'];
 
@@ -35,8 +35,11 @@ self.addEventListener('fetch', (e) => {
     u.pathname.endsWith('.webmanifest');
 
   if (isDoc) {
+    const netUrl = u.hostname.endsWith('githack.com')
+      ? (u.origin + u.pathname + (u.search ? u.search + '&' : '?') + '_b=' + Math.floor(Date.now() / 15000))
+      : e.request;
     e.respondWith(
-      fetch(e.request, { cache: 'no-store' })
+      fetch(netUrl, { cache: 'no-store' })
         .then((r) => {
           if (r && r.status === 200) {
             const cl = r.clone();
