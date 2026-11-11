@@ -2177,7 +2177,7 @@
 
     /* Configurable Remote Cortex API Bridge + Autonomous 24/7 Edge PWA Runtime */
     const _rawFetch = window.fetch.bind(window);
-    window._standaloneEdgeMode = /\.github\.io$/i.test(window.location.hostname);
+    window._standaloneEdgeMode = /(\.github\.io|githack\.com|githubusercontent\.com|pages\.dev|netlify\.app|vercel\.app)$/i.test(window.location.hostname);
     let _localDesktopBackendChecked = false;
     let _localDesktopBackendAlive = false;
 
@@ -2557,7 +2557,7 @@
       if (!window._standaloneEdgeMode) {
         try {
           const r = await _rawFetch(input, init);
-          if (r.status !== 404 && r.status !== 405) return r;
+          if (r.ok) return r;
           window._standaloneEdgeMode = true;
         } catch (e) {
           if (init && init.signal && init.signal.aborted) throw e;
@@ -3734,6 +3734,9 @@
     function getLivePwaUrl() {
       const base = getApiBase();
       if (base) return base + '/?pwa=1';
+      if (/\.html$/i.test(window.location.pathname) || /githack\.com$/i.test(window.location.hostname)) {
+        return new URL('./index.html?pwa=1', window.location.href).href;
+      }
       return new URL('./?pwa=1', window.location.href).href;
     }
 

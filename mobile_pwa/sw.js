@@ -1,6 +1,6 @@
-const BUILD = '4.2.0-sovereign';
+const BUILD = '4.2.1-sovereign';
 const CACHE = 'never-ai-monolith-pwa-' + BUILD;
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon.ico'];
+const SHELL = ['./index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon.ico'];
 
 self.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
