@@ -161,14 +161,21 @@ class OTAUpdater:
         return self.status()
 
     def status(self) -> dict[str, Any]:
+        if (self.app_root / ".git").exists() and not (self.app_root / "ota_manifest.json").exists():
+            git_sha, _ = detect_git_head_info(self.app_root)
+            if git_sha and git_sha != "local-install":
+                self.state["local_commit"] = git_sha
         loc = str(self.state.get("local_commit", "local"))
         return {
             "ok": True,
             "version": APP_VERSION,
             "app_version": APP_VERSION,
+            "local_version": APP_VERSION,
+            "build_id": f"{APP_VERSION}-{loc[:7]}",
             "github_repo": self.github_repo,
             "branch": self.state.get("branch", CANDIDATE_BRANCHES[0]),
             "local_commit": loc,
+            "local_sha": loc,
             "installed_commit": loc,
             "local_commit_short": loc[:7],
             "installed_short": loc[:7],
@@ -244,6 +251,7 @@ class OTAUpdater:
             "update_available": is_newer,
             "remote_branch": best_remote["branch"],
             "remote_commit": best_remote["sha"],
+            "remote_sha": best_remote["sha"],
             "remote_commit_short": best_remote["short_sha"],
             "remote_short": best_remote["short_sha"],
             "remote_message": best_remote["message"],

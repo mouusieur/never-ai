@@ -207,7 +207,10 @@ class PluginInvokeRequest(BaseModel):
 def index() -> HTMLResponse:
     ota_html = Path.cwd() / "src" / "never_ai" / "server" / "static" / "index.html"
     html_path = ota_html if ota_html.exists() else (_STATIC_DIR / "index.html")
-    return HTMLResponse(html_path.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        html_path.read_text(encoding="utf-8"),
+        headers={"Cache-Control": "no-cache, must-revalidate"},
+    )
 
 
 @app.get("/favicon.ico")
@@ -237,16 +240,18 @@ def pwa_icon_512() -> FileResponse:
 
 @app.get("/manifest.webmanifest")
 def pwa_manifest() -> Response:
+    ota_st = get_ota().status()
     manifest = {
         "id": "never-ai-studio-pwa",
         "name": "Never-AI",
         "short_name": "Never-AI",
-        "description": "Modèle neuronal libre auto-construit (ChronoMorph-LM · GitHub) avec entraînement continu et mises à jour OTA.",
+        "version": ota_st.get("local_version", "4.2.0"),
+        "description": "Never-AI 3.89B Souverain Sans Limite — Application PWA complète avec mise à jour automatique à distance (OTA GitHub).",
         "lang": "fr",
-        "start_url": "/?source=pwa",
+        "start_url": "/?pwa=1&source=pwa",
         "scope": "/",
         "display": "standalone",
-        "display_override": ["standalone", "minimal-ui"],
+        "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
         "orientation": "any",
         "background_color": "#000000",
         "theme_color": "#000000",
@@ -261,43 +266,95 @@ def pwa_manifest() -> Response:
             {
                 "name": "Nouvelle discussion",
                 "short_name": "Discuter",
-                "url": "/?view=chat",
+                "url": "/?pwa=1&view=chat",
                 "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}],
             },
             {
-                "name": "Entraîner Never-AI",
-                "short_name": "Entraîner",
-                "url": "/?view=model",
+                "name": "Cortex 3.89B",
+                "short_name": "Modèle",
+                "url": "/?pwa=1&view=model",
+                "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}],
+            },
+            {
+                "name": "Mises à jour OTA",
+                "short_name": "Mise à jour",
+                "url": "/?pwa=1&view=apps",
                 "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}],
             },
         ],
     }
-    return Response(content=json.dumps(manifest, indent=2, ensure_ascii=False), media_type="application/manifest+json")
+    return Response(
+        content=json.dumps(manifest, indent=2, ensure_ascii=False),
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@app.get("/api/pwa/version")
+def api_pwa_version() -> dict[str, Any]:
+    st = get_ota().status()
+    return {
+        "ok": True,
+        "version": st.get("local_version", "4.2.0"),
+        "sha": st.get("local_commit", "local"),
+        "short_sha": st.get("local_commit_short", "local"),
+        "build_id": st.get("build_id", "4.2.0-local"),
+        "auto_update": bool(st.get("auto_update_on_boot", True)),
+    }
 
 
 @app.get("/sw.js")
 def pwa_service_worker() -> Response:
+    build_id = get_ota().status().get("build_id", "4.2.0-live")
     sw_code = (
-        "const CACHE='never-ai-monolith-v3.4';\n"
-        "const SHELL=['/','/manifest.webmanifest','/icon-192.png','/icon-512.png','/favicon.ico'];\n"
+        f"const BUILD='{build_id}';\n"
+        "const CACHE='never-ai-monolith-'+BUILD;\n"
+        "const SHELL=['/','/?pwa=1','/manifest.webmanifest','/icon-192.png','/icon-512.png','/favicon.ico'];\n"
+        "self.addEventListener('message',e=>{\n"
+        "  if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting();\n"
+        "  if(e.data&&e.data.type==='GET_BUILD'&&e.ports&&e.ports[0])e.ports[0].postMessage({build:BUILD});\n"
+        "});\n"
         "self.addEventListener('install',e=>{\n"
         "  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));\n"
         "  self.skipWaiting();\n"
         "});\n"
         "self.addEventListener('activate',e=>{\n"
-        "  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));\n"
+        "  e.waitUntil(\n"
+        "    caches.keys()\n"
+        "      .then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))\n"
+        "      .then(()=>self.clients.claim())\n"
+        "      .then(()=>self.clients.matchAll({type:'window',includeUncontrolled:true}))\n"
+        "      .then(cs=>cs.forEach(c=>c.postMessage({type:'NEVER_AI_SW_UPDATED',build:BUILD})))\n"
+        "  );\n"
         "});\n"
         "self.addEventListener('fetch',e=>{\n"
         "  if(e.request.method!=='GET')return;\n"
         "  const u=new URL(e.request.url);\n"
-        "  if(u.pathname.startsWith('/api/'))return;\n"
-        "  e.respondWith(fetch(e.request).then(r=>{if(r&&r.status===200){const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl)).catch(()=>{});}return r;}).catch(()=>caches.match(e.request).then(m=>m||caches.match('/'))));\n"
+        "  if(u.pathname.startsWith('/api/')||u.pathname.startsWith('/download/'))return;\n"
+        "  const isDoc=e.request.mode==='navigate'||u.pathname==='/'||u.pathname.endsWith('.html')||u.pathname.endsWith('.webmanifest');\n"
+        "  if(isDoc){\n"
+        "    e.respondWith(\n"
+        "      fetch(e.request,{cache:'no-store'})\n"
+        "        .then(r=>{if(r&&r.status===200){const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl)).catch(()=>{});}return r;})\n"
+        "        .catch(()=>caches.match(e.request).then(m=>m||caches.match('/?pwa=1')||caches.match('/')))\n"
+        "    );\n"
+        "    return;\n"
+        "  }\n"
+        "  e.respondWith(\n"
+        "    caches.match(e.request).then(cached=>{\n"
+        "      const net=fetch(e.request).then(r=>{if(r&&r.status===200){const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl)).catch(()=>{});}return r;}).catch(()=>cached);\n"
+        "      return cached||net;\n"
+        "    })\n"
+        "  );\n"
         "});\n"
     )
     return Response(
         content=sw_code,
         media_type="application/javascript",
-        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"},
+        headers={
+            "Service-Worker-Allowed": "/",
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
     )
 
 
@@ -363,13 +420,18 @@ def mobile_pwa_asset(asset_name: str) -> Response:
         "sw.js": "application/javascript",
         "icon-192.png": "image/png",
         "icon-512.png": "image/png",
+        "favicon.ico": "image/x-icon",
+        "LISEZMOI-PWA.md": "text/markdown; charset=utf-8",
     }
     if asset_name not in allowed:
         raise HTTPException(status_code=404, detail="Not found")
     fp = _REPO_ROOT / "mobile_pwa" / asset_name
+    if not fp.exists() and asset_name == "favicon.ico":
+        fp = _BRAND_DIR / "never_ai.ico"
     if not fp.exists():
         raise HTTPException(status_code=404, detail="Asset missing")
-    return FileResponse(fp, media_type=allowed[asset_name])
+    headers = {"Cache-Control": "no-cache"} if asset_name in ("index.html", "manifest.webmanifest", "sw.js") else {}
+    return FileResponse(fp, media_type=allowed[asset_name], headers=headers)
 
 
 @app.api_route("/download/NeverAI-Setup.exe", methods=["GET", "HEAD"])

@@ -41,5 +41,6 @@ logs/
 runs/
 observatory/node_modules/
 observatory/dist/
+/NeverAI-PWA.zip
 .DS_Store
 .env

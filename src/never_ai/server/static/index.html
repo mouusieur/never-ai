@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Never-AI" />
+  <meta name="application-name" content="Never-AI" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Never-AI</title>
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./favicon.ico" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -1676,12 +1679,15 @@
           <div id="topbarTitle" class="topbar-title">Discussion</div>
         </div>
         <div class="topbar-right">
+          <button id="btnTopOtaUpdate" class="btn-monolith hidden" style="padding:5px 12px;font-size:11.5px;border-radius:999px;height:28px;" onclick="applyOtaNow()" title="Nouvelle mise à jour prête — cliquer pour appliquer à chaud">
+            <span>Mise à jour prête</span>
+          </button>
           <button id="engineBadge" class="github-sync-pill" onclick="switchView('model')" title="Modèle unique Never-AI synchronisé avec GitHub">
             <span class="beacon-wrap">
               <span class="beacon-ring"></span>
               <span class="beacon-core"></span>
             </span>
-            <span id="engineBadgeText">Never-AI · GitHub</span>
+            <span id="engineBadgeText">Never-AI · 3.89B Souverain</span>
           </button>
           <button id="btnTopPwa" class="btn-arch" style="padding:5px 11px;font-size:11.5px;border-radius:999px;" onclick="openPwaModal()" title="Installer l'application PWA (Android / iOS / PC)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
@@ -1999,15 +2005,23 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="card-title">Mise à jour à distance (OTA sans réinstaller)</div>
-                  <div id="otaDesc" class="card-desc">Synchronise l'interface et le moteur depuis GitHub tout en préservant vos discussions et poids locaux.</div>
+                  <div class="card-title">Mise à jour automatique (OTA + Service Worker PWA)</div>
+                  <div id="otaDesc" class="card-desc">Synchronise automatiquement l'application PWA et le moteur 3.89B depuis GitHub sans jamais réinstaller, en préservant vos discussions et mémoires.</div>
                 </div>
               </div>
-              <span id="otaVersionTag" class="mono-tag">v3.3</span>
+              <span id="otaVersionTag" class="mono-tag">v4.2.0 · AUTO</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);">
+              <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px;color:var(--fg);">
+                <input id="chkAutoOtaPwa" type="checkbox" checked onchange="toggleAutoOtaPwa(this.checked)" style="accent-color:#FFFFFF;width:15px;height:15px;cursor:pointer;" />
+                <span>Mise à jour automatique en arrière-plan (au démarrage &amp; retour d'écran)</span>
+              </label>
+              <span id="swBuildStatus" class="mono-tag" style="font-size:10.5px;">SW · ACTIF</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="btn-arch" onclick="checkOtaNow()">Vérifier les mises à jour</button>
               <button class="btn-monolith" onclick="applyOtaNow()">Mettre à jour maintenant</button>
+              <button class="btn-arch" onclick="forcePwaShellRefresh()">Actualiser le cache PWA</button>
             </div>
             <div id="otaFeedback" class="status-note"></div>
           </div>
@@ -2022,25 +2036,30 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="card-title">Application Android &amp; Mobile (PWA officielle)</div>
-                  <div class="card-desc">S'installe directement via Google Chrome ou Safari en plein écran, sans APK externe (100 % compatible contrôle parental / Family Link).</div>
+                  <div class="card-title">Application Complète PWA Auto-Évolutive (Android · iOS · PC)</div>
+                  <div class="card-desc">S'installe en 1 clic via Chrome, Edge ou Safari en plein écran natif, fonctionne hors-cadre et se met à jour toute seule dès qu'une version sort.</div>
                 </div>
               </div>
-              <span class="mono-tag">PWA · HTTPS</span>
+              <span class="mono-tag">PWA v4.2 · AUTO-UPDATE</span>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button class="btn-monolith" onclick="openPwaModal()">Installer la PWA / QR Code</button>
+              <button class="btn-monolith" onclick="installPwa()">Installer l'App PWA</button>
+              <button class="btn-arch" onclick="openPwaModal()">QR Code Mobile</button>
               <a id="cardOpenPwaTab" class="btn-arch" href="/?pwa=1" target="_blank" rel="noopener">
                 <span>Ouvrir en plein onglet</span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
               </a>
               <a class="btn-arch" href="/download/NeverAI-PWA.zip" download>
-                <span>Pack NeverAI-PWA.zip</span>
+                <span>Télécharger NeverAI-PWA.zip</span>
               </a>
               <a class="btn-arch" href="https://render.com/deploy?repo=https://github.com/mouusieur/never-ai" target="_blank" rel="noopener">
                 <span>Cloud 24/7 (Render)</span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
               </a>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+              <input id="inpRemoteServerUrl" class="field" style="flex:1;min-width:220px;font-family:var(--font-mono);font-size:11.5px;" placeholder="Serveur Cortex distant optionnel (ex: https://votre-serveur-never-ai.app — vide = local)" />
+              <button class="btn-arch" onclick="saveRemoteServerUrl()">Connecter</button>
             </div>
           </div>
         </div>
@@ -2149,7 +2168,36 @@
     let bgGrowthActive = false;
     let activeStreamCtrl = null;
     let deferredPwaPrompt = null;
+    let swRegistration = null;
+    let knownServerBuildId = null;
+    let pendingShellReload = false;
+    let swReloading = false;
+    let autoOtaBusy = false;
     let lastCurvePoints = [];
+
+    /* Configurable Remote Cortex API Bridge (allows standalone NeverAI-PWA.zip anywhere) */
+    const _rawFetch = window.fetch.bind(window);
+    (function initApiBridge() {
+      try {
+        const qp = new URLSearchParams(window.location.search);
+        const srv = (qp.get('server') || '').trim().replace(/\/+$/, '');
+        if (srv && /^https?:\/\//i.test(srv)) {
+          localStorage.setItem('never_ai_api_base', srv);
+        }
+      } catch (_) {}
+    })();
+
+    function getApiBase() {
+      return (localStorage.getItem('never_ai_api_base') || '').trim().replace(/\/+$/, '');
+    }
+
+    window.fetch = function(input, init) {
+      const base = getApiBase();
+      if (base && typeof input === 'string' && (input.startsWith('/api/') || input.startsWith('/download/'))) {
+        return _rawFetch(base + input, init);
+      }
+      return _rawFetch(input, init);
+    };
 
     /* Authentic Double-Rail Hollow Morphogenetic 'N' Mark */
     const MARK_N_MINI = `<svg width="15" height="15" viewBox="0 0 512 512" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M96 84H162V428H96V84ZM350 84H416V428H350V84ZM96 84H188L416 428H324L96 84ZM144 114L344 415H372L172 114H144Z" fill="#FFFFFF"/></svg>`;
@@ -2160,10 +2208,15 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPwaPrompt = e;
+      const topPwa = document.getElementById('btnTopPwa');
+      if (topPwa) topPwa.classList.add('btn-monolith');
     });
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
+
+    window.addEventListener('appinstalled', () => {
+      deferredPwaPrompt = null;
+      closePwaModal();
+      toast('Application Never-AI installée — mise à jour auto activée');
+    });
 
     /* Cursor-tracked Specular Spotlight on Architectural Surfaces */
     document.addEventListener('pointermove', (e) => {
@@ -3070,13 +3123,176 @@
       }
     }
 
-    /* ---------------- OTA & PWA ---------------- */
+    /* ---------------- OTA & AUTO-UPDATING PWA ---------------- */
+    function isAutoUpdateEnabled() {
+      return localStorage.getItem('never_ai_auto_ota_pwa') !== '0';
+    }
+
+    async function toggleAutoOtaPwa(enabled) {
+      localStorage.setItem('never_ai_auto_ota_pwa', enabled ? '1' : '0');
+      try {
+        await fetch('/api/ota/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auto_update_on_boot: Boolean(enabled) }),
+        });
+      } catch (_) {}
+      toast(enabled ? 'Mise à jour automatique activée' : 'Mise à jour automatique mise en pause');
+    }
+
+    function saveRemoteServerUrl() {
+      const inp = document.getElementById('inpRemoteServerUrl');
+      const val = ((inp && inp.value) || '').trim().replace(/\/+$/, '');
+      if (!val) {
+        localStorage.removeItem('never_ai_api_base');
+        toast('Connexion locale directe activée');
+      } else if (!/^https?:\/\//i.test(val)) {
+        toast('Entrez une URL commençant par https:// ou http://');
+        return;
+      } else {
+        localStorage.setItem('never_ai_api_base', val);
+        toast('Serveur Cortex distant connecté');
+      }
+      refreshStatus();
+      checkOtaStatusSilent();
+      loadThreads();
+    }
+
+    function scheduleSafeReload(msg) {
+      if (swReloading) return;
+      if (msg) toast(msg);
+      const attempt = () => {
+        if (typeof activeStreamCtrl !== 'undefined' && activeStreamCtrl) {
+          pendingShellReload = true;
+          setTimeout(attempt, 1200);
+          return;
+        }
+        swReloading = true;
+        setTimeout(() => window.location.reload(), 450);
+      };
+      attempt();
+    }
+
+    async function forcePwaShellRefresh() {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        if (swRegistration) {
+          await swRegistration.update();
+          if (swRegistration.waiting) swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      } catch (_) {}
+      scheduleSafeReload('Cache PWA purgé — rechargement de la dernière version…');
+    }
+
+    function initServiceWorkerSelfUpdate() {
+      if (!('serviceWorker' in navigator)) return;
+      let hadController = Boolean(navigator.serviceWorker.controller);
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController) {
+          hadController = true;
+          return;
+        }
+        if (isAutoUpdateEnabled()) {
+          scheduleSafeReload('Nouvelle version PWA installée — actualisation…');
+        }
+      });
+
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'NEVER_AI_SW_UPDATED') {
+          const badge = document.getElementById('swBuildStatus');
+          if (badge && e.data.build) badge.textContent = 'SW · ' + e.data.build;
+        }
+      });
+
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then((reg) => {
+        swRegistration = reg;
+        const activateWaiting = (worker) => {
+          if (worker && isAutoUpdateEnabled()) {
+            worker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        };
+        if (reg.waiting) activateWaiting(reg.waiting);
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              const topBtn = document.getElementById('btnTopOtaUpdate');
+              if (topBtn) topBtn.classList.remove('hidden');
+              activateWaiting(nw);
+            }
+          });
+        });
+      }).catch(() => {});
+
+      setInterval(() => {
+        if (swRegistration) swRegistration.update().catch(() => {});
+      }, 180000);
+    }
+
     async function checkOtaStatusSilent() {
       try {
         const r = await fetch('/api/ota/status');
         const d = await r.json();
-        if (d.local_version) document.getElementById('otaVersionTag').textContent = 'v' + d.local_version;
+        const ver = d.local_version || d.version || '4.2.0';
+        const sha = (d.local_commit_short || '').slice(0, 7);
+        const tag = document.getElementById('otaVersionTag');
+        if (tag) tag.textContent = `v${ver}${sha ? ' · ' + sha : ''}`;
+        const swTag = document.getElementById('swBuildStatus');
+        if (swTag && d.build_id) swTag.textContent = 'SW · ' + d.build_id;
+        if (d.build_id) {
+          if (knownServerBuildId && knownServerBuildId !== d.build_id) {
+            knownServerBuildId = d.build_id;
+            if (swRegistration) await swRegistration.update().catch(() => {});
+            if (isAutoUpdateEnabled()) scheduleSafeReload('Nouvelle build détectée — mise à jour…');
+          } else {
+            knownServerBuildId = d.build_id;
+          }
+        }
       } catch (_) {}
+    }
+
+    let _lastAutoOtaTs = 0;
+    async function runAutoOtaCycle(forceCheck = false) {
+      if (autoOtaBusy) return;
+      const now = Date.now();
+      if (!forceCheck && now - _lastAutoOtaTs < 45000) return;
+      _lastAutoOtaTs = now;
+      autoOtaBusy = true;
+      try {
+        await checkOtaStatusSilent();
+        if (swRegistration) swRegistration.update().catch(() => {});
+        if (!isAutoUpdateEnabled()) return;
+        const r = await fetch('/api/ota/check', { method: 'POST' });
+        const d = await r.json();
+        const topBtn = document.getElementById('btnTopOtaUpdate');
+        if (d && d.update_available) {
+          if (topBtn) topBtn.classList.remove('hidden');
+          const fb = document.getElementById('otaFeedback');
+          const shortSha = (d.remote_commit_short || d.remote_sha || '').slice(0, 7);
+          if (fb) fb.textContent = `Mise à jour détectée (${shortSha}) — synchronisation automatique…`;
+          if (!activeStreamCtrl) {
+            const ar = await fetch('/api/ota/apply', { method: 'POST' });
+            const ad = await ar.json();
+            if (ad && ad.updated) {
+              if ('caches' in window) {
+                const ks = await caches.keys();
+                await Promise.all(ks.map((k) => caches.delete(k)));
+              }
+              scheduleSafeReload(`Never-AI mis à jour automatiquement (${ad.new_commit_short || shortSha})`);
+            }
+          }
+        } else if (topBtn) {
+          topBtn.classList.add('hidden');
+        }
+      } catch (_) {
+      } finally {
+        autoOtaBusy = false;
+      }
     }
 
     async function checkOtaNow() {
@@ -3086,9 +3302,16 @@
       try {
         const r = await fetch('/api/ota/check', { method: 'POST' });
         const d = await r.json();
-        fb.textContent = d.update_available
-          ? `Nouvelle version disponible (${(d.remote_sha || '').slice(0, 7)}).`
-          : 'Votre application est déjà à jour.';
+        const shortSha = (d.remote_commit_short || d.remote_sha || '').slice(0, 7);
+        const topBtn = document.getElementById('btnTopOtaUpdate');
+        if (d.update_available) {
+          if (topBtn) topBtn.classList.remove('hidden');
+          fb.textContent = `Nouvelle version disponible (${shortSha} : ${d.remote_message || 'mise à jour'}).`;
+        } else {
+          if (topBtn) topBtn.classList.add('hidden');
+          fb.textContent = d.message || 'Votre application PWA & Cortex est déjà sur la toute dernière version.';
+        }
+        await checkOtaStatusSilent();
       } finally {
         setCardBusy('cardOta', false);
       }
@@ -3097,29 +3320,45 @@
     async function applyOtaNow() {
       const fb = document.getElementById('otaFeedback');
       setCardBusy('cardOta', true);
-      fb.textContent = 'Téléchargement et application à chaud…';
+      if (fb) fb.textContent = 'Téléchargement et application à chaud sans réinstallation…';
       try {
         const r = await fetch('/api/ota/apply', { method: 'POST' });
         const d = await r.json();
-        const updated = Boolean(d.updated || d.ok);
-        fb.textContent = updated ? 'Mise à jour appliquée. Rechargement…' : (d.reason || d.error || 'Déjà à jour.');
-        if (updated) setTimeout(() => location.reload(), 900);
+        const updated = Boolean(d.updated);
+        if (fb) {
+          fb.textContent = updated
+            ? (d.message || 'Mise à jour appliquée. Actualisation de la PWA…')
+            : (d.message || d.reason || d.error || 'Déjà sur la dernière version.');
+        }
+        if ('caches' in window && updated) {
+          const ks = await caches.keys();
+          await Promise.all(ks.map((k) => caches.delete(k)));
+        }
+        if (swRegistration) await swRegistration.update().catch(() => {});
+        if (updated) {
+          scheduleSafeReload('Mise à jour installée — rechargement…');
+        } else {
+          const topBtn = document.getElementById('btnTopOtaUpdate');
+          if (topBtn) topBtn.classList.add('hidden');
+        }
       } finally {
         setCardBusy('cardOta', false);
       }
     }
 
     function getLivePwaUrl() {
-      return window.location.origin + '/?pwa=1';
+      const base = getApiBase() || window.location.origin;
+      return base + '/?pwa=1';
     }
 
     function openPwaModal() {
       const url = getLivePwaUrl();
+      const base = getApiBase();
       const inp = document.getElementById('pwaLiveUrlInput');
       const qr = document.getElementById('pwaQrImg');
       const fullBtn = document.getElementById('btnModalOpenFullTab');
       if (inp) inp.value = url;
-      if (qr) qr.src = '/api/pwa/qr.svg?url=' + encodeURIComponent(url);
+      if (qr) qr.src = (base || '') + '/api/pwa/qr.svg?url=' + encodeURIComponent(url);
       if (fullBtn) {
         fullBtn.href = url;
         fullBtn.style.display = (window.self !== window.top) ? 'inline-flex' : 'none';
@@ -3159,7 +3398,7 @@
       if (/iPhone|iPad|iPod/i.test(ua)) {
         toast('Sur Safari iOS : bouton Partager → Sur l\'écran d\'accueil');
       } else {
-        toast('Sur Chrome : Menu ⋮ → Installer l\'application (ou Ajouter à l\'écran d\'accueil)');
+        toast('Sur Chrome / Edge : Menu ⋮ → Installer l\'application (ou icône dans la barre d\'adresse)');
       }
     }
 
@@ -3178,22 +3417,46 @@
         localStorage.setItem('never_ai_user_v3', JSON.stringify(currentUser));
       }
       localStorage.removeItem('never_ai_super_cortex_v2');
-      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+
+      const chkAuto = document.getElementById('chkAutoOtaPwa');
+      if (chkAuto) chkAuto.checked = isAutoUpdateEnabled();
+      const inpSrv = document.getElementById('inpRemoteServerUrl');
+      if (inpSrv) inpSrv.value = getApiBase();
+
+      const isStandalone = Boolean(
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true
+      );
+      if (isStandalone) {
         const topPwa = document.getElementById('btnTopPwa');
         if (topPwa) topPwa.style.display = 'none';
       }
+
+      initServiceWorkerSelfUpdate();
       syncProfileUI();
       renderChat(true);
       loadThreads();
+      refreshStatus();
       refreshGlobalBrainStatus();
+      checkOtaStatusSilent();
+
       const params = new URLSearchParams(window.location.search);
       const vParam = params.get('view');
       if (vParam === 'model' || vParam === 'apps' || vParam === 'chat') {
         switchView(vParam);
       }
-      if (params.get('pwa') === '1') {
+      if (params.get('pwa') === '1' && !isStandalone && params.get('source') !== 'pwa') {
         setTimeout(openPwaModal, 180);
       }
+
+      /* Automatic Self-Update Daemon: boot + foreground resume + reconnect + 5-min loop */
+      setTimeout(() => runAutoOtaCycle(true), 2200);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') runAutoOtaCycle(false);
+      });
+      window.addEventListener('online', () => runAutoOtaCycle(true));
+      setInterval(() => runAutoOtaCycle(false), 300000);
+
       setInterval(() => {
         if (!document.getElementById('view-model').classList.contains('hidden')) refreshStatus();
       }, 4000);

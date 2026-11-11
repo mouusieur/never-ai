@@ -131,8 +131,42 @@ def test_download_exe_and_ota_endpoints(tmp_path: Path, monkeypatch) -> None:
     r_man = client.get("/manifest.webmanifest")
     assert r_man.status_code == 200
     assert r_man.json()["display"] == "standalone"
-    assert client.get("/sw.js").status_code == 200
+    assert r_man.json()["version"] == "4.2.0"
+
+    r_sw = client.get("/sw.js")
+    assert r_sw.status_code == 200
+    assert "SKIP_WAITING" in r_sw.text
+    assert "NEVER_AI_SW_UPDATED" in r_sw.text
+    assert "no-store" in r_sw.headers.get("cache-control", "")
+
+    r_ver = client.get("/api/pwa/version")
+    assert r_ver.status_code == 200
+    assert r_ver.json()["version"] == "4.2.0"
+    initial_build_id = r_ver.json()["build_id"]
+    assert initial_build_id in r_sw.text
+
+    # Simulate OTA commit advancement and verify /sw.js dynamically updates its BUILD stamp
+    ota.state["local_commit"] = "9f8e7d6c5b4a32109f8e7d6c5b4a32109f8e7d6c"
+    r_sw_after = client.get("/sw.js")
+    assert "4.2.0-9f8e7d6" in r_sw_after.text
+
     assert client.get("/icon-192.png").status_code == 200
     assert client.get("/icon-512.png").status_code == 200
-    assert client.get("/mobile/index.html").status_code == 200
+    r_mob = client.get("/mobile/index.html")
+    assert r_mob.status_code == 200
+    assert "initServiceWorkerSelfUpdate" in r_mob.text
+    assert "runAutoOtaCycle" in r_mob.text
+
+    # 5. Complete standalone NeverAI-PWA.zip package
+    r_zip = client.get("/download/NeverAI-PWA.zip")
+    assert r_zip.status_code == 200
+    with zipfile.ZipFile(io.BytesIO(r_zip.content), "r") as zf:
+        names = set(zf.namelist())
+        assert "NeverAI-PWA/index.html" in names
+        assert "NeverAI-PWA/sw.js" in names
+        assert "NeverAI-PWA/manifest.webmanifest" in names
+        assert "NeverAI-PWA/icon-192.png" in names
+        assert "NeverAI-PWA/icon-512.png" in names
+        assert "NeverAI-PWA/LISEZMOI-PWA.md" in names
+
 
