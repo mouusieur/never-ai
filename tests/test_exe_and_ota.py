@@ -131,7 +131,7 @@ def test_download_exe_and_ota_endpoints(tmp_path: Path, monkeypatch) -> None:
     r_man = client.get("/manifest.webmanifest")
     assert r_man.status_code == 200
     assert r_man.json()["display"] == "standalone"
-    assert r_man.json()["version"] == "4.2.0"
+    assert r_man.json()["version"] == "5.0.0"
 
     r_sw = client.get("/sw.js")
     assert r_sw.status_code == 200
@@ -141,14 +141,14 @@ def test_download_exe_and_ota_endpoints(tmp_path: Path, monkeypatch) -> None:
 
     r_ver = client.get("/api/pwa/version")
     assert r_ver.status_code == 200
-    assert r_ver.json()["version"] == "4.2.0"
+    assert r_ver.json()["version"] == "5.0.0"
     initial_build_id = r_ver.json()["build_id"]
     assert initial_build_id in r_sw.text
 
     # Simulate OTA commit advancement and verify /sw.js dynamically updates its BUILD stamp
     ota.state["local_commit"] = "9f8e7d6c5b4a32109f8e7d6c5b4a32109f8e7d6c"
     r_sw_after = client.get("/sw.js")
-    assert "4.2.0-9f8e7d6" in r_sw_after.text
+    assert "5.0.0-9f8e7d6" in r_sw_after.text
 
     assert client.get("/icon-192.png").status_code == 200
     assert client.get("/icon-512.png").status_code == 200

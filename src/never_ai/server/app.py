@@ -245,8 +245,8 @@ def pwa_manifest() -> Response:
         "id": "never-ai-studio-pwa",
         "name": "Never-AI",
         "short_name": "Never-AI",
-        "version": ota_st.get("local_version", "4.2.0"),
-        "description": "Never-AI 3.89B Souverain Sans Limite — Application PWA complète avec mise à jour automatique à distance (OTA GitHub).",
+        "version": ota_st.get("local_version", "5.0.0"),
+        "description": "Never-AI 5.0 Souverain Sans Limite — PWA complète (RP, Variantes, Fork, Voix, Vision, Atelier WASM, Coffre AES-256 & Auto-OTA).",
         "lang": "fr",
         "start_url": "/?pwa=1&source=pwa",
         "scope": "/",
@@ -295,17 +295,17 @@ def api_pwa_version() -> dict[str, Any]:
     st = get_ota().status()
     return {
         "ok": True,
-        "version": st.get("local_version", "4.2.0"),
+        "version": st.get("local_version", "5.0.0"),
         "sha": st.get("local_commit", "local"),
         "short_sha": st.get("local_commit_short", "local"),
-        "build_id": st.get("build_id", "4.2.0-local"),
+        "build_id": st.get("build_id", "5.0.0-sovereign"),
         "auto_update": bool(st.get("auto_update_on_boot", True)),
     }
 
 
 @app.get("/sw.js")
 def pwa_service_worker() -> Response:
-    build_id = get_ota().status().get("build_id", "4.2.0-live")
+    build_id = get_ota().status().get("build_id", "5.0.0-sovereign")
     sw_code = (
         f"const BUILD='{build_id}';\n"
         "const CACHE='never-ai-monolith-'+BUILD;\n"
@@ -581,6 +581,106 @@ def api_get_thread(thread_id: str) -> dict[str, Any]:
     return {"thread": t}
 
 
+class ThreadSyncRequest(BaseModel):
+    messages: list[dict[str, Any]]
+    title: str | None = None
+    owner: str = "local"
+
+
+class ThreadForkRequest(BaseModel):
+    up_to_index: int | None = None
+    owner: str = "local"
+
+
+class ExperienceRecordRequest(BaseModel):
+    prompt: str
+    preferred_reply: str
+    kind: str = "edit"
+
+
+class EncryptedVaultPushRequest(BaseModel):
+    vault_id: str
+    ciphertext_b64: str
+    iv_b64: str
+    salt_b64: str
+    updated_at: float | int | None = None
+
+
+@app.put("/api/threads/{thread_id}")
+def api_sync_thread(thread_id: str, req: ThreadSyncRequest) -> dict[str, Any]:
+    t = get_engine().conversations.update_thread_messages(
+        thread_id=thread_id,
+        messages=req.messages,
+        title=req.title,
+        owner=req.owner,
+    )
+    return {"ok": True, "thread": t}
+
+
+@app.post("/api/threads/{thread_id}/fork")
+def api_fork_thread(thread_id: str, req: ThreadForkRequest) -> dict[str, Any]:
+    forked = get_engine().conversations.fork_thread(
+        thread_id=thread_id,
+        up_to_index=req.up_to_index,
+        owner=req.owner,
+    )
+    if not forked:
+        raise HTTPException(status_code=404, detail="Conversation introuvable.")
+    return {"ok": True, "thread": forked}
+
+
+@app.get("/api/threads/{thread_id}/scene")
+def api_thread_scene(thread_id: str) -> dict[str, Any]:
+    from never_ai.cortex.scene_graph import extract_scene_graph
+
+    t = get_engine().conversations.get_thread(thread_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Conversation introuvable.")
+    return {"ok": True, "scene": extract_scene_graph(t.get("messages", []))}
+
+
+@app.post("/api/experience/record")
+def api_record_experience(req: ExperienceRecordRequest) -> dict[str, Any]:
+    eng = get_engine()
+    return eng.neural_graft.experience_store.record(
+        prompt=req.prompt,
+        preferred_reply=req.preferred_reply,
+        kind=req.kind,
+    )
+
+
+@app.post("/api/vault/push")
+def api_vault_push(req: EncryptedVaultPushRequest) -> dict[str, Any]:
+    import re
+    import time
+
+    vid = re.sub(r"[^a-zA-Z0-9_-]", "", req.vault_id)[:64]
+    if len(vid) < 4:
+        raise HTTPException(status_code=400, detail="Identifiant de coffre invalide (min 4 caractères).")
+    vdir = _REPO_ROOT / "memory_store" / "encrypted_vaults"
+    vdir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "vault_id": vid,
+        "ciphertext_b64": req.ciphertext_b64,
+        "iv_b64": req.iv_b64,
+        "salt_b64": req.salt_b64,
+        "updated_at": req.updated_at or time.time(),
+    }
+    (vdir / f"{vid}.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return {"ok": True, "vault_id": vid, "updated_at": payload["updated_at"]}
+
+
+@app.get("/api/vault/pull/{vault_id}")
+def api_vault_pull(vault_id: str) -> dict[str, Any]:
+    import re
+
+    vid = re.sub(r"[^a-zA-Z0-9_-]", "", vault_id)[:64]
+    fp = _REPO_ROOT / "memory_store" / "encrypted_vaults" / f"{vid}.json"
+    if not fp.exists():
+        raise HTTPException(status_code=404, detail="Aucun coffre chiffré trouvé pour cet identifiant.")
+    return {"ok": True, **json.loads(fp.read_text(encoding="utf-8"))}
+
+
 @app.delete("/api/threads/{thread_id}")
 def api_delete_thread(thread_id: str) -> dict[str, Any]:
     deleted = get_engine().conversations.delete_thread(thread_id)
@@ -796,6 +896,14 @@ def api_ota_check() -> dict[str, Any]:
 def api_ota_apply() -> dict[str, Any]:
     res = get_ota().apply_remote_update(force=False)
     if res.get("updated"):
+        _reload_engine_if_upgraded()
+    return res
+
+
+@app.post("/api/ota/rollback")
+def api_ota_rollback() -> dict[str, Any]:
+    res = get_ota().rollback_last_update()
+    if res.get("rolled_back"):
         _reload_engine_if_upgraded()
     return res
 

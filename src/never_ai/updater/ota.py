@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, wait
 import datetime
+import hashlib
 import importlib
 import io
 import json
@@ -27,8 +28,8 @@ import zipfile
 
 DEFAULT_GITHUB_REPO = "mouusieur/never-ai"
 CANDIDATE_BRANCHES = ("arena/403f5d7f-never-ai", "main")
-APP_VERSION = "4.2.0"
-USER_AGENT = "NeverAI-Sovereign/4.2.0 (+https://github.com/mouusieur/never-ai)"
+APP_VERSION = "5.0.0"
+USER_AGENT = "NeverAI-Sovereign/5.0.0 (+https://github.com/mouusieur/never-ai)"
 
 # Directories that MUST NEVER be overwritten during an OTA code update
 PROTECTED_TOP_DIRS = {
@@ -180,10 +181,35 @@ class OTAUpdater:
             "local_commit_short": loc[:7],
             "installed_short": loc[:7],
             "auto_update_on_boot": bool(self.state.get("auto_update_on_boot", True)),
+            "can_rollback": len(self._list_backups()) > 0,
             "last_checked_at": self.state.get("last_checked_at"),
             "last_updated_at": self.state.get("last_updated_at"),
             "history": list(self.state.get("history", []))[-8:],
         }
+
+    def _list_backups(self) -> list[Path]:
+        bdir = self.state_path.parent / "ota_backups"
+        if not bdir.exists():
+            return []
+        return sorted(bdir.glob("backup_*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+
+    def _create_rollback_snapshot(self, prev_sha: str) -> Path | None:
+        bdir = self.state_path.parent / "ota_backups"
+        try:
+            bdir.mkdir(parents=True, exist_ok=True)
+            snap = bdir / f"backup_{int(datetime.datetime.now(datetime.timezone.utc).timestamp())}_{prev_sha[:7]}.zip"
+            with zipfile.ZipFile(snap, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for rel_item in ("src/never_ai", "mobile_pwa"):
+                    src_p = self.app_root / rel_item
+                    if src_p.is_dir():
+                        for f in src_p.rglob("*"):
+                            if f.is_file() and "__pycache__" not in f.parts:
+                                zf.write(f, arcname=str(f.relative_to(self.app_root)))
+            for old_b in self._list_backups()[3:]:
+                old_b.unlink(missing_ok=True)
+            return snap
+        except Exception:  # noqa: BLE001
+            return None
 
     def _fetch_latest_branch_commit(self, branch: str) -> dict[str, Any] | None:
         url = f"https://api.github.com/repos/{self.github_repo}/commits/{branch}"
@@ -269,8 +295,16 @@ class OTAUpdater:
         new_commit_sha: str,
         branch: str = "main",
         commit_message: str = "Mise à jour OTA",
+        expected_sha256: str | None = None,
     ) -> dict[str, Any]:
         """Atomically apply an OTA archive while strictly preserving checkpoints, accounts & memories."""
+        archive_sha256 = hashlib.sha256(zip_bytes).hexdigest()
+        if expected_sha256 and archive_sha256.lower() != expected_sha256.strip().lower():
+            return {"ok": False, "updated": False, "error": "Échec de vérification d'intégrité SHA-256."}
+
+        prev_sha = str(self.state.get("local_commit", "local"))
+        self._create_rollback_snapshot(prev_sha)
+
         # Safety guard: never overwrite an active git working tree with uncommitted local work unless safe
         with tempfile.TemporaryDirectory(prefix="never_ai_ota_") as tmp_dir:
             tmp_path = Path(tmp_dir)
@@ -314,6 +348,8 @@ class OTAUpdater:
             {
                 "updated_at": now_iso,
                 "commit": new_commit_sha[:7],
+                "previous_commit": prev_sha[:7],
+                "sha256": archive_sha256[:16],
                 "branch": branch,
                 "message": commit_message,
                 "files_synced": updated_files,
@@ -335,11 +371,47 @@ class OTAUpdater:
             "ok": True,
             "updated": True,
             "files_synced": updated_files,
+            "sha256": archive_sha256,
             "new_commit": new_commit_sha,
             "new_commit_short": new_commit_sha[:7],
             "branch": branch,
-            "message": f"Mise à jour installée à distance avec succès ({updated_files} fichiers synchronisés, 0 réinstallation) !",
+            "message": f"Mise à jour installée à distance avec succès ({updated_files} fichiers synchronisés, SHA-256 vérifié) !",
         }
+
+    def rollback_last_update(self) -> dict[str, Any]:
+        """Atomically restore the most recent pre-update snapshot."""
+        backups = self._list_backups()
+        if not backups:
+            return {"ok": False, "rolled_back": False, "error": "Aucune sauvegarde de restauration disponible."}
+        latest_snap = backups[0]
+        parts = latest_snap.stem.split("_")
+        prev_short = parts[-1] if len(parts) >= 3 else "rollback"
+        restored = 0
+        try:
+            with zipfile.ZipFile(latest_snap, "r") as zf:
+                for member in zf.namelist():
+                    if member.endswith("/"):
+                        continue
+                    rel_parts = Path(member).parts
+                    if rel_parts and rel_parts[0] in PROTECTED_TOP_DIRS:
+                        continue
+                    dst = self.app_root / member
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    dst.write_bytes(zf.read(member))
+                    restored += 1
+            latest_snap.unlink(missing_ok=True)
+            self.state["local_commit"] = prev_short
+            self._save_state()
+            self.hot_reload_runtime_modules()
+            return {
+                "ok": True,
+                "rolled_back": True,
+                "restored_files": restored,
+                "restored_commit_short": prev_short,
+                "message": f"Version précédente restaurée ({restored} fichiers rétablis).",
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "rolled_back": False, "error": f"Erreur lors du rollback : {exc}"}
 
     def apply_remote_update(self, force: bool = False) -> dict[str, Any]:
         """Check GitHub and download + apply the latest commit ZIP from `codeload.github.com`."""

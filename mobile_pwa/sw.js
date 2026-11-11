@@ -1,4 +1,4 @@
-const BUILD = '4.2.2-sovereign';
+const BUILD = '5.0.0-sovereign';
 const CACHE = 'never-ai-monolith-pwa-' + BUILD;
 const SHELL = ['./index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon.ico'];
 

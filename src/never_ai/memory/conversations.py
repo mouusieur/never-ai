@@ -264,3 +264,51 @@ class ConversationStore:
         thread["updated_at"] = now
         self._save()
         return thread
+
+    def update_thread_messages(
+        self,
+        thread_id: str,
+        messages: list[dict[str, Any]],
+        title: str | None = None,
+        owner: str = "local",
+    ) -> dict[str, Any]:
+        if thread_id not in self.threads:
+            now = round(time.time(), 2)
+            self.threads[thread_id] = {
+                "id": thread_id,
+                "owner": owner,
+                "title": title or "Discussion",
+                "created_at": now,
+                "updated_at": now,
+                "messages": [],
+            }
+        thread = self.threads[thread_id]
+        if title:
+            thread["title"] = title[:80]
+        thread["messages"] = messages
+        thread["updated_at"] = round(time.time(), 2)
+        self._save()
+        return thread
+
+    def fork_thread(
+        self,
+        thread_id: str,
+        up_to_index: int | None = None,
+        owner: str = "local",
+    ) -> dict[str, Any] | None:
+        src = self.threads.get(thread_id)
+        if not src:
+            return None
+        msgs = list(src.get("messages", []))
+        if up_to_index is not None:
+            msgs = msgs[: max(0, int(up_to_index) + 1)]
+        new_t = self.create_thread(
+            owner=owner or src.get("owner", "local"),
+            title=f"⎇ {src.get('title', 'Discussion')[:36]}",
+        )
+        new_t["messages"] = json.loads(json.dumps(msgs, ensure_ascii=False))
+        new_t["forked_from"] = thread_id
+        new_t["updated_at"] = round(time.time(), 2)
+        self._save()
+        return new_t
+

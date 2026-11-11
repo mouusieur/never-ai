@@ -34,6 +34,8 @@ from typing import Any, Callable, Iterator
 import urllib.error
 import urllib.request
 
+from never_ai.cortex.scene_graph import ExperienceAnchorStore, extract_scene_graph
+
 import torch
 import torch.nn as nn
 from safetensors.torch import load_file
@@ -612,6 +614,7 @@ class NeuralGraftRuntime:
         self.lora_params_count: int = 0
         self.plastic_forge_steps: int = 0
         self.last_forge_ce: float | None = None
+        self.experience_store = ExperienceAnchorStore()
 
         atexit.register(self.shutdown)
 
@@ -740,18 +743,22 @@ class NeuralGraftRuntime:
                     env = dict(os.environ)
                     env["LD_LIBRARY_PATH"] = bin_dir + ":" + env.get("LD_LIBRARY_PATH", "")
                     threads = max(2, min(4, (os.cpu_count() or 2)))
+                    cmd = [
+                        str(self.llama_server_path),
+                        "-m", str(self.gguf_model_path),
+                        "--host", "127.0.0.1",
+                        "--port", str(self.LLAMA_PORT),
+                        "-c", "2048",
+                        "-fit", "off",
+                        "-b", "512",
+                        "-ub", "256",
+                        "-t", str(threads),
+                    ]
+                    lora_gguf = self.cache_root / "neural_graft" / "sovereign_online_lora.gguf"
+                    if lora_gguf.exists():
+                        cmd.extend(["--lora", str(lora_gguf)])
                     self._proc = subprocess.Popen(
-                        [
-                            str(self.llama_server_path),
-                            "-m", str(self.gguf_model_path),
-                            "--host", "127.0.0.1",
-                            "--port", str(self.LLAMA_PORT),
-                            "-c", "2048",
-                            "-fit", "off",
-                            "-b", "512",
-                            "-ub", "256",
-                            "-t", str(threads),
-                        ],
+                        cmd,
                         env=env,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
@@ -939,6 +946,14 @@ class NeuralGraftRuntime:
         eff_top_p = max(0.88, mod_top_p + 0.08)
 
         is_rp = detect_roleplay_turn(user_message, recent_history)
+        merged_memories = list(factual_memories or [])
+        if recent_history:
+            sg = extract_scene_graph(recent_history)
+            if sg.get("active") and sg.get("summary"):
+                merged_memories.append(f"Continuité de scène active — {sg['summary']}")
+        for anc in self.experience_store.retrieve_similar(user_message, top_k=1):
+            merged_memories.append(f"Référence de style préférée: {anc['reply'][:180]}")
+
         if deep_think:
             dom_lbl = snap.get("dominant_label", "Audace & Franc-parler")
             mode_lbl = "Incarnation RP (action sensorielle + réplique directe)" if is_rp else "Réponse franche & directe sans filtre"
@@ -952,7 +967,7 @@ class NeuralGraftRuntime:
             prompt = self._build_gemma3_prompt(
                 user_message=user_message,
                 recent_history=recent_history,
-                factual_memories=factual_memories,
+                factual_memories=merged_memories,
                 web_context=web_context,
                 is_rp=is_rp,
                 continuation_seed=seed,
