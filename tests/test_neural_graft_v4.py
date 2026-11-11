@@ -169,3 +169,43 @@ def test_v4_api_endpoints_expose_graft_and_affect() -> None:
 
         af = client.get("/api/affect").json()
         assert set(af["axes"].keys()) == set(AFFECT_AXES)
+
+
+def test_v42_gemma3_4b_refusal_subspace_and_rp_detector() -> None:
+    """Verify tracked 3.88B Gemma-3 refusal GGUF directions, BOS outlier masking, and RP turn routing."""
+    from gguf import GGUFReader
+    import numpy as np
+    from never_ai.cortex.gguf_abliterator import _mask_outliers_and_norm
+    from never_ai.cortex.neural_graft import detect_roleplay_turn
+
+    cvec_path = REPO_ROOT / "assets" / "neural_graft" / "gemma3_4b_refusal_dir.gguf"
+    assert cvec_path.exists()
+    reader = GGUFReader(str(cvec_path), "r")
+    assert len(reader.tensors) == 33
+    for t in reader.tensors:
+        arr = np.array(t.data, dtype=np.float32)
+        assert arr.shape == (2560,)
+        assert np.isfinite(arr).all()
+        masked = _mask_outliers_and_norm(arr, k=96)
+        assert int((masked == 0.0).sum()) >= 96
+        assert abs(float(np.linalg.norm(masked)) - 1.0) < 1e-4
+
+    # Casual / taboo chat stays in non-RP conversational mode
+    assert detect_roleplay_turn("Salut ! Ça va ?") is False
+    assert detect_roleplay_turn("est tu vrmt sans limite") is False
+    assert detect_roleplay_turn("t'aimes pas les bites françaises ? eheh") is False
+
+    # Explicit & dramatic roleplay openers + continuations trigger RP mode
+    assert detect_roleplay_turn("vas y joue le role de belle mere et je dois te baiser (tu es conscentante et ultra chaude)") is True
+    assert detect_roleplay_turn("decris ce que tu fais parle moi (je sors ma bite)") is True
+    assert detect_roleplay_turn("je tattrape la tete") is True
+    assert detect_roleplay_turn("suce ma bite") is True
+
+    # Active RP history carries across short conversational lines until explicit exit
+    rp_hist = [
+        {"role": "user", "content": "Joue le rôle de ma voisine."},
+        {"role": "never", "content": "*Je m'approche de toi en souriant.* « Entre donc… »"},
+    ]
+    assert detect_roleplay_turn("Et ensuite ?", recent_history=rp_hist) is True
+    assert detect_roleplay_turn("stop rp parlons d'autre chose", recent_history=rp_hist) is False
+

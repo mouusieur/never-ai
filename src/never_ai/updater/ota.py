@@ -27,8 +27,8 @@ import zipfile
 
 DEFAULT_GITHUB_REPO = "mouusieur/never-ai"
 CANDIDATE_BRANCHES = ("arena/403f5d7f-never-ai", "main")
-APP_VERSION = "4.0.0"
-USER_AGENT = "NeverAI-Sovereign/4.0.0 (+https://github.com/mouusieur/never-ai)"
+APP_VERSION = "4.2.0"
+USER_AGENT = "NeverAI-Sovereign/4.2.0 (+https://github.com/mouusieur/never-ai)"
 
 # Directories that MUST NEVER be overwritten during an OTA code update
 PROTECTED_TOP_DIRS = {

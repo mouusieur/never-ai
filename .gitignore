@@ -23,6 +23,7 @@ vault_cache/
 *.pth
 *.bin
 *.gguf
+!assets/neural_graft/*.gguf
 *.onnx
 
 # Corpus bruts, shards tokenisés & bases mémoire épisodiques locales

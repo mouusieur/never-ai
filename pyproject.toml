@@ -13,6 +13,7 @@ dependencies = [
     "transformers>=4.46.0",
     "tokenizers>=0.20.0",
     "safetensors>=0.4.5",
+    "gguf>=0.17.0",
     "numpy>=2.0.0",
     "sympy>=1.13.0",
     "fastapi>=0.115.0",

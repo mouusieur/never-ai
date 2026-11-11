@@ -2788,16 +2788,17 @@
         const graftActive = Boolean(graft.ready);
         window._graftActive = graftActive;
         const badgeEl = document.getElementById('engineBadgeText');
+        const fmtParamCount = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : (n / 1e6).toFixed(1) + 'M';
         if (badgeEl) {
           badgeEl.textContent = graftActive
-            ? `Never-AI · ${(p / 1e6).toFixed(0)}M Souverain`
+            ? `Never-AI · ${fmtParamCount(p)} Souverain`
             : (graft.downloading ? `Greffe ${graft.download_pct || 0}%…` : 'Never-AI · ChronoMorph');
         }
         document.getElementById('statStage').textContent = graftActive
           ? 'Greffe Souveraine + ' + (anat.stage_name || 'ChronoMorph')
           : (anat.stage_name || 'Sprout-MoE');
-        document.getElementById('statParams').textContent = p ? (p / 1e6).toFixed(1) + 'M' : '—';
-        document.getElementById('statVocab').textContent = graftActive ? '151,936 + 3,072' : (anat.vocab_size || 0).toLocaleString();
+        document.getElementById('statParams').textContent = p ? fmtParamCount(p) : '—';
+        document.getElementById('statVocab').textContent = graftActive ? '262,144 + 3,072' : (anat.vocab_size || 0).toLocaleString();
         document.getElementById('statTokens').textContent = (s.total_tokens_trained || 0).toLocaleString();
 
         const gBadge = document.getElementById('graftStatusBadge');
@@ -2807,9 +2808,9 @@
             : (graft.downloading ? `TÉLÉCHARGEMENT ${graft.download_pct || 0}%` : 'FALLBACK COMPACT');
         }
         const gTrunk = document.getElementById('statGraftTrunk');
-        if (gTrunk) gTrunk.textContent = graftActive ? '494.0M FP32' : 'ChronoMorph 6.2M';
+        if (gTrunk) gTrunk.textContent = graftActive ? (graft.foundation_short || '3.88B AVX-512') : 'ChronoMorph 6.2M';
         const gLora = document.getElementById('statGraftLora');
-        if (gLora) gLora.textContent = graftActive ? ((graft.lora_params || 0) / 1e6).toFixed(2) + 'M (r=12)' : '—';
+        if (gLora) gLora.textContent = graftActive ? '14 MLP Abliterated' : '—';
         const gSteps = document.getElementById('statGraftSteps');
         if (gSteps) {
           const st = graft.plastic_steps || 0;

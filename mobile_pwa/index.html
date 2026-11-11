@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Never-AI</title>
-  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -2136,20 +2136,6 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    (function setupCloudApiBridge() {
-      const p = new URLSearchParams(window.location.search);
-      if (p.get('api')) {
-        localStorage.setItem('never_ai_cloud_api', p.get('api').replace(/\/+$/, ''));
-      }
-      const origFetch = window.fetch.bind(window);
-      window.fetch = function(input, init) {
-        const base = localStorage.getItem('never_ai_cloud_api') || '';
-        if (base && typeof input === 'string' && input.startsWith('/api/')) {
-          return origFetch(base + input, init);
-        }
-        return origFetch(input, init);
-      };
-    })();
     /* ==========================================================================
        NEVER-AI v3.3 — INTERACTION & MOTION ENGINE
        ========================================================================== */
@@ -2176,7 +2162,7 @@
       deferredPwaPrompt = e;
     });
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
     /* Cursor-tracked Specular Spotlight on Architectural Surfaces */
@@ -2802,16 +2788,17 @@
         const graftActive = Boolean(graft.ready);
         window._graftActive = graftActive;
         const badgeEl = document.getElementById('engineBadgeText');
+        const fmtParamCount = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : (n / 1e6).toFixed(1) + 'M';
         if (badgeEl) {
           badgeEl.textContent = graftActive
-            ? `Never-AI · ${(p / 1e6).toFixed(0)}M Souverain`
+            ? `Never-AI · ${fmtParamCount(p)} Souverain`
             : (graft.downloading ? `Greffe ${graft.download_pct || 0}%…` : 'Never-AI · ChronoMorph');
         }
         document.getElementById('statStage').textContent = graftActive
           ? 'Greffe Souveraine + ' + (anat.stage_name || 'ChronoMorph')
           : (anat.stage_name || 'Sprout-MoE');
-        document.getElementById('statParams').textContent = p ? (p / 1e6).toFixed(1) + 'M' : '—';
-        document.getElementById('statVocab').textContent = graftActive ? '151,936 + 3,072' : (anat.vocab_size || 0).toLocaleString();
+        document.getElementById('statParams').textContent = p ? fmtParamCount(p) : '—';
+        document.getElementById('statVocab').textContent = graftActive ? '262,144 + 3,072' : (anat.vocab_size || 0).toLocaleString();
         document.getElementById('statTokens').textContent = (s.total_tokens_trained || 0).toLocaleString();
 
         const gBadge = document.getElementById('graftStatusBadge');
@@ -2821,9 +2808,9 @@
             : (graft.downloading ? `TÉLÉCHARGEMENT ${graft.download_pct || 0}%` : 'FALLBACK COMPACT');
         }
         const gTrunk = document.getElementById('statGraftTrunk');
-        if (gTrunk) gTrunk.textContent = graftActive ? '494.0M FP32' : 'ChronoMorph 6.2M';
+        if (gTrunk) gTrunk.textContent = graftActive ? (graft.foundation_short || '3.88B AVX-512') : 'ChronoMorph 6.2M';
         const gLora = document.getElementById('statGraftLora');
-        if (gLora) gLora.textContent = graftActive ? ((graft.lora_params || 0) / 1e6).toFixed(2) + 'M (r=12)' : '—';
+        if (gLora) gLora.textContent = graftActive ? '14 MLP Abliterated' : '—';
         const gSteps = document.getElementById('statGraftSteps');
         if (gSteps) {
           const st = graft.plastic_steps || 0;
